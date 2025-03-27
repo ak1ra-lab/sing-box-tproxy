@@ -1,0 +1,250 @@
+{
+    "subscriptions": {
+        "example": {
+            "type": "SIP002",
+            "exclude": [
+                "过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"
+            ],
+            "url": "https://sub.example.com/subscriptions.txt"
+        }
+    },
+    "outbounds": [
+        {
+            "tag": "DIRECT",
+            "type": "direct"
+        },
+        {
+            "tag": "AUTO",
+            "type": "urltest",
+            "filter": [
+                ".*"
+            ],
+            "outbounds": [],
+            "url": "https://www.gstatic.com/generate_204",
+            "interval": "3m",
+            "tolerance": 0,
+            "idle_timeout": "30m",
+            "interrupt_exist_connections": false
+        },
+        {
+            "tag": "PROXY",
+            "type": "selector",
+            "outbounds": [
+                "🇸🇬 狮城节点",
+                "🇭🇰 香港节点",
+                "🇺🇸 美国节点",
+                "🇯🇵 日本节点",
+                "🏰 欧洲节点",
+                "🇹🇼 台湾节点",
+                "🇰🇷 韩国节点",
+                "AUTO"
+            ],
+            "interrupt_exist_connections": false
+        },
+        {
+            "tag": "FINAL",
+            "type": "selector",
+            "filter": [
+                ".*"
+            ],
+            "outbounds": [
+                "PROXY",
+                "DIRECT",
+                "AUTO",
+                "🇸🇬 狮城节点",
+                "🇭🇰 香港节点",
+                "🇺🇸 美国节点",
+                "🇯🇵 日本节点",
+                "🏰 欧洲节点",
+                "🇹🇼 台湾节点",
+                "🇰🇷 韩国节点"
+            ],
+            "default": "PROXY",
+            "interrupt_exist_connections": false
+        },
+        {
+            "tag": "APPLE",
+            "type": "selector",
+            "outbounds": [
+                "PROXY",
+                "🇸🇬 狮城节点",
+                "🇭🇰 香港节点",
+                "🇺🇸 美国节点",
+                "🇯🇵 日本节点",
+                "🏰 欧洲节点",
+                "🇹🇼 台湾节点",
+                "🇰🇷 韩国节点",
+                "AUTO",
+                "DIRECT"
+            ],
+            "default": "DIRECT",
+            "interrupt_exist_connections": false
+        },
+        {
+            "tag": "STEAM",
+            "type": "selector",
+            "outbounds": [
+                "PROXY",
+                "🇸🇬 狮城节点",
+                "🇭🇰 香港节点",
+                "🇺🇸 美国节点",
+                "🇯🇵 日本节点",
+                "🏰 欧洲节点",
+                "🇹🇼 台湾节点",
+                "🇰🇷 韩国节点",
+                "AUTO",
+                "DIRECT"
+            ],
+            "default": "PROXY",
+            "interrupt_exist_connections": false
+        },
+        {
+            "tag": "AI",
+            "type": "selector",
+            "outbounds": [
+                "PROXY",
+                "🇸🇬 狮城节点",
+                "🇭🇰 香港节点",
+                "🇺🇸 美国节点",
+                "🇯🇵 日本节点",
+                "🏰 欧洲节点",
+                "🇹🇼 台湾节点",
+                "🇰🇷 韩国节点",
+                "AUTO",
+                "DIRECT"
+            ],
+            "default": "PROXY",
+            "interrupt_exist_connections": false
+        },
+        {
+            "tag": "TELEGRAM",
+            "type": "selector",
+            "outbounds": [
+                "PROXY",
+                "🇸🇬 狮城节点",
+                "🇭🇰 香港节点",
+                "🇺🇸 美国节点",
+                "🇯🇵 日本节点",
+                "🏰 欧洲节点",
+                "🇹🇼 台湾节点",
+                "🇰🇷 韩国节点",
+                "AUTO",
+                "DIRECT"
+            ],
+            "default": "PROXY",
+            "interrupt_exist_connections": false
+        },
+        {
+            "tag": "DOWNLOADER",
+            "type": "selector",
+            "outbounds": [
+                "PROXY",
+                "🇸🇬 狮城节点",
+                "🇭🇰 香港节点",
+                "🇺🇸 美国节点",
+                "🇯🇵 日本节点",
+                "🏰 欧洲节点",
+                "🇹🇼 台湾节点",
+                "🇰🇷 韩国节点",
+                "AUTO",
+                "DIRECT"
+            ],
+            "default": "DIRECT",
+            "interrupt_exist_connections": false
+        },
+        {
+            "tag": "SSH",
+            "type": "selector",
+            "outbounds": [
+                "PROXY",
+                "🇸🇬 狮城节点",
+                "🇭🇰 香港节点",
+                "🇺🇸 美国节点",
+                "🇯🇵 日本节点",
+                "🏰 欧洲节点",
+                "🇹🇼 台湾节点",
+                "🇰🇷 韩国节点",
+                "AUTO",
+                "DIRECT"
+            ],
+            "default": "PROXY",
+            "interrupt_exist_connections": false
+        },
+        {
+            "tag": "🇭🇰 香港节点",
+            "type": "selector",
+            "outbounds": [],
+            "filter": [
+                "港|HK|Hong Kong"
+            ],
+            "interrupt_exist_connections": false
+        },
+        {
+            "tag": "🇯🇵 日本节点",
+            "type": "selector",
+            "outbounds": [],
+            "filter": [
+                "日本|川日|东京|大阪|泉日|埼玉|沪日|深日|[^-]日|JP|Japan"
+            ],
+            "interrupt_exist_connections": false
+        },
+        {
+            "tag": "🇸🇬 狮城节点",
+            "type": "selector",
+            "outbounds": [],
+            "filter": [
+                "新加坡|坡|狮城|SG|Singapore"
+            ],
+            "interrupt_exist_connections": false
+        },
+        {
+            "tag": "🇺🇸 美国节点",
+            "type": "selector",
+            "outbounds": [],
+            "filter": [
+                "美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States"
+            ],
+            "interrupt_exist_connections": false
+        },
+        {
+            "tag": "🏰 欧洲节点",
+            "type": "selector",
+            "outbounds": [],
+            "filter": [
+                "(Belgium|比利时)",
+                "(Finland|Helsinki|芬兰|赫尔辛基)",
+                "\\bDE[U]?\\b|Germany|法兰克福|德(国|意志)|中德|^德$",
+                "\\bD[N]?K\\b|Denmark|丹麦",
+                "\\bES[P]?\\b|Spain|西班牙",
+                "\\bFR[A]?\\b|France|Paris|法国|巴黎",
+                "\\bIS[L]?\\b|Iceland|冰岛",
+                "\\bNL[D]?\\b|Netherlands|荷兰|阿姆斯特丹",
+                "\\bUK\\b|\\bGB[R]?\\b|England|United.*?Kingdom|London|英国|[^-]英|伦敦",
+                "(Ireland|Dublin|爱尔兰|都柏林)",
+                "(Italy|Milan|意大利|米兰)",
+                "(Switzerland|Zurich|瑞士|苏黎世)",
+                "(希腊|Greece)",
+                "(挪威|Norway)"
+            ],
+            "interrupt_exist_connections": false
+        },
+        {
+            "tag": "🇹🇼 台湾节点",
+            "type": "selector",
+            "outbounds": [],
+            "filter": [
+                "台|新北|彰化|TW|Taiwan"
+            ],
+            "interrupt_exist_connections": false
+        },
+        {
+            "tag": "🇰🇷 韩国节点",
+            "type": "selector",
+            "outbounds": [],
+            "filter": [
+                "KR|Korea|KOR|首尔|韩|韓"
+            ],
+            "interrupt_exist_connections": false
+        }
+    ]
+}
