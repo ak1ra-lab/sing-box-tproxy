@@ -4,8 +4,8 @@ from pathlib import Path
 
 import httpx
 
-from singbox_tproxy.parser.shadowsocks import decode_sip002_to_singbox
-from singbox_tproxy.utils import b64decode, save_json
+from singbox_config.parser.shadowsocks import decode_sip002_to_singbox
+from singbox_config.utils import b64decode, save_json
 
 logger = logging.getLogger(__name__)
 

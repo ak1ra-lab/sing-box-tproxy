@@ -1,6 +1,6 @@
 from pathlib import Path
 
-log_dir = Path("~/.local/state/singbox_tproxy/log").expanduser()
+log_dir = Path("~/.local/state/singbox_config/log").expanduser()
 log_file = log_dir / "messages.log"
 
 # https://guicommits.com/how-to-log-in-python-like-a-pro/

@@ -1,5 +1,5 @@
 [project]
-name = "singbox_tproxy"
+name = "singbox_config"
 dynamic = ["version"]
 description = "The configuration generator for sing-box"
 authors = [
@@ -30,7 +30,7 @@ source = "scm"
 
 
 [project.scripts]
-sing-box-tproxy = "singbox_tproxy.cmd:main"
+sing-box-config = "singbox_config.cmd:main"
 
 
 # All development dependencies are included as long as --prod is not passed and -G doesn't specify any dev groups.
