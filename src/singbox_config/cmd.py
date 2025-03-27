@@ -10,9 +10,9 @@ from pathlib import Path
 
 import argcomplete
 
-from singbox_tproxy.config import log_dir, logging_config
-from singbox_tproxy.export import save_config_from_subscriptions
-from singbox_tproxy.utils import read_json
+from singbox_config.config import log_dir, logging_config
+from singbox_config.export import save_config_from_subscriptions
+from singbox_config.utils import read_json
 
 logger = logging.getLogger(__name__)
 

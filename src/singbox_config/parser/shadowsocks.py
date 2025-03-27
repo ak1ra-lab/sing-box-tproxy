@@ -4,7 +4,7 @@
 import logging
 import urllib.parse
 
-from singbox_tproxy.utils import b64decode
+from singbox_config.utils import b64decode
 
 logger = logging.getLogger(__name__)
 
