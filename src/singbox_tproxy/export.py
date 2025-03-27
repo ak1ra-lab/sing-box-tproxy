@@ -9,28 +9,31 @@ from singbox_tproxy.utils import b64decode, save_json
 
 logger = logging.getLogger(__name__)
 
+supported_types = ["SIP002"]
 
-def save_config_from_subscriptions(
-    base_config: dict, subscriptions_config: dict, output: Path
-) -> None:
-    subscriptions = subscriptions_config.pop("subscriptions")
-    outbounds = subscriptions_config.pop("outbounds")
 
+def get_proxies_from_subscriptions(name: str, subscription: dict) -> list:
     proxies = []
-    for name, subscription in subscriptions.items():
-        tag_prefix = name + " - "
-        if subscription["type"] == "SIP002":
-            proxies_raw = httpx.get(subscription["url"])
-            proxies_lines = b64decode(proxies_raw.text).splitlines()
-            for line in proxies_lines:
-                proxy = decode_sip002_to_singbox(line, tag_prefix)
-                if proxy:
-                    proxies.append(proxy)
+    if subscription["type"].upper() not in supported_types:
+        return proxies
 
-    if logger.level == logging.DEBUG:
-        save_json(output.with_suffix(".proxies.json"), proxies)
+    exclude = subscription.pop("exclude", [])
+    if subscription["type"].upper() == "SIP002":
+        resp = httpx.get(subscription["url"], timeout=120)
+        proxies_lines = b64decode(resp.text).splitlines()
+        logger.debug("url = %s, proxies_lines = %s", subscription["url"], proxies_lines)
+        for line in proxies_lines:
+            proxy = decode_sip002_to_singbox(line, name + " - ")
+            if not proxy:
+                continue
+            if any(re.search(p, proxy["tag"], re.IGNORECASE) for p in exclude):
+                continue
+            proxies.append(proxy)
 
-    # filter outbounds
+    return proxies
+
+
+def filter_outbounds_from_proxies(outbounds: list, proxies: list) -> None:
     for outbound in outbounds:
         if all(k not in outbound.keys() for k in ["exclude", "filter"]):
             continue
@@ -44,9 +47,23 @@ def save_config_from_subscriptions(
             if any(re.search(p, proxy["tag"], re.IGNORECASE) for p in filter):
                 outbound["outbounds"].append(proxy["tag"])
 
-    outbounds += proxies
-    if logger.level == logging.DEBUG:
-        save_json(output.with_suffix(".outbounds.json"), outbounds)
 
+def save_config_from_subscriptions(
+    base_config: dict, subscriptions_config: dict, output: Path
+) -> None:
+    subscriptions = subscriptions_config.pop("subscriptions")
+    outbounds = subscriptions_config.pop("outbounds")
+
+    proxies = []
+    for name, subscription in subscriptions.items():
+        proxies += get_proxies_from_subscriptions(name, subscription)
+
+    # 原地修改
+    filter_outbounds_from_proxies(outbounds, proxies)
+
+    outbounds += proxies
     base_config["outbounds"] += outbounds
+
+    save_json(output.with_suffix(".proxies.json"), proxies)
+    save_json(output.with_suffix(".outbounds.json"), outbounds)
     save_json(output, base_config)

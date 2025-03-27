@@ -1,5 +1,8 @@
 import base64
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def save_json(filename, data):

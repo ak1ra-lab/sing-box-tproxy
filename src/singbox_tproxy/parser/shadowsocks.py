@@ -9,6 +9,10 @@ from singbox_tproxy.utils import b64decode
 logger = logging.getLogger(__name__)
 
 
+# https://shadowsocks.org/doc/sip003.html
+supported_plugins = ["obfs-local", "v2ray-plugin"]
+
+
 def decode_sip002_to_singbox(uri: str, tag_prefix: str) -> dict:
     """
     Decodes a Shadowsocks SIP002 URI into a sing-box shadowsocks outbound configuration.
@@ -52,9 +56,6 @@ def decode_sip002_to_singbox(uri: str, tag_prefix: str) -> dict:
         "plugin_opts": "",
     }
 
-    # https://shadowsocks.org/doc/sip003.html
-    sip003_plugins = ["obfs-local", "v2ray-plugin"]
-
     if not parsed_uri.query:
         return outbound_config
 
@@ -69,7 +70,7 @@ def decode_sip002_to_singbox(uri: str, tag_prefix: str) -> dict:
 
         # Only obfs-local and v2ray-plugin are supported.
         # https://sing-box.sagernet.org/configuration/outbound/shadowsocks/#plugin
-        if plugin_parts[0] not in sip003_plugins:
+        if plugin_parts[0] not in supported_plugins:
             logger.warning("sing-box doesn't support plugin %s", plugin_parts[0])
             return {}
 
