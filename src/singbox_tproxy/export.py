@@ -49,7 +49,7 @@ def filter_outbounds_from_proxies(outbounds: list, proxies: list) -> None:
 
 
 def save_config_from_subscriptions(
-    base_config: dict, subscriptions_config: dict, output: Path
+    base_config: dict, subscriptions_config: dict, output: Path, verbose: bool = False
 ) -> None:
     subscriptions = subscriptions_config.pop("subscriptions")
     outbounds = subscriptions_config.pop("outbounds")
@@ -64,6 +64,8 @@ def save_config_from_subscriptions(
     outbounds += proxies
     base_config["outbounds"] += outbounds
 
-    save_json(output.with_suffix(".proxies.json"), proxies)
-    save_json(output.with_suffix(".outbounds.json"), outbounds)
+    if verbose:
+        save_json(output.with_suffix(".proxies.json"), proxies)
+        save_json(output.with_suffix(".outbounds.json"), outbounds)
+
     save_json(output, base_config)
