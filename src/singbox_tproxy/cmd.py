@@ -12,6 +12,7 @@ import argcomplete
 
 from singbox_tproxy.config import log_dir, logging_config
 from singbox_tproxy.export import save_config_from_subscriptions
+from singbox_tproxy.utils import read_json
 
 logger = logging.getLogger(__name__)
 
@@ -63,8 +64,8 @@ def main() -> None:
         logging.root.setLevel(logging.INFO)
 
     save_config_from_subscriptions(
-        base_config=args.base,
-        subscriptions_config=args.subscriptions,
+        base_config=read_json(args.base),
+        subscriptions_config=read_json(args.subscriptions),
         output=args.output,
     )
 
