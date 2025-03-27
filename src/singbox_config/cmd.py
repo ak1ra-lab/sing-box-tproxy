@@ -66,7 +66,7 @@ def main() -> None:
     save_config_from_subscriptions(
         base_config=read_json(args.base),
         subscriptions_config=read_json(args.subscriptions),
-        output=args.output,
+        output=Path(args.output),
         verbose=args.verbose,
     )
 
