@@ -41,7 +41,7 @@ def main() -> None:
         "-o",
         "--output",
         type=Path,
-        default="config/config.json",
+        default="files/etc/sing-box/config.json",
         metavar="config.json",
         help="sing-box output config",
     )
@@ -67,6 +67,7 @@ def main() -> None:
         base_config=read_json(args.base),
         subscriptions_config=read_json(args.subscriptions),
         output=args.output,
+        verbose=args.verbose,
     )
 
 
