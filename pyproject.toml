@@ -1,0 +1,49 @@
+[project]
+name = "singbox_tproxy"
+dynamic = ["version"]
+description = "The configuration generator for sing-box"
+authors = [
+    {name = "ak1ra", email = "git@ak1ra.xyz"},
+]
+dependencies = ["httpx>=0.28.1", "argcomplete>=3.5.3"]
+requires-python = ">=3.11"
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Other Audience",
+]
+keywords = ["proxy", "sing-box"]
+readme = "README.md"
+license = "LICENSE"
+
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
+
+
+[tool.pdm.version]
+source = "scm"
+
+
+[project.scripts]
+sing-box-tproxy = "singbox_tproxy.cmd:main"
+
+
+# All development dependencies are included as long as --prod is not passed and -G doesn't specify any dev groups.
+[dependency-groups]
+tests = [
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+]
+lint = [
+    "ruff>=0.9.4",
+]
+dev = [
+    "nox>=2024.10.9",
+    {include-group = "tests"},
+    {include-group = "lint"},
+]
