@@ -10,16 +10,14 @@
                 "tag": "dns_resolver",
                 "type": "udp",
                 "server": "223.5.5.5",
-                "server_port": 53,
-                "detour": "DIRECT"
+                "server_port": 53
             },
             {
                 "tag": "dns_direct",
                 "type": "tls",
                 "server": "dns.alidns.com",
                 "server_port": 853,
-                "domain_resolver": "dns_resolver",
-                "detour": "DIRECT"
+                "domain_resolver": "dns_resolver"
             },
             {
                 "tag": "dns_proxy",
