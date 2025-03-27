@@ -64,6 +64,9 @@ def save_config_from_subscriptions(
     outbounds += proxies
     base_config["outbounds"] += outbounds
 
+    if not output.parent.exists():
+        output.parent.mkdir(parents=True)
+
     if verbose:
         save_json(output.with_suffix(".proxies.json"), proxies)
         save_json(output.with_suffix(".outbounds.json"), outbounds)
