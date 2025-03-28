@@ -54,6 +54,7 @@
   loop_control:
     loop_var: file
 
+# 其实这里有问题, 这里没有区分全部做了 notify, 按理说应该更精确一些才好些
 - name: template singbox_templates on remote
   ansible.builtin.template:
     src: "{{ template }}"
@@ -66,6 +67,9 @@
     loop_var: template
   notify:
     - systemctl daemon-reload
+    - systemctl restart nftables.service
+    - systemctl restart sing-box.service
+    - netplan apply
 
 - name: ensure sing-box working directory ownership
   ansible.builtin.file:
