@@ -80,13 +80,14 @@
   loop_control:
     loop_var: directory
 
-- name: ensure systemd service restarted and enabled
+- name: ensure systemd service started and enabled
   ansible.builtin.systemd_service:
     name: "{{ service }}"
-    state: restarted
+    state: started
     enabled: true
   loop:
-    - nftables
-    - sing-box
+    - nftables.service
+    - sing-box.service
+    - sing-box-reload.path
   loop_control:
     loop_var: service
