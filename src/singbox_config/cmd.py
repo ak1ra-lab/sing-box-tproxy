@@ -27,7 +27,7 @@ def main() -> None:
         type=Path,
         default="config/base.json",
         metavar="base.json",
-        help="sing-box base config",
+        help="sing-box base config, default: %(default)s",
     )
     parser.add_argument(
         "-s",
@@ -35,15 +35,15 @@ def main() -> None:
         type=Path,
         default="config/subscriptions.json",
         metavar="subscriptions.json",
-        help="sing-box subscriptions config with subscriptions and outbounds",
+        help="sing-box subscriptions config with subscriptions and outbounds, default: %(default)s",
     )
     parser.add_argument(
         "-o",
         "--output",
         type=Path,
-        default="files/etc/sing-box/config.json",
+        default="config/config.json",
         metavar="config.json",
-        help="sing-box output config",
+        help="sing-box output config, default: %(default)s",
     )
     parser.add_argument(
         "-v",
