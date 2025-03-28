@@ -1,0 +1,121 @@
+---
+# tasks file for singbox_config
+- name: ensure packages is installed
+  ansible.builtin.package:
+    name:
+      - python3-venv
+    state: present
+
+- name: ensure proxy group exists
+  ansible.builtin.group:
+    name: "{{ proxy_group.name }}"
+    gid: "{{ proxy_group.gid | int }}"
+    state: present
+
+- name: ensure proxy user exists
+  ansible.builtin.user:
+    name: "{{ proxy_user.name }}"
+    uid: "{{ proxy_user.uid | int }}"
+    home: "{{ proxy_user.home }}"
+    shell: "{{ proxy_user.shell }}"
+    group: "{{ proxy_group.name }}"
+    state: present
+
+- name: ensure sing-box working directory exists
+  ansible.builtin.file:
+    path: "{{ directory }}"
+    owner: "{{ proxy_user.name }}"
+    group: "{{ proxy_group.name }}"
+    mode: "0700"
+    state: directory
+  loop:
+    - "{{ singbox_etc_dir }}"
+    - "{{ singbox_log_dir }}"
+    - "{{ singbox_state_dir }}"
+  loop_control:
+    loop_var: directory
+
+- name: ensure singbox_templates parent directory exists on remote
+  ansible.builtin.file:
+    path: "{{ ['/', file] | ansible.builtin.path_join | ansible.builtin.dirname }}"
+    state: directory
+  loop: "{{ singbox_templates }}"
+  loop_control:
+    loop_var: file
+
+- name: template singbox_templates on remote
+  ansible.builtin.template:
+    src: "{{ template }}"
+    dest: "{{ ['/', template] | ansible.builtin.path_join | ansible.builtin.splitext | first }}"
+    owner: "{{ proxy_user.name }}"
+    group: "{{ proxy_group.name }}"
+    mode: "0600"
+  loop: "{{ singbox_templates }}"
+  loop_control:
+    loop_var: template
+  notify:
+    - systemctl daemon-reload
+
+- name: pdm build on current repo
+  become: false
+  ansible.builtin.command: pdm build --no-sdist
+  delegate_to: localhost
+
+- name: set_fact on pdm_wheel
+  ansible.builtin.set_fact:
+    pdm_wheel: "{{ lookup('ansible.builtin.fileglob', playbook_dir ~ '/dist/*.whl').split() | list | last }}"
+
+- name: debug_var on pdm_wheel
+  ansible.builtin.debug:
+    var: pdm_wheel
+
+- name: copy pdm_wheel to remote
+  ansible.builtin.copy:
+    src: "{{ pdm_wheel }}"
+    dest: "{{ singbox_state_dir }}/"
+
+- name: install pdm_wheel on remote venv
+  vars:
+    relpath: "{{ pdm_wheel | ansible.builtin.relpath(playbook_dir) }}"
+    pdm_wheel_dest: "{{ [singbox_state_dir, pdm_wheel | ansible.builtin.basename] | ansible.builtin.path_join }}"
+  ansible.builtin.pip:
+    name: "file://{{ pdm_wheel_dest }}"
+    virtualenv: "{{ singbox_state_dir }}/.venv"
+    virtualenv_command: python3 -m venv
+
+- name: ensure singbox_config_files parent directory exists
+  ansible.builtin.file:
+    path: "{{ file_obj.dest | ansible.builtin.dirname }}"
+    state: directory
+  loop: "{{ singbox_config_files }}"
+  loop_control:
+    loop_var: file_obj
+
+- name: copy singbox_config_files to remote
+  ansible.builtin.copy:
+    src: "{{ file_obj.src }}"
+    dest: "{{ file_obj.dest }}"
+    owner: "{{ proxy_user.name }}"
+    group: "{{ proxy_group.name }}"
+    mode: "0600"
+  loop: "{{ singbox_config_files }}"
+  loop_control:
+    loop_var: file_obj
+
+- name: ensure sing-box working directory ownership
+  ansible.builtin.file:
+    path: "{{ directory }}"
+    owner: "{{ proxy_user.name }}"
+    group: "{{ proxy_group.name }}"
+    recurse: true
+  loop:
+    - "{{ singbox_etc_dir }}"
+    - "{{ singbox_log_dir }}"
+    - "{{ singbox_state_dir }}"
+  loop_control:
+    loop_var: directory
+
+- name: ensure sing-box-config-updater.timer enabled
+  ansible.builtin.systemd_service:
+    name: sing-box-config-updater.timer
+    enabled: true
