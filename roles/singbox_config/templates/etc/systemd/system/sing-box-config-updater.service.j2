@@ -3,7 +3,5 @@ Description=sing-box-config updater
 
 [Service]
 Type=oneshot
-User={{ proxy_user.name }}
-Group={{ proxy_group.name }}
 WorkingDirectory={{ singbox_state_dir }}
 ExecStart={{ singbox_state_dir }}/.venv/bin/sing-box-config --output {{ singbox_etc_dir }}/config.json
