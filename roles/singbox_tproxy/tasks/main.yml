@@ -1,0 +1,92 @@
+---
+- name: ensure packages is installed
+  ansible.builtin.package:
+    name:
+      - bash
+      - curl
+      - iproute2
+      - nftables
+    state: present
+
+- name: ensure required kernel module is loaded
+  community.general.modprobe:
+    name: "{{ module }}"
+    state: present
+    persistent: present
+  loop:
+    - nft_tproxy
+    - nft_socket
+    - nf_tproxy_ipv4
+    - nf_tproxy_ipv6
+  loop_control:
+    loop_var: module
+
+# should we enable net.ipv4.conf.all.route_localnet=1 ?
+- name: ensure ip_forward is enabled
+  ansible.posix.sysctl:
+    name: "{{ line }}"
+    value: 1
+    state: present
+    ignoreerrors: true
+  loop:
+    - net.ipv4.ip_forward
+    - net.ipv4.conf.all.proxy_arp
+    - net.ipv6.conf.all.forwarding
+  loop_control:
+    loop_var: line
+
+- name: ensure parent directory exists on remote
+  ansible.builtin.file:
+    path: "{{ ['/', file] | ansible.builtin.path_join | ansible.builtin.dirname }}"
+    state: directory
+  loop: "{{ singbox_files + singbox_templates }}"
+  loop_control:
+    loop_var: file
+
+- name: copy singbox_files to remote
+  ansible.builtin.copy:
+    src: "{{ file }}"
+    dest: "{{ ['/', file] | ansible.builtin.path_join }}"
+    owner: "{{ proxy_user.name }}"
+    group: "{{ proxy_group.name }}"
+    mode: "0600"
+  loop: "{{ singbox_files }}"
+  loop_control:
+    loop_var: file
+
+- name: template singbox_templates on remote
+  ansible.builtin.template:
+    src: "{{ template }}"
+    dest: "{{ ['/', template] | ansible.builtin.path_join | ansible.builtin.splitext | first }}"
+    owner: "{{ proxy_user.name }}"
+    group: "{{ proxy_group.name }}"
+    mode: "0600"
+  loop: "{{ singbox_templates }}"
+  loop_control:
+    loop_var: template
+  notify:
+    - systemctl daemon-reload
+
+- name: ensure sing-box working directory ownership
+  ansible.builtin.file:
+    path: "{{ directory }}"
+    owner: "{{ proxy_user.name }}"
+    group: "{{ proxy_group.name }}"
+    recurse: true
+  loop:
+    - "{{ singbox_etc_dir }}"
+    - "{{ singbox_log_dir }}"
+    - "{{ singbox_state_dir }}"
+  loop_control:
+    loop_var: directory
+
+- name: ensure systemd service restarted and enabled
+  ansible.builtin.systemd_service:
+    name: "{{ service }}"
+    state: restarted
+    enabled: true
+  loop:
+    - nftables
+    - sing-box
+  loop_control:
+    loop_var: service

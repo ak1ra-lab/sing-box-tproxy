@@ -1,0 +1,91 @@
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+# ip route show default | awk '/default/ {print $5}'
+define INTERFACE = "{{ ansible_default_ipv4.interface }}"
+# 对应 sing-box 中 type = tproxy 的 inbounds
+define TPROXY_PORT = {{ singbox_tproxy_port }}
+# ip -f inet rule add fwmark $PROXY_MARK lookup $PROXY_ROUTE_TABLE
+# ip -f inet route add local default dev $INTERFACE table $PROXY_ROUTE_TABLE
+# echo "{{ singbox_proxy_route_table }} tproxy" | sudo tee /etc/iproute2/rt_tables.d/tproxy.conf >/dev/null
+define PROXY_ROUTE_TABLE = {{ singbox_proxy_route_table }}
+define PROXY_MARK = {{ singbox_proxy_mark }}
+# 对应 sing-box 配置项 route.default_mark
+define ROUTE_DEFAULT_MARK = {{ singbox_route_default_mark }}
+
+table inet singbox_tproxy {
+	set reserved_ip4 {
+		type ipv4_addr
+		flags interval
+		elements = {
+			10.0.0.0/8,
+			172.16.0.0/12,
+			192.168.0.0/16,
+			127.0.0.0/8,
+			100.64.0.0/10,
+			169.254.0.0/16,
+			224.0.0.0/4,
+			240.0.0.0/4,
+		}
+	}
+
+	set custom_bypass {
+		type ipv4_addr
+		flags interval
+		elements = { 192.168.0.0/16 }
+	}
+
+	chain prerouting_tproxy {
+		type filter hook prerouting priority mangle; policy accept;
+
+		# DNS透明代理 (TCP/UDP)
+		meta l4proto { tcp, udp } th dport 53 tproxy to :$TPROXY_PORT accept comment "DNS 透明代理"
+
+		# 自定义绕过地址
+		ip daddr @custom_bypass accept comment "绕过某些地址"
+
+		# 防止回环
+		fib daddr type local meta l4proto { tcp, udp } th dport $TPROXY_PORT reject with icmpx type host-unreachable comment "拒绝直接访问 tproxy 端口"
+
+		# 本机流量绕过
+		fib daddr type local accept comment "本机绕过"
+
+		# 保留地址绕过
+		ip daddr @reserved_ip4 accept comment "保留地址绕过"
+
+		# 已建立的透明代理连接
+		meta l4proto tcp socket transparent 1 meta mark set $PROXY_MARK accept comment "绕过已建立连接"
+
+		# 其他流量透明代理
+		meta l4proto { tcp, udp } tproxy to :$TPROXY_PORT meta mark set $PROXY_MARK comment "通用透明代理"
+	}
+
+	chain output_tproxy {
+		type route hook output priority mangle; policy accept;
+
+		# 排除非出口网卡流量
+		oifname != $INTERFACE accept comment "非出口流量绕过"
+
+		# 标记流量绕过
+		meta mark $ROUTE_DEFAULT_MARK accept comment "标记流量绕过"
+
+		# DNS重路由
+		meta l4proto { tcp, udp } th dport 53 meta mark set $PROXY_MARK accept comment "DNS重路由"
+
+		# NetBIOS绕过
+		udp dport { netbios-ns, netbios-dgm, netbios-ssn } accept comment "NetBIOS绕过"
+
+		# 自定义绕过地址
+		ip daddr @custom_bypass accept comment "自定义绕过"
+
+		# 本机流量绕过
+		fib daddr type local accept comment "本机路由绕过"
+
+		# 保留地址绕过
+		ip daddr @reserved_ip4 accept comment "保留地址过滤"
+
+		# 其他流量标记
+		meta l4proto { tcp, udp } meta mark set $PROXY_MARK comment "输出流量标记"
+	}
+}
