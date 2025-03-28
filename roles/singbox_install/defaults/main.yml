@@ -1,0 +1,3 @@
+---
+apt_key_url: https://sing-box.app/gpg.key
+apt_keyrings_dest: /etc/apt/keyrings/sagernet.asc
