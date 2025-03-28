@@ -1,0 +1,43 @@
+---
+- name: ensure apt_keyrings_dest directory exists
+  ansible.builtin.file:
+    path: "{{ apt_keyrings_dest | ansible.builtin.dirname }}"
+    state: directory
+
+- name: get apt key from apt_key_url
+  ansible.builtin.get_url:
+    url: "{{ apt_key_url }}"
+    dest: "{{ apt_keyrings_dest }}"
+
+- name: add apt repo in DEB822 format
+  vars:
+    # ansible_architecture return x86_64,
+    # but $(dpkg --print-architecture) return = amd64
+    deb_architectures:
+      x86_64: amd64
+  ansible.builtin.deb822_repository:
+    name: sagernet
+    state: present
+    enabled: true
+    types: deb
+    uris: https://deb.sagernet.org/
+    suites: "*"
+    components: "*"
+    architectures: "{{ deb_architectures[ansible_architecture] }}"
+    signed_by: "{{ apt_keyrings_dest }}"
+
+- name: add apt package pinning
+  ansible.builtin.copy:
+    dest: /etc/apt/preferences.d/99sagernet
+    content: |
+      Package: *
+      Pin: origin deb.sagernet.org
+      Pin-Priority: 900
+    mode: "0644"
+
+- name: install sing-box package
+  ansible.builtin.apt:
+    name:
+      - sing-box-beta
+    update_cache: true
+    state: present
