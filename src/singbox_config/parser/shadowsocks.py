@@ -25,25 +25,29 @@ def decode_sip002_to_singbox(uri: str, tag_prefix: str) -> dict:
     """
     try:
         parsed_uri = urllib.parse.urlparse(uri)
-    except Exception as e:
-        raise ValueError(f"Invalid SIP002 URI: {e}")
+    except Exception:
+        logger.warning("Failed to parse SIP002 URI: %s", parsed_uri)
+        return {}
 
     if parsed_uri.scheme != "ss":
-        raise ValueError("Invalid scheme. Expected 'ss'")
+        logger.warning("Invalid scheme. Expected 'ss'")
+        return {}
 
     userinfo_encoded = parsed_uri.netloc.split("@")[0]
     try:
         userinfo_decoded = b64decode(userinfo_encoded)
         method, password = userinfo_decoded.split(":", 1)
     except Exception:
-        raise ValueError("Invalid userinfo format")
+        logger.warning("Invalid userinfo %s", userinfo_encoded)
+        return {}
 
     hostname_port = parsed_uri.netloc.split("@")[1]
     hostname, port_str = hostname_port.split(":")
     try:
         port = int(port_str)
     except ValueError:
-        raise ValueError("Invalid port")
+        logger.warning("Invalid port %s", port_str)
+        return {}
 
     outbound_config = {
         "type": "shadowsocks",
