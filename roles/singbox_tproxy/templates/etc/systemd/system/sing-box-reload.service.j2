@@ -1,0 +1,6 @@
+[Unit]
+Description=Reload sing-box after config changes
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl reload sing-box.service

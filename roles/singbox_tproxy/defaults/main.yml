@@ -36,3 +36,5 @@ singbox_templates:
   - etc/netplan/99-tproxy.yaml.j2
   - etc/nftables.conf.j2
   - etc/systemd/system/sing-box.service.j2
+  - etc/systemd/system/sing-box-reload.path.j2
+  - etc/systemd/system/sing-box-reload.service.j2
