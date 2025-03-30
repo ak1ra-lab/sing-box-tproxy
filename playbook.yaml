@@ -7,7 +7,7 @@
 
     # ip -f inet rule add fwmark $PROXY_MARK lookup $PROXY_ROUTE_TABLE
     # ip -f inet route add local default dev $INTERFACE table $PROXY_ROUTE_TABLE
-    # echo "224 tproxy" | sudo tee /etc/iproute2/rt_tables.d/tproxy.conf >/dev/null
+    # echo "224 singbox_tproxy" | sudo tee /etc/iproute2/rt_tables.d/singbox_tproxy.conf >/dev/null
     singbox_proxy_route_table: 224
     singbox_proxy_mark: 224
 

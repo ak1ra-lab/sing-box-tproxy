@@ -16,7 +16,7 @@ singbox_tproxy_port: 7895
 
 # ip -f inet rule add fwmark $PROXY_MARK lookup $PROXY_ROUTE_TABLE
 # ip -f inet route add local default dev $INTERFACE table $PROXY_ROUTE_TABLE
-# echo "224 tproxy" | sudo tee /etc/iproute2/rt_tables.d/tproxy.conf >/dev/null
+# echo "224 singbox_tproxy" | sudo tee /etc/iproute2/rt_tables.d/singbox_tproxy.conf >/dev/null
 singbox_proxy_route_table: 224
 singbox_proxy_mark: 224
 
@@ -27,13 +27,9 @@ singbox_etc_dir: /etc/sing-box
 singbox_log_dir: /var/log/sing-box
 singbox_state_dir: /var/lib/sing-box
 
-singbox_files:
-  - etc/modules-load.d/tproxy.conf
-  - etc/sysctl.d/99-ip_forward.conf
-
 singbox_templates:
-  - etc/iproute2/rt_tables.d/tproxy.conf.j2
-  - etc/netplan/99-tproxy.yaml.j2
+  - etc/iproute2/rt_tables.d/singbox_tproxy.conf.j2
+  - etc/netplan/99-singbox_tproxy.yaml.j2
   - etc/nftables.conf.j2
   - etc/systemd/system/sing-box.service.j2
   - etc/systemd/system/sing-box-reload.path.j2

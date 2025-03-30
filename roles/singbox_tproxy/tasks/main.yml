@@ -39,36 +39,41 @@
   ansible.builtin.file:
     path: "{{ ['/', file] | ansible.builtin.path_join | ansible.builtin.dirname }}"
     state: directory
-  loop: "{{ singbox_files + singbox_templates }}"
+  loop: "{{ singbox_templates }}"
   loop_control:
     loop_var: file
 
-- name: copy singbox_files to remote
-  ansible.builtin.copy:
-    src: "{{ file }}"
-    dest: "{{ ['/', file] | ansible.builtin.path_join }}"
-    owner: "{{ proxy_user.name }}"
-    group: "{{ proxy_group.name }}"
-    mode: "0600"
-  loop: "{{ singbox_files }}"
-  loop_control:
-    loop_var: file
+- name: template iproute2 rt_tables on remote
+  ansible.builtin.template:
+    src: etc/iproute2/rt_tables.d/singbox_tproxy.conf.j2
+    dest: /etc/iproute2/rt_tables.d/singbox_tproxy.conf
 
-# 其实这里有问题, 这里没有区分全部做了 notify, 按理说应该更精确一些才好些
-- name: template singbox_templates on remote
+- name: template nftables.conf on remote
+  ansible.builtin.template:
+    src: etc/nftables.conf.j2
+    dest: /etc/nftables.conf
+  notify:
+    - systemctl restart nftables.service
+
+- name: template systemd service on remote
   ansible.builtin.template:
     src: "{{ template }}"
     dest: "{{ ['/', template] | ansible.builtin.path_join | ansible.builtin.splitext | first }}"
-    owner: "{{ proxy_user.name }}"
-    group: "{{ proxy_group.name }}"
-    mode: "0600"
-  loop: "{{ singbox_templates }}"
+  loop:
+    - etc/systemd/system/sing-box.service.j2
+    - etc/systemd/system/sing-box-reload.path.j2
+    - etc/systemd/system/sing-box-reload.service.j2
   loop_control:
     loop_var: template
   notify:
     - systemctl daemon-reload
-    - systemctl restart nftables.service
-    - systemctl restart sing-box.service
+
+- name: template netplan config on remote
+  ansible.builtin.template:
+    src: etc/netplan/99-singbox_tproxy.yaml.j2
+    dest: /etc/netplan/99-singbox_tproxy.yaml
+    mode: "0600"
+  notify:
     - netplan apply
 
 - name: ensure sing-box working directory ownership

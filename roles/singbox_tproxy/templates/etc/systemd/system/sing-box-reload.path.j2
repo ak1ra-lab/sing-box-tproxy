@@ -2,8 +2,8 @@
 Description=Watch {{ singbox_etc_dir }}/config.json for changes
 
 [Path]
-PathChanged={{ singbox_etc_dir }}/config.json
 Unit=sing-box-reload.service
+PathChanged={{ singbox_etc_dir }}/config.json
 
 [Install]
 WantedBy=multi-user.target
