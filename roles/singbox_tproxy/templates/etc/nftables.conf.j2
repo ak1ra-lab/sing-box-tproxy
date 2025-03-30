@@ -8,7 +8,7 @@ define INTERFACE = "{{ ansible_default_ipv4.interface }}"
 define TPROXY_PORT = {{ singbox_tproxy_port }}
 # ip -f inet rule add fwmark $PROXY_MARK lookup $PROXY_ROUTE_TABLE
 # ip -f inet route add local default dev $INTERFACE table $PROXY_ROUTE_TABLE
-# echo "{{ singbox_proxy_route_table }} tproxy" | sudo tee /etc/iproute2/rt_tables.d/tproxy.conf >/dev/null
+# echo "{{ singbox_proxy_route_table }} singbox_tproxy" | sudo tee /etc/iproute2/rt_tables.d/singbox_tproxy.conf >/dev/null
 define PROXY_ROUTE_TABLE = {{ singbox_proxy_route_table }}
 define PROXY_MARK = {{ singbox_proxy_mark }}
 # 对应 sing-box 配置项 route.default_mark
