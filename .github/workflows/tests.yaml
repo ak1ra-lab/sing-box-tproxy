@@ -1,0 +1,29 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch: ~
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: pdm install
+
+      - name: Run nox tests
+        run: pdm run nox -s tests
+
+      - name: Run nox lint
+        run: pdm run nox -s lint
