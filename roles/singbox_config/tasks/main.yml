@@ -47,9 +47,6 @@
   ansible.builtin.template:
     src: "{{ template }}"
     dest: "{{ ['/', template] | ansible.builtin.path_join | ansible.builtin.splitext | first }}"
-    owner: "{{ proxy_user.name }}"
-    group: "{{ proxy_group.name }}"
-    mode: "0600"
   loop: "{{ singbox_templates }}"
   loop_control:
     loop_var: template
