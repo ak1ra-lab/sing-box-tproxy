@@ -1,0 +1,31 @@
+# https://pdm-project.org/en/latest/usage/publish/
+on:
+  push:
+    tags:
+      - "**"
+  workflow_dispatch: ~
+
+jobs:
+  pypi-publish:
+    name: upload release to PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/sing-box-config
+    permissions:
+      # # This permission is needed for private repositories.
+      # contents: read
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: 3.11
+
+      - name: Publish package distributions to PyPI
+        run: pdm publish
+        # env:
+        #   PDM_PUBLISH_USERNAME: ${{ secrets.PDM_PUBLISH_USERNAME }}
+        #   PDM_PUBLISH_PASSWORD: ${{ secrets.PDM_PUBLISH_PASSWORD }}
