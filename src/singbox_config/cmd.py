@@ -12,7 +12,6 @@ import argcomplete
 
 from singbox_config.config import log_dir, logging_config
 from singbox_config.export import save_config_from_subscriptions
-from singbox_config.utils import read_json
 
 logger = logging.getLogger(__name__)
 
@@ -63,12 +62,7 @@ def main() -> None:
     else:
         logging.root.setLevel(logging.INFO)
 
-    save_config_from_subscriptions(
-        base_config=read_json(args.base),
-        subscriptions_config=read_json(args.subscriptions),
-        output=Path(args.output),
-        verbose=args.verbose,
-    )
+    save_config_from_subscriptions(args)
 
 
 if __name__ == "__main__":
