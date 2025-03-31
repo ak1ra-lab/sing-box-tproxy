@@ -1,3 +1,4 @@
+import argparse
 import logging
 import re
 from pathlib import Path
@@ -5,7 +6,7 @@ from pathlib import Path
 import httpx
 
 from singbox_config.parser.shadowsocks import decode_sip002_to_singbox
-from singbox_config.utils import b64decode, save_json
+from singbox_config.utils import b64decode, read_json, save_json
 
 logger = logging.getLogger(__name__)
 
@@ -48,17 +49,17 @@ def filter_outbounds_from_proxies(outbounds: list, proxies: list) -> None:
                 outbound["outbounds"].append(proxy["tag"])
 
 
-def save_config_from_subscriptions(
-    base_config: dict, subscriptions_config: dict, output: Path, verbose: bool = False
-) -> None:
-    subscriptions = subscriptions_config.pop("subscriptions")
-    outbounds = subscriptions_config.pop("outbounds")
+def save_config_from_subscriptions(args: argparse.Namespace) -> None:
+    base_config = read_json(Path(args.base))
+    subscriptions_config = read_json(Path(args.subscriptions))
+    output = Path(args.output)
 
     proxies = []
+    subscriptions = subscriptions_config.pop("subscriptions")
     for name, subscription in subscriptions.items():
         proxies += get_proxies_from_subscriptions(name, subscription)
 
-    # 原地修改
+    outbounds = subscriptions_config.pop("outbounds")
     filter_outbounds_from_proxies(outbounds, proxies)
 
     outbounds += proxies
@@ -67,7 +68,7 @@ def save_config_from_subscriptions(
     if not output.parent.exists():
         output.parent.mkdir(parents=True)
 
-    if verbose:
+    if args.verbose:
         save_json(output.with_suffix(".proxies.json"), proxies)
         save_json(output.with_suffix(".outbounds.json"), outbounds)
 
