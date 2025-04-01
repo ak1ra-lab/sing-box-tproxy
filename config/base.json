@@ -174,7 +174,7 @@
                 "tag": "geoip-private",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://gh.chapro.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/private.srs",
+                "url": "https://gh.ak1ra.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/private.srs",
                 "download_detour": "PROXY",
                 "update_interval": "7d"
             },
@@ -182,7 +182,7 @@
                 "tag": "geosite-private",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://gh.chapro.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/private.srs",
+                "url": "https://gh.ak1ra.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/private.srs",
                 "download_detour": "PROXY",
                 "update_interval": "7d"
             },
@@ -190,7 +190,7 @@
                 "tag": "geosite-google",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://gh.chapro.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/google.srs",
+                "url": "https://gh.ak1ra.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/google.srs",
                 "download_detour": "PROXY",
                 "update_interval": "7d"
             },
@@ -198,7 +198,7 @@
                 "tag": "geosite-geolocation-cn",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://gh.chapro.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/geolocation-cn.srs",
+                "url": "https://gh.ak1ra.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/geolocation-cn.srs",
                 "download_detour": "PROXY",
                 "update_interval": "7d"
             },
@@ -206,7 +206,7 @@
                 "tag": "geosite-win-update",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://gh.chapro.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/win-update.srs",
+                "url": "https://gh.ak1ra.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/win-update.srs",
                 "download_detour": "PROXY",
                 "update_interval": "7d"
             },
@@ -214,7 +214,7 @@
                 "tag": "geosite-apple",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://gh.chapro.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/apple.srs",
+                "url": "https://gh.ak1ra.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/apple.srs",
                 "download_detour": "PROXY",
                 "update_interval": "7d"
             },
@@ -222,7 +222,7 @@
                 "tag": "geosite-github",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://gh.chapro.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/github.srs",
+                "url": "https://gh.ak1ra.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/github.srs",
                 "download_detour": "PROXY",
                 "update_interval": "7d"
             },
@@ -230,7 +230,7 @@
                 "tag": "geoip-telegram",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://gh.chapro.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/telegram.srs",
+                "url": "https://gh.ak1ra.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/telegram.srs",
                 "download_detour": "PROXY",
                 "update_interval": "30d"
             },
@@ -238,7 +238,7 @@
                 "tag": "geosite-telegram",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://gh.chapro.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/telegram.srs",
+                "url": "https://gh.ak1ra.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/telegram.srs",
                 "download_detour": "PROXY",
                 "update_interval": "7d"
             },
@@ -246,7 +246,7 @@
                 "tag": "geosite-bing",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://gh.chapro.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bing.srs",
+                "url": "https://gh.ak1ra.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bing.srs",
                 "download_detour": "PROXY",
                 "update_interval": "7d"
             },
@@ -254,7 +254,7 @@
                 "tag": "geosite-category-ai-!cn",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://gh.chapro.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-ai-!cn.srs",
+                "url": "https://gh.ak1ra.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-ai-!cn.srs",
                 "download_detour": "PROXY",
                 "update_interval": "7d"
             },
@@ -262,7 +262,7 @@
                 "tag": "geosite-steam",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://gh.chapro.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/steam.srs",
+                "url": "https://gh.ak1ra.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/steam.srs",
                 "download_detour": "PROXY",
                 "update_interval": "7d"
             },
@@ -270,7 +270,7 @@
                 "tag": "geosite-debian",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://gh.chapro.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/debian.srs",
+                "url": "https://gh.ak1ra.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/debian.srs",
                 "download_detour": "PROXY",
                 "update_interval": "7d"
             },
@@ -278,7 +278,7 @@
                 "tag": "geosite-gfw",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://gh.chapro.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/gfw.srs",
+                "url": "https://gh.ak1ra.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/gfw.srs",
                 "download_detour": "PROXY",
                 "update_interval": "7d"
             },
@@ -286,7 +286,7 @@
                 "tag": "geoip-cn",
                 "type": "remote",
                 "format": "binary",
-                "url": "https://gh.chapro.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/cn.srs",
+                "url": "https://gh.ak1ra.xyz/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/cn.srs",
                 "download_detour": "PROXY",
                 "update_interval": "7d"
             }
