@@ -1,3 +1,11 @@
 ---
 apt_key_url: https://sing-box.app/gpg.key
 apt_keyrings_dest: /etc/apt/keyrings/sagernet.asc
+
+apt_repo: sagernet
+apt_repo_uris: https://deb.sagernet.org/
+apt_repo_suites: "*"
+apt_repo_components: "*"
+
+apt_repo_packages:
+  - sing-box-beta
