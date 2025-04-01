@@ -16,28 +16,27 @@
     deb_architectures:
       x86_64: amd64
   ansible.builtin.deb822_repository:
-    name: sagernet
+    name: "{{ apt_repo }}"
     state: present
     enabled: true
     types: deb
-    uris: https://deb.sagernet.org/
-    suites: "*"
-    components: "*"
+    uris: "{{ apt_repo_uris }}"
+    suites: "{{ apt_repo_suites }}"
+    components: "{{ apt_repo_components }}"
     architectures: "{{ deb_architectures[ansible_architecture] }}"
     signed_by: "{{ apt_keyrings_dest }}"
 
 - name: add apt package pinning
   ansible.builtin.copy:
-    dest: /etc/apt/preferences.d/99sagernet
+    dest: "/etc/apt/preferences.d/99{{ apt_repo }}"
     content: |
       Package: *
-      Pin: origin deb.sagernet.org
+      Pin: origin {{ apt_repo_uris | ansible.builtin.urlsplit('hostname') }}
       Pin-Priority: 900
     mode: "0644"
 
 - name: install sing-box package
   ansible.builtin.apt:
-    name:
-      - sing-box-beta
+    name: "{{ apt_repo_packages }}"
     update_cache: true
-    state: present
+    state: latest
