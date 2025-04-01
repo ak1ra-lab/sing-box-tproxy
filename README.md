@@ -1,18 +1,24 @@
-# sing-box tproxy config
+# sing-box-tproxy
 
-## [install sing-box](https://sing-box.sagernet.org/installation/package-manager/)
+## What is this?
 
-```shell
-(
-    sudo curl -fsSL https://sing-box.app/gpg.key -o /etc/apt/keyrings/sagernet.asc
-    sudo chmod a+r /etc/apt/keyrings/sagernet.asc
-    echo "deb [arch=`dpkg --print-architecture` signed-by=/etc/apt/keyrings/sagernet.asc] https://deb.sagernet.org/ * *" | \
-      sudo tee /etc/apt/sources.list.d/sagernet.list > /dev/null
-    sudo apt-get update
-    sudo apt-get install sing-box-beta
-)
-```
+This project uses Ansible to configure [SagerNet/sing-box](https://github.com/SagerNet/sing-box) as a [Tproxy](https://sing-box.sagernet.org/configuration/inbound/tproxy/) transparent proxy bypass gateway. Currently, the Ansible roles only support Debian Linux.
 
-## reference
+## Quick start
 
-- [sing-box tproxy - 心底的河流](https://lhy.life/20231012-sing-box-tproxy/)
+1. Install Ansible using `pipx` if it is not already installed.
+2. Set up your Linux VM, SSH credentials, and Ansible inventory.
+3. Run `ansible-playbook playbook.yaml`.
+
+## What do we have?
+
+- A Python 3 CLI script, `sing-box-config`:
+  - Used to generate new sing-box configurations.
+- Ansible roles to install, configure, and set up sing-box as a Tproxy gateway:
+  - For details on the Ansible roles, refer to the [./roles](./roles/) directory.
+
+## Reference
+
+- [sing-box](https://github.com/SagerNet/sing-box)
+- [Tproxy](https://sing-box.sagernet.org/configuration/inbound/tproxy/)
+- [sing-box tproxy](https://lhy.life/20231012-sing-box-tproxy/)
