@@ -73,8 +73,4 @@ def save_config_from_subscriptions(args: argparse.Namespace) -> None:
     if not output.parent.exists():
         output.parent.mkdir(parents=True)
 
-    if args.verbose:
-        save_json(output.with_suffix(".proxies.json"), proxies)
-        save_json(output.with_suffix(".outbounds.json"), outbounds)
-
     save_json(output, base_config)
