@@ -57,6 +57,7 @@
   become: false
   ansible.builtin.command: pdm build --no-sdist
   delegate_to: localhost
+  run_once: true
 
 - name: set_fact on pdm_wheel
   ansible.builtin.set_fact:
