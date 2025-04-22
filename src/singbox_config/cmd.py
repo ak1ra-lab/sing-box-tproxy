@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
-# author: ak1ra
-# date: 2025-03-27
 
 import argparse
-import logging
-import logging.config
 from pathlib import Path
 
 import argcomplete
 
-from singbox_config.config import log_dir, logging_config
 from singbox_config.export import save_config_from_subscriptions
+from singbox_config.logging import setup_logger
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__, "messages.log")
 
 
 def main() -> None:
@@ -44,23 +40,9 @@ def main() -> None:
         metavar="config.json",
         help="sing-box output config, default: %(default)s",
     )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="store_true",
-        help="Enable debug logging.",
-    )
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-
-    log_dir.mkdir(parents=True, exist_ok=True)
-
-    logging.config.dictConfig(logging_config)
-    if args.verbose:
-        logging.root.setLevel(logging.DEBUG)
-    else:
-        logging.root.setLevel(logging.INFO)
 
     save_config_from_subscriptions(args)
 
