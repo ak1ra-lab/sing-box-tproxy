@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 supported_plugins = ["obfs-local", "v2ray-plugin"]
 
 
-def decode_sip002_to_singbox(uri: str, tag_prefix: str) -> dict:
+def decode_sip002_to_singbox(uri: str, tag_prefix: str = "") -> dict:
     """
     Decodes a Shadowsocks SIP002 URI into a sing-box shadowsocks outbound configuration.
 
