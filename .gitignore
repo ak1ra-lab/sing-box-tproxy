@@ -230,3 +230,6 @@ cache.db
 config/*
 !config/base.json
 !config/subscriptions.json
+
+.github/prompts/*.md
+.github/copilot-instructions.md
