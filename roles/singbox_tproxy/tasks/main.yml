@@ -96,7 +96,12 @@
     enabled: true
   loop:
     - nftables.service
-    - sing-box.service
     - sing-box-reload.path
   loop_control:
     loop_var: service
+
+- name: ensure sing-box.service restarted
+  ansible.builtin.systemd_service:
+    name: sing-box.service
+    state: restarted
+    enabled: true
