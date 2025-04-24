@@ -1,5 +1,2 @@
 ---
 # handlers file for singbox_config
-- name: systemctl daemon-reload
-  ansible.builtin.systemd:
-    daemon_reload: true

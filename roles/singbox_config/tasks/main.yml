@@ -50,35 +50,12 @@
   loop: "{{ singbox_templates }}"
   loop_control:
     loop_var: template
-  notify:
-    - systemctl daemon-reload
 
-- name: pdm build on current repo
-  become: false
-  ansible.builtin.command: pdm build --no-sdist
-  delegate_to: localhost
-  run_once: true
-
-- name: set_fact on pdm_wheel
-  ansible.builtin.set_fact:
-    pdm_wheel: "{{ lookup('ansible.builtin.fileglob', playbook_dir ~ '/dist/*.whl').split() | list | last }}"
-
-- name: debug_var on pdm_wheel
-  ansible.builtin.debug:
-    var: pdm_wheel
-
-- name: copy pdm_wheel to remote
-  ansible.builtin.copy:
-    src: "{{ pdm_wheel }}"
-    dest: "{{ singbox_state_dir }}/"
-
-- name: install pdm_wheel on remote venv
-  vars:
-    relpath: "{{ pdm_wheel | ansible.builtin.relpath(playbook_dir) }}"
-    pdm_wheel_dest: "{{ [singbox_state_dir, pdm_wheel | ansible.builtin.basename] | ansible.builtin.path_join }}"
+- name: install sing-box-config from PyPI
   ansible.builtin.pip:
-    name: "file://{{ pdm_wheel_dest }}"
-    virtualenv: "{{ singbox_state_dir }}/.venv"
+    name: sing-box-config
+    state: latest
+    virtualenv: "{{ singbox_venv_dir }}"
     virtualenv_command: python3 -m venv
 
 - name: ensure singbox_config_files parent directory exists
@@ -116,4 +93,11 @@
 - name: ensure sing-box-config-updater.timer enabled
   ansible.builtin.systemd_service:
     name: sing-box-config-updater.timer
+    state: started
     enabled: true
+    daemon_reload: true
+
+- name: ensure /etc/sing-box/config.json generated
+  ansible.builtin.systemd_service:
+    name: sing-box-config-updater.service
+    state: started

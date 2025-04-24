@@ -17,6 +17,7 @@ singbox_route_default_mark: 225
 singbox_etc_dir: /etc/sing-box
 singbox_log_dir: /var/log/sing-box
 singbox_state_dir: /var/lib/sing-box
+singbox_venv_dir: "{{ singbox_state_dir }}/.venv"
 
 singbox_templates:
   - etc/systemd/system/sing-box-config-updater.service.j2
@@ -27,5 +28,3 @@ singbox_config_files:
     dest: "{{ [singbox_state_dir, 'config/base.json'] | ansible.builtin.path_join }}"
   - src: "{{ [playbook_dir, 'config/subscriptions.json'] | ansible.builtin.path_join }}"
     dest: "{{ [singbox_state_dir, 'config/subscriptions.json'] | ansible.builtin.path_join }}"
-  - src: "{{ [playbook_dir, 'config/config.json'] | ansible.builtin.path_join }}"
-    dest: "{{ [singbox_etc_dir, 'config.json'] | ansible.builtin.path_join }}"
