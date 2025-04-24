@@ -6,38 +6,36 @@
 
 This project uses Ansible to configure [SagerNet/sing-box](https://github.com/SagerNet/sing-box) as a transparent proxy in [Tproxy](https://sing-box.sagernet.org/configuration/inbound/tproxy/) mode, which can be used as a bypass gateway.
 
-## Project Principles
+## Project Structure
 
 ### playbook.yaml and Ansible roles
 
 - [playbook.yaml](./playbook.yaml) is the entry file for ansible-playbook.
   - The tasks in the playbook use `import_role` to statically import the Ansible roles in the project.
-  - Using roles to encapsulate complex tasks simplifies the structure of the playbook, which is a recommended practice.
+  - Using Ansible roles to encapsulate complex tasks simplifies the structure of the playbook.
 - [roles/singbox_install](./roles/singbox_install/)
   - Used to set up the apt repository for sing-box on the remote host and install sing-box.
 - [roles/singbox_config](./roles/singbox_config/)
-  - Used to configure the basic environment on the remote host.
+  - Creates a proxy user and working directory on the remote host.
   - Installs the `sing-box-config` command-line tool.
+  - Configures the `sing-box-config-updater.timer` to periodically execute the `sing-box-config` tool, enabling updates to the sing-box `config.json`.
 - [roles/singbox_tproxy](./roles/singbox_tproxy/)
-  - Used to configure the remote host as a transparent proxy in Tproxy mode.
+  - Configures the remote host as a transparent proxy in Tproxy mode.
   - Includes loading necessary kernel modules, enabling IP forwarding, and configuring nftables firewall rules.
+  - Configures `sing-box-reload.path` to monitor changes to the `/etc/sing-box/config.json` file and reload the sing-box process when changes occur.
 
-### `sing-box-config`
+### `sing-box-config` and src/singbox_config
 
-Since [SagerNet/sing-box](https://github.com/SagerNet/sing-box) does not support proxy-providers like [Dreamacro/clash](https://github.com/Dreamacro/clash), you need to handle proxy node updates yourself when using third-party proxy nodes. Although [SagerNet/serenity](https://github.com/SagerNet/serenity) is a configuration generator for sing-box, due to its complexity and custom requirements, this project developed a simple tool called `sing-box-config`.
+Since [SagerNet/sing-box](https://github.com/SagerNet/sing-box) does not support proxy-providers like [Dreamacro/clash](https://github.com/Dreamacro/clash), you need to handle proxy node updates yourself when using third-party proxy nodes. The project [SagerNet/serenity](https://github.com/SagerNet/serenity) implements a configuration generator for sing-box, but due to its lack of documentation and configuration examples, it is difficult to create a working configuration file. Additionally, custom proxy group requirements led to the development of a configuration generator tailored to current needs.
 
-The code for `sing-box-config` is located in the [src/singbox_config](./src/singbox_config/) directory and uses [pdm](https://github.com/pdm-project/pdm) to manage Python project dependencies.
-
-This tool requires two configuration files in the `config` directory:
+`sing-box-config` requires two configuration files in the `config/` directory:
 
 - [config/base.json](./config/base.json)
   - The base configuration file for sing-box, including `dns`, `route`, and `inbounds` sections.
 - [config/subscriptions.json](./config/subscriptions.json)
-  - Used to configure proxy providers and the `outbounds` section.
+  - The `subscriptions` section is not part of sing-box but is a custom section for the `sing-box-config` tool.
   - Currently, the `type` in `subscriptions` only supports the [SIP002](https://github.com/shadowsocks/shadowsocks-org/wiki/SIP002-URI-Scheme) format, with plans to extend support based on future needs.
-  - The `outbounds` section includes predefined proxy groups and region-based proxy groups.
-  - Region-based proxy groups filter nodes obtained from `subscriptions.url` using regular expressions in the `filter` list.
-  - Region-based proxy groups automatically create `selector` and `urltest` types of `outbounds`.
+  - The `outbounds` section contains some predefined proxy groups and proxy groups grouped by region, which automatically creates `selector` and `urltest` types of `outbounds`.
 
 ## Usage Guide
 
@@ -100,9 +98,7 @@ To use this project successfully, you need some basic knowledge of Linux and Ans
      "subscriptions": {
        "example": {
          "type": "SIP002",
-         "exclude": [
-           "过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"
-         ],
+         "exclude": ["过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"],
          "url": "https://sub.example.com/subscriptions.txt"
        }
      }
@@ -114,21 +110,7 @@ To use this project successfully, you need some basic knowledge of Linux and Ans
 
    ```ShellSession
    $ pipx install --include-deps sing-box-config
-
    $ sing-box-config --help
-   usage: sing-box-config [-h] [-b base.json] [-s subscriptions.json] [-o config.json]
-
-   The configuration generator for sing-box
-
-   options:
-     -h, --help            show this help message and exit
-     -b base.json, --base base.json
-                           sing-box base config, default: config/base.json
-     -s subscriptions.json, --subscriptions subscriptions.json
-                           sing-box subscriptions config with subscriptions and outbounds, default: config/subscriptions.json
-     -o config.json, --output config.json
-                           sing-box output config, default: config/config.json
-
    $ sing-box-config
    ```
 
