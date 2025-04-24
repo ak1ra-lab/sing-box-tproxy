@@ -4,4 +4,4 @@ Description=sing-box-config updater
 [Service]
 Type=oneshot
 WorkingDirectory={{ singbox_state_dir }}
-ExecStart={{ singbox_state_dir }}/.venv/bin/sing-box-config --output {{ singbox_etc_dir }}/config.json
+ExecStart={{ singbox_venv_dir }}/bin/sing-box-config --output {{ singbox_etc_dir }}/config.json
