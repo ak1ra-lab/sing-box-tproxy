@@ -1,5 +1,5 @@
 [project]
-name = "singbox_config"
+name = "sing-box-config"
 dynamic = ["version"]
 description = "The configuration generator for sing-box"
 authors = [
