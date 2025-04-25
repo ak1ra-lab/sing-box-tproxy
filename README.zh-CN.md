@@ -1,6 +1,6 @@
 # sing-box-tproxy
 
-[English](./README.md) | [简体中文](./README.zh-CN.md)
+[English](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/README.md) | [简体中文](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/README.zh-CN.md)
 
 ## 项目简介
 
@@ -10,16 +10,16 @@
 
 ### playbook.yaml 与 Ansible roles
 
-- [playbook.yaml](./playbook.yaml) 是 ansible-playbook 的入口文件.
+- [playbook.yaml](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/playbook.yaml) 是 ansible-playbook 的入口文件.
   - 在 playbook 的 tasks 中使用 `import_role` 静态导入了项目中的 Ansible roles.
   - 使用 Ansible roles 封装复杂任务可以简化 playbook 的结构.
-- [roles/singbox_install](./roles/singbox_install/)
+- [roles/singbox_install](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/singbox_install/)
   - 用于在远程主机上设置 sing-box 的 apt 仓库并安装 sing-box.
-- [roles/singbox_config](./roles/singbox_config/)
+- [roles/singbox_config](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/singbox_config/)
   - 在远程主机上创建 proxy 用户和工作目录
   - 安装 `sing-box-config` 命令行工具
   - 配置 sing-box-config-updater.timer 以定时执行 sing-box-config 命令行工具, 达成更新 sing-box config.json 的目的
-- [roles/singbox_tproxy](./roles/singbox_tproxy/)
+- [roles/singbox_tproxy](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/singbox_tproxy/)
   - 用于将远程主机配置为 Tproxy 模式的透明代理.
   - 包括加载必要的内核模块, 启用 IP 转发, 配置 nftables 防火墙规则等.
   - 配置 sing-box-reload.path 监听 /etc/sing-box/config.json 文件的变化, 如发生变化则 reload sing-box 进程
@@ -30,9 +30,9 @@
 
 `sing-box-config` 需要读取 `config/` 目录下的两个配置文件:
 
-- [config/base.json](./config/base.json)
+- [config/base.json](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/config/base.json)
   - sing-box 的基础配置文件, 包含 `dns`, `route` 和 `inbounds` 等配置段.
-- [config/subscriptions.json](./config/subscriptions.json)
+- [config/subscriptions.json](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/config/subscriptions.json)
   - `subscriptions` 配置段并非来自 sing-box, 它是 `sing-box-config` 工具的自定义配置段
   - 当前 `subscriptions` 的 `type` 仅支持 [SIP002](https://github.com/shadowsocks/shadowsocks-org/wiki/SIP002-URI-Scheme) 格式, 后续可根据需求扩展支持
   - `outbounds` 配置段中包含一些预定义的 proxy groups 和按地区分组的 proxy groups, 后者会自动创建 `selector` 和 `urltest` 类型的 `outbounds`.
