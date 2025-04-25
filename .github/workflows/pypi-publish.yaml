@@ -19,16 +19,11 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-          ref: ${{ github.ref }}
 
       - uses: pdm-project/setup-pdm@v4
-        with:
-          python-version: 3.11
 
       - name: Publish package distributions to PyPI
-        run: |
-          git status
-          pdm publish -v
+        run: pdm publish -v
+        # env:
+        #   PDM_PUBLISH_USERNAME: ${{ secrets.PDM_PUBLISH_USERNAME }}
+        #   PDM_PUBLISH_PASSWORD: ${{ secrets.PDM_PUBLISH_PASSWORD }}
