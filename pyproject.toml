@@ -16,6 +16,11 @@ readme = "README.md"
 license = "LICENSE"
 
 
+[project.urls]
+Repository = "https://github.com/ak1ra-lab/sing-box-tproxy"
+Issues = "https://github.com/ak1ra-lab/sing-box-tproxy/issues"
+
+
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
