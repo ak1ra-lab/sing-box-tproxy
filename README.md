@@ -8,9 +8,9 @@
 
 ### PyPI package [sing-box-config](https://pypi.org/project/sing-box-config/)
 
-PyPI package sing-box-config 只是整个中用于生成 sing-box 配置文件的一部分.
+sing-box-config 只是整个项目中用于生成 sing-box 配置文件的一部分.
 
-由于 [SagerNet/sing-box](https://github.com/SagerNet/sing-box) 不像 [Dreamacro/clash](https://github.com/Dreamacro/clash) 那样支持 proxy-providers, 因此在使用第三方的代理节点时, 需要自行处理节点更新. 项目 [SagerNet/serenity](https://github.com/SagerNet/serenity) 实现了一个 sing-box 的配置生成器, 但由于它缺少文档和示例配置, 我在研究它时没办法写出一份可工作的配置文件, 加上我有一些自定义 proxy groups 的需求, 于是编写了一个仅满足自身需求的 sing-box 配置文件生成工具 sing-box-config.
+由于 [SagerNet/sing-box](https://github.com/SagerNet/sing-box) 不像 [Dreamacro/clash](https://github.com/Dreamacro/clash) 那样支持 proxy-providers, 因此在使用第三方的代理节点时, 需要自行处理节点更新. [SagerNet/serenity](https://github.com/SagerNet/serenity) 或许是更优雅的 "The configuration generator for sing-box" 实现, 不过由于它缺少文档和示例配置, 我在研究它时没办法写出一份可工作的配置文件, 只能暂时放弃, 加上我有一些自定义 routes 和 proxy groups 的需求, 于是编写了这个 sing-box-config, 用于定时创建和更新 sing-box 配置文件.
 
 sing-box-config 需要读取 `config/` 目录下的两个配置文件:
 
