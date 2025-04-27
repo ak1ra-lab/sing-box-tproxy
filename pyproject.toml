@@ -53,7 +53,8 @@ lint = [
     "ruff>=0.9.4",
 ]
 dev = [
-    "nox>=2024.10.9",
     {include-group = "tests"},
     {include-group = "lint"},
+    "nox>=2024.10.9",
+    "pre-commit>=4.2.0",
 ]
