@@ -2,7 +2,7 @@
 on:
   push:
     tags:
-      - "**"
+      - "v*"
   workflow_dispatch: ~
 
 jobs:
@@ -13,17 +13,25 @@ jobs:
       name: pypi
       url: https://pypi.org/p/sing-box-config
     permissions:
-      # # This permission is needed for private repositories.
+      # This permission is needed for private repositories.
       # contents: read
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: pdm install -v
+
+      - name: Build package distributions
+        run: pdm build -v
 
       - name: Publish package distributions to PyPI
-        run: pdm publish -v
-        # env:
-        #   PDM_PUBLISH_USERNAME: ${{ secrets.PDM_PUBLISH_USERNAME }}
-        #   PDM_PUBLISH_PASSWORD: ${{ secrets.PDM_PUBLISH_PASSWORD }}
+        run: pdm publish -v --no-build
