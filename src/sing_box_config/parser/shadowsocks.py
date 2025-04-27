@@ -4,7 +4,7 @@
 import logging
 import urllib.parse
 
-from singbox_config.utils import b64decode
+from sing_box_config.utils import b64decode
 
 logger = logging.getLogger(__name__)
 

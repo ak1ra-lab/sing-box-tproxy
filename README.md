@@ -24,7 +24,7 @@ This project uses Ansible to configure [SagerNet/sing-box](https://github.com/Sa
   - Includes loading necessary kernel modules, enabling IP forwarding, and configuring nftables firewall rules.
   - Configures `sing-box-reload.path` to monitor changes to the `/etc/sing-box/config.json` file and reload the sing-box process when changes occur.
 
-### `sing-box-config` and src/singbox_config
+### `sing-box-config` and src/sing_box_config
 
 Since [SagerNet/sing-box](https://github.com/SagerNet/sing-box) does not support proxy-providers like [Dreamacro/clash](https://github.com/Dreamacro/clash), you need to handle proxy node updates yourself when using third-party proxy nodes. The project [SagerNet/serenity](https://github.com/SagerNet/serenity) implements a configuration generator for sing-box, but due to its lack of documentation and configuration examples, it is difficult to create a working configuration file. Additionally, custom proxy group requirements led to the development of a configuration generator tailored to current needs.
 
