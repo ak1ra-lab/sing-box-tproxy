@@ -1,0 +1,9 @@
+[Unit]
+Description=Watch {{ sing_box_etc_dir }}/config.json for changes
+
+[Path]
+Unit=sing-box-reload.service
+PathChanged={{ sing_box_etc_dir }}/config.json
+
+[Install]
+WantedBy=multi-user.target

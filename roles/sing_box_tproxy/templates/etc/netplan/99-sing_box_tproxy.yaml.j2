@@ -1,4 +1,4 @@
-# /etc/netplan/99-singbox_tproxy.yaml
+# /etc/netplan/99-sing_box_tproxy.yaml
 # ip -f inet rule add fwmark 224 lookup 224
 # ip -f inet route add local default dev eth0 table 224
 network:
@@ -8,8 +8,8 @@ network:
       routes:
         - to: 0.0.0.0/0
           type: local
-          table: {{ singbox_proxy_route_table }}
+          table: {{ sing_box_proxy_route_table }}
       routing-policy:
         - from: 0.0.0.0/0
-          mark: {{ singbox_proxy_mark }}
-          table: {{ singbox_proxy_route_table }}
+          mark: {{ sing_box_proxy_mark }}
+          table: {{ sing_box_proxy_route_table }}

@@ -1,5 +1,5 @@
 ---
-# handlers file for singbox_tproxy
+# handlers file for sing_box_tproxy
 - name: systemctl daemon-reload
   ansible.builtin.systemd:
     daemon_reload: true

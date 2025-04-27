@@ -3,22 +3,22 @@
   become: true
   vars:
     # 对应 sing-box 中 type = tproxy 的 inbounds
-    singbox_tproxy_port: 7895
+    sing_box_tproxy_port: 7895
 
     # ip -f inet rule add fwmark $PROXY_MARK lookup $PROXY_ROUTE_TABLE
     # ip -f inet route add local default dev $INTERFACE table $PROXY_ROUTE_TABLE
-    # echo "224 singbox_tproxy" | sudo tee /etc/iproute2/rt_tables.d/singbox_tproxy.conf >/dev/null
-    singbox_proxy_route_table: 224
-    singbox_proxy_mark: 224
+    # echo "224 sing_box_tproxy" | sudo tee /etc/iproute2/rt_tables.d/sing_box_tproxy.conf >/dev/null
+    sing_box_proxy_route_table: 224
+    sing_box_proxy_mark: 224
 
     # 对应 sing-box 配置项 route.default_mark
-    singbox_route_default_mark: 225
+    sing_box_route_default_mark: 225
   tasks:
     - ansible.builtin.import_role:
-        name: singbox_install
+        name: sing_box_install
 
     - ansible.builtin.import_role:
-        name: singbox_config
+        name: sing_box_config
 
     - ansible.builtin.import_role:
-        name: singbox_tproxy
+        name: sing_box_tproxy
