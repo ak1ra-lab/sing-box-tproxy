@@ -13,13 +13,13 @@
 - [playbook.yaml](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/playbook.yaml) 是 ansible-playbook 的入口文件.
   - 在 playbook 的 tasks 中使用 `import_role` 静态导入了项目中的 Ansible roles.
   - 使用 Ansible roles 封装复杂任务可以简化 playbook 的结构.
-- [roles/singbox_install](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/singbox_install/)
+- [roles/sing_box_install](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/sing_box_install/)
   - 用于在远程主机上设置 sing-box 的 apt 仓库并安装 sing-box.
-- [roles/singbox_config](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/singbox_config/)
+- [roles/sing_box_config](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/sing_box_config/)
   - 在远程主机上创建 proxy 用户和工作目录
   - 安装 `sing-box-config` 命令行工具
   - 配置 sing-box-config-updater.timer 以定时执行 sing-box-config 命令行工具, 达成更新 sing-box config.json 的目的
-- [roles/singbox_tproxy](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/singbox_tproxy/)
+- [roles/sing_box_tproxy](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/sing_box_tproxy/)
   - 用于将远程主机配置为 Tproxy 模式的透明代理.
   - 包括加载必要的内核模块, 启用 IP 转发, 配置 nftables 防火墙规则等.
   - 配置 sing-box-reload.path 监听 /etc/sing-box/config.json 文件的变化, 如发生变化则 reload sing-box 进程

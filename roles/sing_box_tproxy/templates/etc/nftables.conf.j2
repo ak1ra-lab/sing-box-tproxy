@@ -5,16 +5,16 @@ flush ruleset
 # ip route show default | awk '/default/ {print $5}'
 define INTERFACE = "{{ ansible_default_ipv4.interface }}"
 # 对应 sing-box 中 type = tproxy 的 inbounds
-define TPROXY_PORT = {{ singbox_tproxy_port }}
+define TPROXY_PORT = {{ sing_box_tproxy_port }}
 # ip -f inet rule add fwmark $PROXY_MARK lookup $PROXY_ROUTE_TABLE
 # ip -f inet route add local default dev $INTERFACE table $PROXY_ROUTE_TABLE
-# echo "{{ singbox_proxy_route_table }} singbox_tproxy" | sudo tee /etc/iproute2/rt_tables.d/singbox_tproxy.conf >/dev/null
-define PROXY_ROUTE_TABLE = {{ singbox_proxy_route_table }}
-define PROXY_MARK = {{ singbox_proxy_mark }}
+# echo "{{ sing_box_proxy_route_table }} sing_box_tproxy" | sudo tee /etc/iproute2/rt_tables.d/sing_box_tproxy.conf >/dev/null
+define PROXY_ROUTE_TABLE = {{ sing_box_proxy_route_table }}
+define PROXY_MARK = {{ sing_box_proxy_mark }}
 # 对应 sing-box 配置项 route.default_mark
-define ROUTE_DEFAULT_MARK = {{ singbox_route_default_mark }}
+define ROUTE_DEFAULT_MARK = {{ sing_box_route_default_mark }}
 
-table inet singbox_tproxy {
+table inet sing_box_tproxy {
 	set reserved_ip4 {
 		type ipv4_addr
 		flags interval

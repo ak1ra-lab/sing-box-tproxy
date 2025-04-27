@@ -39,14 +39,14 @@
   ansible.builtin.file:
     path: "{{ ['/', file] | ansible.builtin.path_join | ansible.builtin.dirname }}"
     state: directory
-  loop: "{{ singbox_templates }}"
+  loop: "{{ sing_box_templates }}"
   loop_control:
     loop_var: file
 
 - name: template iproute2 rt_tables on remote
   ansible.builtin.template:
-    src: etc/iproute2/rt_tables.d/singbox_tproxy.conf.j2
-    dest: /etc/iproute2/rt_tables.d/singbox_tproxy.conf
+    src: etc/iproute2/rt_tables.d/sing_box_tproxy.conf.j2
+    dest: /etc/iproute2/rt_tables.d/sing_box_tproxy.conf
 
 - name: template nftables.conf on remote
   ansible.builtin.template:
@@ -70,8 +70,8 @@
 
 - name: template netplan config on remote
   ansible.builtin.template:
-    src: etc/netplan/99-singbox_tproxy.yaml.j2
-    dest: /etc/netplan/99-singbox_tproxy.yaml
+    src: etc/netplan/99-sing_box_tproxy.yaml.j2
+    dest: /etc/netplan/99-sing_box_tproxy.yaml
     mode: "0600"
   notify:
     - netplan apply
@@ -83,9 +83,9 @@
     group: "{{ proxy_group.name }}"
     recurse: true
   loop:
-    - "{{ singbox_etc_dir }}"
-    - "{{ singbox_log_dir }}"
-    - "{{ singbox_state_dir }}"
+    - "{{ sing_box_etc_dir }}"
+    - "{{ sing_box_log_dir }}"
+    - "{{ sing_box_state_dir }}"
   loop_control:
     loop_var: directory
 

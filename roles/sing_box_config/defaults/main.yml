@@ -1,5 +1,5 @@
 ---
-# defaults file for singbox_config
+# defaults file for sing_box_config
 # https://wiki.debian.org/SystemGroups#Groups_with_an_associated_user
 # proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
 proxy_user:
@@ -12,19 +12,19 @@ proxy_group:
   gid: 13
 
 # 对应 sing-box 配置项 route.default_mark
-singbox_route_default_mark: 225
+sing_box_route_default_mark: 225
 
-singbox_etc_dir: /etc/sing-box
-singbox_log_dir: /var/log/sing-box
-singbox_state_dir: /var/lib/sing-box
-singbox_venv_dir: "{{ singbox_state_dir }}/.venv"
+sing_box_etc_dir: /etc/sing-box
+sing_box_log_dir: /var/log/sing-box
+sing_box_state_dir: /var/lib/sing-box
+sing_box_venv_dir: "{{ sing_box_state_dir }}/.venv"
 
-singbox_templates:
+sing_box_templates:
   - etc/systemd/system/sing-box-config-updater.service.j2
   - etc/systemd/system/sing-box-config-updater.timer.j2
 
-singbox_config_files:
+sing_box_config_files:
   - src: "{{ [playbook_dir, 'config/base.json'] | ansible.builtin.path_join }}"
-    dest: "{{ [singbox_state_dir, 'config/base.json'] | ansible.builtin.path_join }}"
+    dest: "{{ [sing_box_state_dir, 'config/base.json'] | ansible.builtin.path_join }}"
   - src: "{{ [playbook_dir, 'config/subscriptions.json'] | ansible.builtin.path_join }}"
-    dest: "{{ [singbox_state_dir, 'config/subscriptions.json'] | ansible.builtin.path_join }}"
+    dest: "{{ [sing_box_state_dir, 'config/subscriptions.json'] | ansible.builtin.path_join }}"

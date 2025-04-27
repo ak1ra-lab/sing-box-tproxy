@@ -13,13 +13,13 @@ This project uses Ansible to configure [SagerNet/sing-box](https://github.com/Sa
 - [playbook.yaml](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/playbook.yaml) is the entry file for ansible-playbook.
   - The tasks in the playbook use `import_role` to statically import the Ansible roles in the project.
   - Using Ansible roles to encapsulate complex tasks simplifies the structure of the playbook.
-- [roles/singbox_install](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/singbox_install/)
+- [roles/sing_box_install](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/sing_box_install/)
   - Used to set up the apt repository for sing-box on the remote host and install sing-box.
-- [roles/singbox_config](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/singbox_config/)
+- [roles/sing_box_config](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/sing_box_config/)
   - Creates a proxy user and working directory on the remote host.
   - Installs the `sing-box-config` command-line tool.
   - Configures the `sing-box-config-updater.timer` to periodically execute the `sing-box-config` tool, enabling updates to the sing-box `config.json`.
-- [roles/singbox_tproxy](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/singbox_tproxy/)
+- [roles/sing_box_tproxy](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/sing_box_tproxy/)
   - Configures the remote host as a transparent proxy in Tproxy mode.
   - Includes loading necessary kernel modules, enabling IP forwarding, and configuring nftables firewall rules.
   - Configures `sing-box-reload.path` to monitor changes to the `/etc/sing-box/config.json` file and reload the sing-box process when changes occur.

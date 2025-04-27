@@ -1,5 +1,5 @@
 ---
-# tasks file for singbox_config
+# tasks file for sing_box_config
 - name: ensure packages is installed
   ansible.builtin.package:
     name:
@@ -29,25 +29,25 @@
     mode: "0700"
     state: directory
   loop:
-    - "{{ singbox_etc_dir }}"
-    - "{{ singbox_log_dir }}"
-    - "{{ singbox_state_dir }}"
+    - "{{ sing_box_etc_dir }}"
+    - "{{ sing_box_log_dir }}"
+    - "{{ sing_box_state_dir }}"
   loop_control:
     loop_var: directory
 
-- name: ensure singbox_templates parent directory exists on remote
+- name: ensure sing_box_templates parent directory exists on remote
   ansible.builtin.file:
     path: "{{ ['/', file] | ansible.builtin.path_join | ansible.builtin.dirname }}"
     state: directory
-  loop: "{{ singbox_templates }}"
+  loop: "{{ sing_box_templates }}"
   loop_control:
     loop_var: file
 
-- name: template singbox_templates on remote
+- name: template sing_box_templates on remote
   ansible.builtin.template:
     src: "{{ template }}"
     dest: "{{ ['/', template] | ansible.builtin.path_join | ansible.builtin.splitext | first }}"
-  loop: "{{ singbox_templates }}"
+  loop: "{{ sing_box_templates }}"
   loop_control:
     loop_var: template
 
@@ -55,25 +55,25 @@
   ansible.builtin.pip:
     name: sing-box-config
     state: latest
-    virtualenv: "{{ singbox_venv_dir }}"
+    virtualenv: "{{ sing_box_venv_dir }}"
     virtualenv_command: python3 -m venv
 
-- name: ensure singbox_config_files parent directory exists
+- name: ensure sing_box_config_files parent directory exists
   ansible.builtin.file:
     path: "{{ file_obj.dest | ansible.builtin.dirname }}"
     state: directory
-  loop: "{{ singbox_config_files }}"
+  loop: "{{ sing_box_config_files }}"
   loop_control:
     loop_var: file_obj
 
-- name: copy singbox_config_files to remote
+- name: copy sing_box_config_files to remote
   ansible.builtin.copy:
     src: "{{ file_obj.src }}"
     dest: "{{ file_obj.dest }}"
     owner: "{{ proxy_user.name }}"
     group: "{{ proxy_group.name }}"
     mode: "0600"
-  loop: "{{ singbox_config_files }}"
+  loop: "{{ sing_box_config_files }}"
   loop_control:
     loop_var: file_obj
 
@@ -84,9 +84,9 @@
     group: "{{ proxy_group.name }}"
     recurse: true
   loop:
-    - "{{ singbox_etc_dir }}"
-    - "{{ singbox_log_dir }}"
-    - "{{ singbox_state_dir }}"
+    - "{{ sing_box_etc_dir }}"
+    - "{{ sing_box_log_dir }}"
+    - "{{ sing_box_state_dir }}"
   loop_control:
     loop_var: directory
 
