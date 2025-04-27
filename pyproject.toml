@@ -35,7 +35,7 @@ source = "scm"
 
 
 [project.scripts]
-sing-box-config = "singbox_config.cmd:main"
+sing-box-config = "sing_box_config.cmd:main"
 
 
 # All development dependencies are included as long as --prod is not passed and -G doesn't specify any dev groups.

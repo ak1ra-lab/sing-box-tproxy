@@ -5,8 +5,8 @@ from pathlib import Path
 
 import httpx
 
-from singbox_config.parser.shadowsocks import decode_sip002_to_singbox
-from singbox_config.utils import b64decode, read_json, save_json
+from sing_box_config.parser.shadowsocks import decode_sip002_to_singbox
+from sing_box_config.utils import b64decode, read_json, save_json
 
 logger = logging.getLogger(__name__)
 

@@ -1,4 +1,4 @@
-from singbox_config.parser.shadowsocks import decode_sip002_to_singbox
+from sing_box_config.parser.shadowsocks import decode_sip002_to_singbox
 
 
 def test_decode_invalid_scheme():

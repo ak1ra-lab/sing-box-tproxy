@@ -24,7 +24,7 @@
   - 包括加载必要的内核模块, 启用 IP 转发, 配置 nftables 防火墙规则等.
   - 配置 sing-box-reload.path 监听 /etc/sing-box/config.json 文件的变化, 如发生变化则 reload sing-box 进程
 
-### `sing-box-config` 与 src/singbox_config
+### `sing-box-config` 与 src/sing_box_config
 
 由于 [SagerNet/sing-box](https://github.com/SagerNet/sing-box) 不像 [Dreamacro/clash](https://github.com/Dreamacro/clash) 那样支持 proxy-providers, 因此在使用第三方的代理节点时, 需要自行处理节点更新. 项目 [SagerNet/serenity](https://github.com/SagerNet/serenity) 实现了一个 sing-box 的配置生成器, 但由于它缺少文档和配置示例, 没办法写出一份可工作的配置文件, 加上一些自定义 proxy groups 的需求, 于是自行编写了仅满足当前需求的配置文件生成器实现.
 
