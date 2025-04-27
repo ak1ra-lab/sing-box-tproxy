@@ -11,7 +11,7 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: Other Audience",
 ]
-keywords = ["proxy", "sing-box"]
+keywords = ["ansible", "tproxy", "sing-box"]
 readme = "README.md"
 license = "LICENSE"
 
@@ -28,6 +28,10 @@ build-backend = "pdm.backend"
 
 [tool.pdm]
 distribution = true
+
+
+[tool.pdm.build]
+includes = ["config", "roles", "ansible.cfg", "playbook.yaml"]
 
 
 [tool.pdm.version]
