@@ -14,5 +14,5 @@ def tests(session: nox.Session) -> None:
 @nox.session
 def lint(session: nox.Session) -> None:
     session.run_always("pdm", "install", "-G", "lint", external=True)
-    session.run("ruff", "-v", "check", "--fix", "src/", "tests/")
-    session.run("ruff", "-v", "format", "src/", "tests/")
+    session.run("ruff", "check", "--fix", "src/", "tests/")
+    session.run("ruff", "format", "src/", "tests/")
