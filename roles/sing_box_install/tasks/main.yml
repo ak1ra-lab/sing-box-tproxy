@@ -39,4 +39,4 @@
   ansible.builtin.apt:
     name: "{{ apt_repo_packages }}"
     update_cache: true
-    state: latest
+    state: present
