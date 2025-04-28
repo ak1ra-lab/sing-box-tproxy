@@ -8,4 +8,4 @@ apt_repo_suites: "*"
 apt_repo_components: "*"
 
 apt_repo_packages:
-  - sing-box-beta
+  - sing-box
