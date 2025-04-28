@@ -293,7 +293,6 @@
         ],
         "final": "FINAL",
         "auto_detect_interface": true,
-        "default_mark": 225,
         "default_domain_resolver": "dns_direct"
     },
     "experimental": {
