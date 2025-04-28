@@ -16,6 +16,9 @@
   tasks:
     - ansible.builtin.import_role:
         name: sing_box_install
+      vars:
+        apt_repo_packages:
+          - sing-box-beta
 
     - ansible.builtin.import_role:
         name: sing_box_config
