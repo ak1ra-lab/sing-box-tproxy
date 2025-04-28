@@ -13,6 +13,10 @@ define PROXY_ROUTE_TABLE = {{ sing_box_proxy_route_table }}
 define PROXY_MARK = {{ sing_box_proxy_mark }}
 # 对应 sing-box 配置项 route.default_mark
 define ROUTE_DEFAULT_MARK = {{ sing_box_route_default_mark }}
+# https://wiki.debian.org/SystemGroups#Groups_with_an_associated_user
+# proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
+define PROXY_USER = {{ proxy_user.uid }}
+define PROXY_GROUP = {{ proxy_group.gid }}
 
 table inet sing_box_tproxy {
 	set reserved_ip4 {
@@ -39,53 +43,58 @@ table inet sing_box_tproxy {
 	chain prerouting_tproxy {
 		type filter hook prerouting priority mangle; policy accept;
 
-		# DNS透明代理 (TCP/UDP)
+		# DNS 透明代理
 		meta l4proto { tcp, udp } th dport 53 tproxy to :$TPROXY_PORT accept comment "DNS 透明代理"
 
-		# 自定义绕过地址
-		ip daddr @custom_bypass accept comment "绕过某些地址"
+		# 绕过自定义地址
+		ip daddr @custom_bypass accept comment "绕过自定义地址"
 
-		# 防止回环
-		fib daddr type local meta l4proto { tcp, udp } th dport $TPROXY_PORT reject with icmpx type host-unreachable comment "拒绝直接访问 tproxy 端口"
+		# 拒绝直接访问 tproxy 端口, 防止回环
+		fib daddr type local meta l4proto { tcp, udp } \
+			th dport $TPROXY_PORT reject with icmpx type host-unreachable comment "拒绝直接访问 tproxy 端口, 防止回环"
 
-		# 本机流量绕过
-		fib daddr type local accept comment "本机绕过"
+		# 绕过本机流量
+		fib daddr type local accept comment "绕过本机流量"
 
-		# 保留地址绕过
-		ip daddr @reserved_ip4 accept comment "保留地址绕过"
+		# 绕过保留地址
+		ip daddr @reserved_ip4 accept comment "绕过保留地址"
 
-		# 已建立的透明代理连接
-		meta l4proto tcp socket transparent 1 meta mark set $PROXY_MARK accept comment "绕过已建立连接"
+		# 绕过已建立透明代理连接
+		meta l4proto tcp socket transparent 1 meta mark set $PROXY_MARK accept comment "绕过已建立透明代理连接"
 
 		# 其他流量透明代理
-		meta l4proto { tcp, udp } tproxy to :$TPROXY_PORT meta mark set $PROXY_MARK comment "通用透明代理"
+		meta l4proto { tcp, udp } tproxy to :$TPROXY_PORT meta mark set $PROXY_MARK comment "其他流量透明代理"
 	}
 
 	chain output_tproxy {
 		type route hook output priority mangle; policy accept;
 
 		# 排除非出口网卡流量
-		oifname != $INTERFACE accept comment "非出口流量绕过"
+		oifname != $INTERFACE accept comment "排除非出口网卡流量"
 
-		# 标记流量绕过
-		meta mark $ROUTE_DEFAULT_MARK accept comment "标记流量绕过"
+		# 标记 PROXY 用户进程流量
+		meta skuid $PROXY_USER meta skgid $PROXY_GROUP \
+			meta mark set $ROUTE_DEFAULT_MARK accept comment "标记 PROXY 用户进程流量"
 
-		# DNS重路由
-		meta l4proto { tcp, udp } th dport 53 meta mark set $PROXY_MARK accept comment "DNS重路由"
+		# 绕过标记流量
+		meta mark $ROUTE_DEFAULT_MARK accept comment "绕过标记流量"
 
-		# NetBIOS绕过
-		udp dport { netbios-ns, netbios-dgm, netbios-ssn } accept comment "NetBIOS绕过"
+		# 重路由 DNS
+		meta l4proto { tcp, udp } th dport 53 meta mark set $PROXY_MARK accept comment "重路由 DNS"
 
-		# 自定义绕过地址
-		ip daddr @custom_bypass accept comment "自定义绕过"
+		# 绕过 NetBIOS
+		udp dport { netbios-ns, netbios-dgm, netbios-ssn } accept comment "绕过 NetBIOS"
 
-		# 本机流量绕过
-		fib daddr type local accept comment "本机路由绕过"
+		# 绕过自定义地址
+		ip daddr @custom_bypass accept comment "绕过自定义地址"
 
-		# 保留地址绕过
-		ip daddr @reserved_ip4 accept comment "保留地址过滤"
+		# 绕过本机流量
+		fib daddr type local accept comment "绕过本机流量"
 
-		# 其他流量标记
-		meta l4proto { tcp, udp } meta mark set $PROXY_MARK comment "输出流量标记"
+		# 绕过保留地址
+		ip daddr @reserved_ip4 accept comment "绕过保留地址"
+
+		# 为其他流量设置 PROXY_MARK 标记
+		meta l4proto { tcp, udp } meta mark set $PROXY_MARK comment "为其他流量设置 PROXY_MARK 标记"
 	}
 }
