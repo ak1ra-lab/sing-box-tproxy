@@ -9,7 +9,7 @@ import argcomplete
 from sing_box_config.export import save_config_from_subscriptions
 from sing_box_config.logging import setup_logger
 
-logger = setup_logger(__name__, "messages.log")
+logger = setup_logger(__name__)
 
 
 def main() -> None:
