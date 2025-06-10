@@ -22,7 +22,7 @@ logging_config = {
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "formatter": "precise",
+            "formatter": "brief",
             "stream": "ext://sys.stdout",
         },
     },

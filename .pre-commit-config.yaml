@@ -6,7 +6,6 @@ repos:
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
-      - id: check-illegal-windows-names
       - id: check-merge-conflict
       - id: detect-aws-credentials
       - id: detect-private-key

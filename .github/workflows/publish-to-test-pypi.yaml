@@ -1,0 +1,47 @@
+# https://pdm-project.org/en/latest/usage/publish/
+on:
+  push:
+    branches:
+      - dev
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+      - "**.toml"
+      - "**.yaml"
+  workflow_dispatch: ~
+
+jobs:
+  build-n-push:
+    name: upload release to Test PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: test-pypi
+      url: https://test.pypi.org/p/sing-box-config
+
+    permissions:
+      # This permission is needed for private repositories.
+      # contents: read
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: 3.11
+
+      - name: Build a binary wheel and a source tarball
+        run: |-
+          git tag $(git describe --tags | cut -d- -f1,2)
+          pdm build -v
+
+      - name: Publish package distributions to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
+          print-hash: true
+          skip-existing: true
+          repository-url: https://test.pypi.org/legacy/
