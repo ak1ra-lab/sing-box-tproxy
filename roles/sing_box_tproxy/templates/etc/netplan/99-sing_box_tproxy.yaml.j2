@@ -1,10 +1,10 @@
 # /etc/netplan/99-sing_box_tproxy.yaml
-# ip -f inet rule add fwmark 224 lookup 224
-# ip -f inet route add local default dev eth0 table 224
+# ip -f inet rule add fwmark $PROXY_MARK lookup $PROXY_ROUTE_TABLE
+# ip -f inet route add local default dev $INTERFACE table $PROXY_ROUTE_TABLE
 network:
   version: 2
   ethernets:
-    eth0:
+    {{ ansible_default_ipv4.interface }}:
       routes:
         - to: 0.0.0.0/0
           type: local
