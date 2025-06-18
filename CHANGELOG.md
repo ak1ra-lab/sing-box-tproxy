@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2025-06-18
+
+### 🐛 Bug Fixes
+
+- fix hard coded netplan default INTERFACE
+
+### ⚙️ Miscellaneous Tasks
+
+- typo fix on ansible.cfg
+- fixup and improvement
+- fixup nftables.conf.j2
+- bump version
+
 ## [0.2.0] - 2025-05-19
 
 ### 🚀 Features
