@@ -1,0 +1,20 @@
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+{% for interface in physical_interfaces %}
+    {{ interface.device }}:
+      set-name: {{ interface.device }}
+      match:
+        macaddress: {{ interface.macaddress }}
+      addresses:
+        - {{ interface.ipv4.address }}/{{ interface.ipv4.prefix }}
+{% if interface.device == ansible_default_ipv4.interface %}
+      routes:
+        - to: default
+          via: {{ default_gateway }}
+      nameservers:
+        addresses:
+          - {{ default_nameserver }}
+{% endif %}
+{% endfor %}

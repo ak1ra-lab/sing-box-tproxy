@@ -1,0 +1,102 @@
+---
+# 在 PVE 下通过 cloud-init 修改网络相关的配置都需要重启主机才能生效
+# 无法接受虚拟机重启的场景下, 可以通过这个 playbook 禁用 cloud-init 网络配置功能
+# 也可通过设置 tproxy_enabled 的值来控制是否覆盖 default_gateway 与 default_nameserver
+# ansible-playbook contrib/disable-cloud-init-network-config/playbook.yaml -e 'tproxy_enabled=true tproxy_gateway=10.16.0.253'
+- name: disable cloud-init network config
+  hosts: "{{ playbook_hosts | default('localhost') }}"
+  become: true
+  vars:
+    debug_var: false
+
+    # 是否启用旁路网关代理
+    tproxy_enabled: true
+    tproxy_gateway: "172.16.0.253"
+
+    # 默认网关
+    default_gateway: "172.16.0.2"
+    default_nameserver: "223.6.6.6"
+
+  tasks:
+    - name: set_fact on default_gateway and default_nameserver
+      when: (tproxy_enabled | ansible.builtin.bool)
+      ansible.builtin.set_fact:
+        default_gateway: "{{ tproxy_gateway }}"
+        default_nameserver: "{{ tproxy_gateway }}"
+
+    - name: select physical_interfaces
+      ansible.builtin.set_fact:
+        physical_interfaces: >-
+          {{
+            ansible_facts.interfaces
+              | select('match', '^(eth|en[psx])')
+              | map('extract', ansible_facts)
+              | list
+          }}
+
+    - name: debug_var on physical_interfaces
+      when: (debug_var | ansible.builtin.bool)
+      ansible.builtin.debug:
+        var: physical_interfaces
+
+    - name: ensure packages installed
+      ansible.builtin.package:
+        name:
+          - netplan.io
+          - systemd-resolved
+          - qemu-guest-agent
+        state: present
+
+    - name: ensure directory present exist
+      ansible.builtin.file:
+        path: "/etc/cloud/cloud.cfg.d"
+        state: directory
+
+    # All files with the '.cfg' extension in this directory will be read by
+    # cloud-init. They are read in lexical order. Later files overwrite values in
+    # earlier files.
+    - name: disable cloud-init network config
+      ansible.builtin.copy:
+        mode: "0600"
+        dest: "/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg"
+        content: |
+          network: {config: disabled}
+
+    # https://github.com/lima-vm/lima/issues/678
+    - name: keep sshd host keys (keep /etc/sshd/ssh_host_*)
+      ansible.builtin.copy:
+        mode: "0600"
+        dest: "/etc/cloud/cloud.cfg.d/99-sshd-keep-host-keys.cfg"
+        content: |
+          ssh_deletekeys: false
+
+    - name: ensure /etc/netplan/50-cloud-init.yaml absent
+      ansible.builtin.file:
+        path: /etc/netplan/50-cloud-init.yaml
+        state: absent
+
+    - name: template /etc/netplan/90-default.yaml
+      notify:
+        - netplan apply
+        - resolvectl flush-caches
+      ansible.builtin.template:
+        src: templates/90-default.yaml.j2
+        dest: /etc/netplan/90-default.yaml
+        mode: "0600"
+
+    - name: ensure systemd-resolved enabled
+      ansible.builtin.systemd_service:
+        name: "{{ service_name }}"
+        enabled: true
+      loop:
+        - systemd-resolved
+        - systemd-networkd
+      loop_control:
+        loop_var: service_name
+
+  handlers:
+    - name: netplan apply
+      ansible.builtin.command: netplan apply
+
+    - name: resolvectl flush-caches
+      ansible.builtin.command: resolvectl flush-caches
