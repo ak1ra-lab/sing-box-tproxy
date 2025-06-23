@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2025-06-23
+
+### 🚀 Features
+
+- impl contrib/disable-cloud-init-network-config/playbook.yaml
+- impl fetch_url_with_retries on httpx.get()
+
+### 🐛 Bug Fixes
+
+- add ExecStartPre= on sing-box-reload.service
+
+### ⚙️ Miscellaneous Tasks
+
+- rename contrib/pwsh/Set-ProxyGateway.ps1
+- bump version
+
 ## [0.2.1] - 2025-06-18
 
 ### 🐛 Bug Fixes
