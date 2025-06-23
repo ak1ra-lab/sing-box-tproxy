@@ -3,24 +3,32 @@ import logging
 import re
 from pathlib import Path
 
-import httpx
-
 from sing_box_config.parser.shadowsocks import decode_sip002_to_singbox
-from sing_box_config.utils import b64decode, read_json, save_json
+from sing_box_config.utils import (
+    b64decode,
+    fetch_url_with_retries,
+    read_json,
+    save_json,
+)
 
 logger = logging.getLogger(__name__)
 
 supported_types = ["SIP002"]
 
 
-def get_proxies_from_subscriptions(name: str, subscription: dict) -> list:
+def get_proxies_from_subscriptions(
+    name: str, subscription: dict, retries: int, timeout: int
+) -> list:
     proxies = []
+    exclude = subscription.pop("exclude", [])
     if subscription["type"].upper() not in supported_types:
         return proxies
 
-    exclude = subscription.pop("exclude", [])
+    resp = fetch_url_with_retries(subscription["url"], retries, timeout)
+    if not resp:
+        return proxies
+
     if subscription["type"].upper() == "SIP002":
-        resp = httpx.get(subscription["url"], timeout=120)
         try:
             proxies_lines = b64decode(resp.text).splitlines()
         except UnicodeDecodeError as err:
@@ -62,7 +70,9 @@ def save_config_from_subscriptions(args: argparse.Namespace) -> None:
     proxies = []
     subscriptions = subscriptions_config.pop("subscriptions")
     for name, subscription in subscriptions.items():
-        proxies += get_proxies_from_subscriptions(name, subscription)
+        proxies += get_proxies_from_subscriptions(
+            name, subscription, args.retries, args.timeout
+        )
 
     outbounds = subscriptions_config.pop("outbounds")
     filter_outbounds_from_proxies(outbounds, proxies)

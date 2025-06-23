@@ -40,6 +40,20 @@ def main() -> None:
         metavar="config.json",
         help="sing-box output config, default: %(default)s",
     )
+    parser.add_argument(
+        "-r",
+        "--retries",
+        type=int,
+        default=5,
+        help="Maximum number of retry attempts, default: %(default)s",
+    )
+    parser.add_argument(
+        "-t",
+        "--timeout",
+        type=int,
+        default=60,
+        help="Timeout in seconds for each request, default: %(default)s",
+    )
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
