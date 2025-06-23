@@ -97,6 +97,10 @@
     enabled: true
     daemon_reload: true
 
+# FATAL[0000] initialize outbound[14]: missing tags
+# 我们在 config/subscriptions.json 的 outbounds 中预先定义了 "欧洲节点" 和 "韩国节点" filter
+# 并非所有订阅源都有该地区节点, 而订阅源可能因为网络错误, 未能成功获取订阅节点, 使得对应地区的 outbounds 为空
+# 从而使得 sing-box.service:ExecStartPre= 校验配置文件失败, 导致 sing-box.service 启动失败
 - name: ensure /etc/sing-box/config.json generated
   ansible.builtin.systemd_service:
     name: sing-box-config-updater.service
