@@ -79,7 +79,7 @@
             "tag": "MIXED-IN",
             "type": "mixed",
             "listen": "0.0.0.0",
-            "listen_port": 7890,
+            "listen_port": {{ sing_box_mixed_port | int }},
             "udp_timeout": 180,
             "sniff": true
         },
@@ -87,7 +87,7 @@
             "tag": "TPROXY-IN",
             "type": "tproxy",
             "listen": "0.0.0.0",
-            "listen_port": 7895,
+            "listen_port": {{ sing_box_tproxy_port | int }},
             "udp_timeout": 180,
             "sniff": true
         }

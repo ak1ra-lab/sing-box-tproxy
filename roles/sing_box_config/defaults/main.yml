@@ -11,6 +11,18 @@ proxy_group:
   name: proxy
   gid: 13
 
+# 对应 sing-box 中 type = mixed 的 inbounds
+sing_box_mixed_port: 7890
+
+# 对应 sing-box 中 type = tproxy 的 inbounds
+sing_box_tproxy_port: 7895
+
+# ip -f inet rule add fwmark $PROXY_MARK lookup $PROXY_ROUTE_TABLE
+# ip -f inet route add local default dev $INTERFACE table $PROXY_ROUTE_TABLE
+# echo "224 sing_box_tproxy" | sudo tee /etc/iproute2/rt_tables.d/sing_box_tproxy.conf >/dev/null
+sing_box_proxy_route_table: 224
+sing_box_proxy_mark: 224
+
 # 对应 sing-box 配置项 route.default_mark
 sing_box_route_default_mark: 225
 
@@ -23,8 +35,8 @@ sing_box_templates:
   - etc/systemd/system/sing-box-config-updater.service.j2
   - etc/systemd/system/sing-box-config-updater.timer.j2
 
-sing_box_config_files:
-  - src: "{{ [playbook_dir, 'config/base.json'] | ansible.builtin.path_join }}"
+sing_box_config_objects:
+  - src: "{{ [playbook_dir, 'config/base.json.j2'] | ansible.builtin.path_join }}"
     dest: "{{ [sing_box_state_dir, 'config/base.json'] | ansible.builtin.path_join }}"
-  - src: "{{ [playbook_dir, 'config/subscriptions.json'] | ansible.builtin.path_join }}"
+  - src: "{{ [playbook_dir, 'config/subscriptions.json.j2'] | ansible.builtin.path_join }}"
     dest: "{{ [sing_box_state_dir, 'config/subscriptions.json'] | ansible.builtin.path_join }}"

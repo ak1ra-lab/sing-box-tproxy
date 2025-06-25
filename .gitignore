@@ -229,8 +229,8 @@ cache.db
 
 # config file
 config/*
-!config/base.json
-!config/subscriptions.json
+!config/base.json.j2
+!config/subscriptions.json.j2
 
 # GitHub Copilot
 .github/prompts/*.md

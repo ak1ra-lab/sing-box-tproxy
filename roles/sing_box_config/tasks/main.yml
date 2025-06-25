@@ -58,22 +58,22 @@
     virtualenv: "{{ sing_box_venv_dir }}"
     virtualenv_command: python3 -m venv
 
-- name: ensure sing_box_config_files parent directory exists
+- name: ensure sing_box_config_objects parent directory exists
   ansible.builtin.file:
     path: "{{ file_obj.dest | ansible.builtin.dirname }}"
     state: directory
-  loop: "{{ sing_box_config_files }}"
+  loop: "{{ sing_box_config_objects }}"
   loop_control:
     loop_var: file_obj
 
-- name: copy sing_box_config_files to remote
-  ansible.builtin.copy:
+- name: template sing_box_config_objects to remote
+  ansible.builtin.template:
     src: "{{ file_obj.src }}"
     dest: "{{ file_obj.dest }}"
     owner: "{{ proxy_user.name }}"
     group: "{{ proxy_group.name }}"
     mode: "0600"
-  loop: "{{ sing_box_config_files }}"
+  loop: "{{ sing_box_config_objects }}"
   loop_control:
     loop_var: file_obj
 
