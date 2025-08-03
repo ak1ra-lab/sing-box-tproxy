@@ -63,13 +63,17 @@
         - name: net.ipv4.tcp_congestion_control
           value: bbr
 
-- name: ensure parent directory exists on remote
+# 系统目录不能设置 permission 和 ownership
+- name: create system drop-in directory
   ansible.builtin.file:
-    path: "{{ ['/', file] | ansible.builtin.path_join | ansible.builtin.dirname }}"
+    path: "{{ directory }}"
     state: directory
-  loop: "{{ sing_box_templates }}"
+  loop:
+    - /etc/netplan
+    - /etc/systemd/system
+    - /etc/iproute2/rt_tables.d
   loop_control:
-    loop_var: file
+    loop_var: directory
 
 - name: template iproute2 rt_tables on remote
   ansible.builtin.template:
@@ -104,29 +108,17 @@
   notify:
     - netplan apply
 
-- name: ensure sing-box working directory ownership
-  ansible.builtin.file:
-    path: "{{ directory }}"
-    owner: "{{ proxy_user.name }}"
-    group: "{{ proxy_group.name }}"
-    recurse: true
-  loop:
-    - "{{ sing_box_etc_dir }}"
-    - "{{ sing_box_log_dir }}"
-    - "{{ sing_box_state_dir }}"
-  loop_control:
-    loop_var: directory
-
-- name: ensure systemd service started and enabled
+- name: ensure nftables.service started and enabled
   ansible.builtin.systemd_service:
-    name: "{{ service }}"
+    name: nftables.service
     state: started
     enabled: true
-  loop:
-    - nftables.service
-    - sing-box-reload.path
-  loop_control:
-    loop_var: service
+
+- name: ensure sing-box-reload.path started and enabled
+  ansible.builtin.systemd_service:
+    name: sing-box-reload.path
+    state: started
+    enabled: true
 
 - name: ensure sing-box.service restarted
   ansible.builtin.systemd_service:

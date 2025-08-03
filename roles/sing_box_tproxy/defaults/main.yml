@@ -30,14 +30,7 @@ sing_box_etc_dir: /etc/sing-box
 sing_box_log_dir: /var/log/sing-box
 sing_box_state_dir: /var/lib/sing-box
 sing_box_venv_dir: "{{ sing_box_state_dir }}/.venv"
+sing_box_config_dir: "{{ sing_box_state_dir }}/config"
 
-sing_box_templates:
-  - etc/iproute2/rt_tables.d/sing_box_tproxy.conf.j2
-  - etc/netplan/99-sing_box_tproxy.yaml.j2
-  - etc/nftables.conf.j2
-  - etc/systemd/system/sing-box.service.j2
-  - etc/systemd/system/sing-box-reload.path.j2
-  - etc/systemd/system/sing-box-reload.service.j2
-
-# 有必要开启 TCP BBR 吗?
+# sing-box 作为 tproxy gateway 时有必要开启 TCP BBR 吗? 以往都是在 vps 侧设置
 tcp_bbr_enabled: true
