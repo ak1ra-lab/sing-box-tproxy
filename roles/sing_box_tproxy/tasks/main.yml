@@ -24,16 +24,44 @@
 # should we enable net.ipv4.conf.all.route_localnet=1 ?
 - name: ensure ip_forward is enabled
   ansible.posix.sysctl:
-    name: "{{ line }}"
-    value: 1
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
     state: present
     ignoreerrors: true
   loop:
-    - net.ipv4.ip_forward
-    - net.ipv4.conf.all.proxy_arp
-    - net.ipv6.conf.all.forwarding
-  loop_control:
-    loop_var: line
+    - name: net.ipv4.ip_forward
+      value: 1
+    - name: net.ipv4.conf.all.proxy_arp
+      value: 1
+    - name: net.ipv6.conf.all.forwarding
+      value: 1
+
+- name: enable tcp_bbr
+  when:
+    - ansible_kernel >= '4.9.0'
+    - (tcp_bbr_enabled | ansible.builtin.bool)
+  block:
+    - name: load tcp_bbr module
+      community.general.modprobe:
+        name: "{{ module }}"
+        state: present
+        persistent: present
+      loop:
+        - tcp_bbr
+      loop_control:
+        loop_var: module
+
+    - name: enable tcp_bbr
+      ansible.posix.sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+      loop:
+        # default 'pfifo_fast'
+        - name: net.core.default_qdisc
+          value: fq
+        - name: net.ipv4.tcp_congestion_control
+          value: bbr
 
 - name: ensure parent directory exists on remote
   ansible.builtin.file:

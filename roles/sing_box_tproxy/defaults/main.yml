@@ -38,3 +38,6 @@ sing_box_templates:
   - etc/systemd/system/sing-box.service.j2
   - etc/systemd/system/sing-box-reload.path.j2
   - etc/systemd/system/sing-box-reload.service.j2
+
+# 有必要开启 TCP BBR 吗?
+tcp_bbr_enabled: true
