@@ -1,2 +1,18 @@
 ---
 # handlers file for sing_box_config
+- name: systemctl daemon-reload
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: ensure sing-box working directory ownership
+  ansible.builtin.file:
+    path: "{{ directory }}"
+    owner: "{{ proxy_user.name }}"
+    group: "{{ proxy_group.name }}"
+    recurse: true
+  loop:
+    - "{{ sing_box_etc_dir }}"
+    - "{{ sing_box_log_dir }}"
+    - "{{ sing_box_state_dir }}"
+  loop_control:
+    loop_var: directory

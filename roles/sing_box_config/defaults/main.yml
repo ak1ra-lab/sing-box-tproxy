@@ -30,13 +30,9 @@ sing_box_etc_dir: /etc/sing-box
 sing_box_log_dir: /var/log/sing-box
 sing_box_state_dir: /var/lib/sing-box
 sing_box_venv_dir: "{{ sing_box_state_dir }}/.venv"
+sing_box_config_dir: "{{ sing_box_state_dir }}/config"
 
-sing_box_templates:
-  - etc/systemd/system/sing-box-config-updater.service.j2
-  - etc/systemd/system/sing-box-config-updater.timer.j2
-
-sing_box_config_objects:
-  - src: "{{ [playbook_dir, 'config/base.json.j2'] | ansible.builtin.path_join }}"
-    dest: "{{ [sing_box_state_dir, 'config/base.json'] | ansible.builtin.path_join }}"
-  - src: "{{ [playbook_dir, 'config/subscriptions.json.j2'] | ansible.builtin.path_join }}"
-    dest: "{{ [sing_box_state_dir, 'config/subscriptions.json'] | ansible.builtin.path_join }}"
+# systemd timer 还是要安装, 新增一个允许不启用的选项以应对当前订阅链接"阅后即焚"的状况
+sing_box_config_updater_timer_state: started
+sing_box_config_updater_timer_enabled: true
+sing_box_config_updater_timer_interval: 1d

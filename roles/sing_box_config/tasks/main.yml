@@ -1,11 +1,5 @@
 ---
 # tasks file for sing_box_config
-- name: ensure packages is installed
-  ansible.builtin.package:
-    name:
-      - python3-venv
-    state: present
-
 - name: ensure proxy group exists
   ansible.builtin.group:
     name: "{{ proxy_group.name }}"
@@ -21,7 +15,7 @@
     group: "{{ proxy_group.name }}"
     state: present
 
-- name: ensure sing-box working directory exists
+- name: create drop-in directory
   ansible.builtin.file:
     path: "{{ directory }}"
     owner: "{{ proxy_user.name }}"
@@ -32,24 +26,15 @@
     - "{{ sing_box_etc_dir }}"
     - "{{ sing_box_log_dir }}"
     - "{{ sing_box_state_dir }}"
+    - "{{ sing_box_config_dir }}"
   loop_control:
     loop_var: directory
 
-- name: ensure sing_box_templates parent directory exists on remote
-  ansible.builtin.file:
-    path: "{{ ['/', file] | ansible.builtin.path_join | ansible.builtin.dirname }}"
-    state: directory
-  loop: "{{ sing_box_templates }}"
-  loop_control:
-    loop_var: file
-
-- name: template sing_box_templates on remote
-  ansible.builtin.template:
-    src: "{{ template }}"
-    dest: "{{ ['/', template] | ansible.builtin.path_join | ansible.builtin.splitext | first }}"
-  loop: "{{ sing_box_templates }}"
-  loop_control:
-    loop_var: template
+- name: ensure packages is installed
+  ansible.builtin.package:
+    name:
+      - python3-venv
+    state: present
 
 - name: install sing-box-config from PyPI
   ansible.builtin.pip:
@@ -57,45 +42,41 @@
     state: latest
     virtualenv: "{{ sing_box_venv_dir }}"
     virtualenv_command: python3 -m venv
+  notify:
+    - ensure sing-box working directory ownership
 
-- name: ensure sing_box_config_objects parent directory exists
-  ansible.builtin.file:
-    path: "{{ file_obj.dest | ansible.builtin.dirname }}"
-    state: directory
-  loop: "{{ sing_box_config_objects }}"
-  loop_control:
-    loop_var: file_obj
-
-- name: template sing_box_config_objects to remote
+- name: template sing-box-config base.json and subscriptions.json to remote
+  vars:
+    basename: "{{ template | ansible.builtin.basename | ansible.builtin.splitext | first }}"
   ansible.builtin.template:
-    src: "{{ file_obj.src }}"
-    dest: "{{ file_obj.dest }}"
+    src: "{{ template }}"
+    dest: "{{ [sing_box_config_dir, basename] | ansible.builtin.path_join }}"
     owner: "{{ proxy_user.name }}"
     group: "{{ proxy_group.name }}"
     mode: "0600"
-  loop: "{{ sing_box_config_objects }}"
-  loop_control:
-    loop_var: file_obj
-
-- name: ensure sing-box working directory ownership
-  ansible.builtin.file:
-    path: "{{ directory }}"
-    owner: "{{ proxy_user.name }}"
-    group: "{{ proxy_group.name }}"
-    recurse: true
   loop:
-    - "{{ sing_box_etc_dir }}"
-    - "{{ sing_box_log_dir }}"
-    - "{{ sing_box_state_dir }}"
+    - "{{ [playbook_dir, 'config/base.json.j2'] | ansible.builtin.path_join }}"
+    - "{{ [playbook_dir, 'config/subscriptions.json.j2'] | ansible.builtin.path_join }}"
   loop_control:
-    loop_var: directory
+    loop_var: template
+
+- name: template systemd timer on remote
+  ansible.builtin.template:
+    src: "{{ template }}"
+    dest: "{{ ['/', template] | ansible.builtin.path_join | ansible.builtin.splitext | first }}"
+  loop:
+    - etc/systemd/system/sing-box-config-updater.service.j2
+    - etc/systemd/system/sing-box-config-updater.timer.j2
+  loop_control:
+    loop_var: template
 
 - name: ensure sing-box-config-updater.timer enabled
   ansible.builtin.systemd_service:
     name: sing-box-config-updater.timer
-    state: started
-    enabled: true
-    daemon_reload: true
+    state: "{{ sing_box_config_updater_timer_state }}"
+    enabled: "{{ sing_box_config_updater_timer_enabled }}"
+  notify:
+    - systemctl daemon-reload
 
 # FATAL[0000] initialize outbound[14]: missing tags
 # 我们在 config/subscriptions.json 的 outbounds 中预先定义了 "欧洲节点" 和 "韩国节点" filter
@@ -104,4 +85,4 @@
 - name: ensure /etc/sing-box/config.json generated
   ansible.builtin.systemd_service:
     name: sing-box-config-updater.service
-    state: started
+    state: "{{ sing_box_config_updater_timer_state }}"
