@@ -13,15 +13,23 @@
 
     # 对应 sing-box 配置项 route.default_mark
     sing_box_route_default_mark: 225
+
+    # systemd timer 还是要安装, 新增一个允许不启用的选项以应对当前订阅链接"阅后即焚"的状况
+    sing_box_config_updater_timer_state: started
+    sing_box_config_updater_timer_enabled: true
+
   tasks:
-    - ansible.builtin.import_role:
+    - name: install sing-box package
+      ansible.builtin.import_role:
         name: sing_box_install
       vars:
         apt_repo_packages:
           - sing-box-beta
 
-    - ansible.builtin.import_role:
+    - name: setup sing-box-config timer
+      ansible.builtin.import_role:
         name: sing_box_config
 
-    - ansible.builtin.import_role:
+    - name: setup sing-box-tproxy
+      ansible.builtin.import_role:
         name: sing_box_tproxy
