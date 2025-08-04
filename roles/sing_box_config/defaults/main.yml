@@ -32,7 +32,13 @@ sing_box_state_dir: /var/lib/sing-box
 sing_box_venv_dir: "{{ sing_box_state_dir }}/.venv"
 sing_box_config_dir: "{{ sing_box_state_dir }}/config"
 
-# systemd timer 还是要安装, 新增一个允许不启用的选项以应对当前订阅链接"阅后即焚"的状况
+# 新增一个允许不启用 systemd timer 的选项以应对当前订阅链接强制"阅后即焚"的状况
 sing_box_config_updater_timer_state: started
 sing_box_config_updater_timer_enabled: true
 sing_box_config_updater_timer_interval: 1d
+
+# 安装来源: [local, pypi, testpypi]
+sing_box_config_install_source: local
+sing_box_config_pip_extra_args:
+  pypi: ""
+  testpypi: "--index-url=https://test.pypi.org/simple/"

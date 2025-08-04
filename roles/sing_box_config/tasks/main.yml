@@ -30,8 +30,22 @@
   loop_control:
     loop_var: directory
 
-- name: install pdm_wheel on remote venv
+- name: install sing-box-config from pdm_wheel
+  when:
+    - sing_box_config_install_source == 'local'
   ansible.builtin.include_tasks: pdm_wheel.yml
+
+- name: install sing-box-config from PyPI
+  when:
+    - sing_box_config_install_source in ['pypi', 'testpypi']
+  ansible.builtin.pip:
+    name: sing-box-config
+    state: latest
+    virtualenv: "{{ sing_box_venv_dir }}"
+    virtualenv_command: python3 -m venv
+    extra_args: "{{ sing_box_config_pip_extra_args[sing_box_config_install_source] }}"
+  notify:
+    - ensure sing-box working directory ownership
 
 - name: template sing-box-config base.json and subscriptions.json on remote
   vars:
