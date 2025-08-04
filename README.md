@@ -2,7 +2,7 @@
 
 ## 项目简介
 
-本项目通过 Ansible 将 [SagerNet/sing-box](https://github.com/SagerNet/sing-box) 配置为 [Tproxy](https://sing-box.sagernet.org/configuration/inbound/tproxy/) 模式的透明代理旁路网关.
+本项目使用 Ansible 将 [SagerNet/sing-box](https://github.com/SagerNet/sing-box) 配置为 [Tproxy](https://sing-box.sagernet.org/configuration/inbound/tproxy/) 模式透明代理.
 
 ## 项目结构
 
@@ -10,31 +10,31 @@
 
 sing-box-config 只是整个项目中用于生成 sing-box 配置文件的一部分.
 
-由于 [SagerNet/sing-box](https://github.com/SagerNet/sing-box) 不像 [Dreamacro/clash](https://github.com/Dreamacro/clash) 那样支持 proxy-providers, 因此在使用第三方的代理节点时, 需要自行处理节点更新. [SagerNet/serenity](https://github.com/SagerNet/serenity) 或许是更优雅的 "The configuration generator for sing-box" 实现, 不过由于它缺少文档和示例配置, 我在研究它时没办法写出一份可工作的配置文件, 只能暂时放弃, 加上我有一些自定义 routes 和 proxy groups 的需求, 于是编写了这个 sing-box-config, 用于定时创建和更新 sing-box 配置文件.
+由于 [SagerNet/sing-box](https://github.com/SagerNet/sing-box) 不像 [Dreamacro/clash](https://github.com/Dreamacro/clash) 那样支持 proxy-providers, 因此在使用第三方的代理节点时, 需要自行处理节点更新. 再加上我有一些自定义 routes 和 proxy groups 的需求, 于是编写了这个 sing-box-config, 用于定时更新 sing-box 配置文件.
 
-sing-box-config 需要读取 `config/` 目录下的两个配置文件:
+sing-box-config 需要读取 `config/` 目录下的两个 Jinja2 template, Ansible 将其渲染为 .json 文件作为 sing-box-config 工具的输入文件, 根据 subscriptions.url 获取到 proxies 后将两个 .json 文件合并为最终的 /etc/sing-box/config.json 文件.
 
-- [config/base.json](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/config/base.json)
-  - sing-box 的基础配置文件, 包含 `dns`, `route` 和 `inbounds` 等配置段.
-- [config/subscriptions.json](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/config/subscriptions.json)
-  - `subscriptions` 配置段并非来自 sing-box, 它是 sing-box-config 工具的自定义配置段
-  - 当前 `subscriptions` 的 `type` 仅支持 [SIP002](https://github.com/shadowsocks/shadowsocks-org/wiki/SIP002-URI-Scheme) 格式, 后续可根据需求扩展支持
-  - `outbounds` 配置段中包含一些预定义的 proxy groups 和按地区分组的 proxy groups, 后者会自动创建 `selector` 和 `urltest` 类型的 `outbounds`.
+- [config/base.json.j2](./config/base.json.j2)
+  - sing-box 的基础配置文件, 包含 `dns`, `route` 和 `inbounds` 等不容易发生变更的配置段
+- [config/subscriptions.json.j2](./config/subscriptions.json.j2)
+  - `subscriptions` 配置是 sing-box-config 工具的自定义配置段, 合并最终配置文件前会被移除
+  - `subscriptions.type` 当前仅支持 Shadowsocks `SIP002`, 后续如有需求可另行适配
+  - `outbounds` 配置段中包含一些按地区分组与预定义的 proxy groups
 
 ### playbook.yaml 与 Ansible roles
 
-- [playbook.yaml](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/playbook.yaml) 是 ansible-playbook 的入口文件.
+- [playbook.yaml](./playbook.yaml) 是 ansible-playbook 的入口文件.
   - 在 playbook 的 tasks 中使用 `import_role` 静态导入了项目中的 Ansible roles.
   - 使用 Ansible roles 封装复杂任务可以简化 playbook 的结构.
-- [roles/sing_box_install](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/sing_box_install/)
+- [roles/sing_box_install](./roles/sing_box_install/)
   - 用于在远程主机上设置 sing-box 的 apt 仓库并安装 sing-box.
-- [roles/sing_box_config](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/sing_box_config/)
+- [roles/sing_box_config](./roles/sing_box_config/)
   - 在远程主机上创建 proxy 用户和工作目录
   - 安装 sing-box-config 命令行工具
-  - 配置 sing-box-config-updater.timer 以定时执行 sing-box-config 命令行工具, 达成更新 sing-box config.json 的目的
-- [roles/sing_box_tproxy](https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/roles/sing_box_tproxy/)
+  - 可选配置 sing-box-config-updater.timer 以实现定时更新 sing-box config.json
+- [roles/sing_box_tproxy](./roles/sing_box_tproxy/)
   - 用于将远程主机配置为 Tproxy 模式的透明代理.
-  - 包括加载必要的内核模块, 启用 IP 转发, 配置 nftables 防火墙规则等.
+  - 包括加载必要的内核模块, 启用 IP 转发, 配置 nftables 防火墙规则, 开启 TCP BBR 拥塞控制协议等.
   - 配置 sing-box-reload.path 监听 /etc/sing-box/config.json 文件的变化, 如发生变化则 reload sing-box 进程
 
 ## 使用指南
@@ -77,14 +77,16 @@ sing-box-config 需要读取 `config/` 目录下的两个配置文件:
    }
    ```
 
-4. 修改 `config/subscriptions.json` 文件中的 `subscriptions` 配置段, 注意将示例配置中的 example 和 url 替换为真实的值, 目前 type 仅支持 SIP002.
+4. 修改 `config/subscriptions.json.j2` 文件中的 `subscriptions` 配置段, 注意将示例配置中的 example 和 url 替换为真实的值, 目前 type 仅支持 Shadowsocks `SIP002`.
 
    ```json
    {
      "subscriptions": {
        "example": {
          "type": "SIP002",
-         "exclude": ["过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"],
+         "exclude": [
+           "过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"
+         ],
          "url": "https://sub.example.com/subscriptions.txt"
        }
      }
@@ -102,3 +104,5 @@ sing-box-config 需要读取 `config/` 目录下的两个配置文件:
 - [sing-box](https://github.com/SagerNet/sing-box)
 - [Tproxy](https://sing-box.sagernet.org/configuration/inbound/tproxy/)
 - [sing-box tproxy](https://lhy.life/20231012-sing-box-tproxy/)
+- [SagerNet/serenity](https://github.com/SagerNet/serenity)
+- [SIP002](https://github.com/shadowsocks/shadowsocks-org/wiki/SIP002-URI-Scheme)
