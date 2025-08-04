@@ -2,11 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.3.0] - 2025-06-23
+## [0.4.0] - 2025-08-04
 
 ### 🚀 Features
 
-- impl contrib/disable-cloud-init-network-config/playbook.yaml
+- impl tcp_bbr_enabled on roles/sing_box_tproxy
+- impl remove_invalid_outbounds on src/sing_box_config
+
+### 🚜 Refactor
+
+- handle config/{base,subscriptions}.json as jinja2 template
+- simplify roles/sing_box_config
+- simplify roles/sing_box_tproxy
+
+### 📚 Documentation
+
+- update README.md
+
+### ⚙️ Miscellaneous Tasks
+
+- add sing_box_config_updater_timer_enabled on playbook.yaml
+- impl tasks/pdm_wheel.yml on roles/sing_box_config
+- impl sing_box_config_install_source on roles/sing_box_config
+- bump version
+
+## [0.3.0] - 2025-08-04
+
+### 🚀 Features
+
 - impl fetch_url_with_retries on httpx.get()
 
 ### 🐛 Bug Fixes
@@ -15,10 +38,9 @@ All notable changes to this project will be documented in this file.
 
 ### ⚙️ Miscellaneous Tasks
 
-- rename contrib/pwsh/Set-ProxyGateway.ps1
 - bump version
 
-## [0.2.1] - 2025-06-18
+## [0.2.1] - 2025-08-04
 
 ### 🐛 Bug Fixes
 
@@ -31,7 +53,7 @@ All notable changes to this project will be documented in this file.
 - fixup nftables.conf.j2
 - bump version
 
-## [0.2.0] - 2025-05-19
+## [0.2.0] - 2025-08-04
 
 ### 🚀 Features
 
@@ -48,7 +70,6 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - *(config)* remove route.default_mark on config/base.json
-- add contrib/Set-ProxyGateway.ps1
 - add git-cliff config cliff.toml
 
 ## [0.1.6] - 2025-04-28
