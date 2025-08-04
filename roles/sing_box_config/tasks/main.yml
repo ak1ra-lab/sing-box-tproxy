@@ -30,22 +30,10 @@
   loop_control:
     loop_var: directory
 
-- name: ensure packages is installed
-  ansible.builtin.package:
-    name:
-      - python3-venv
-    state: present
+- name: install pdm_wheel on remote venv
+  ansible.builtin.include_tasks: pdm_wheel.yml
 
-- name: install sing-box-config from PyPI
-  ansible.builtin.pip:
-    name: sing-box-config
-    state: latest
-    virtualenv: "{{ sing_box_venv_dir }}"
-    virtualenv_command: python3 -m venv
-  notify:
-    - ensure sing-box working directory ownership
-
-- name: template sing-box-config base.json and subscriptions.json to remote
+- name: template sing-box-config base.json and subscriptions.json on remote
   vars:
     basename: "{{ template | ansible.builtin.basename | ansible.builtin.splitext | first }}"
   ansible.builtin.template:

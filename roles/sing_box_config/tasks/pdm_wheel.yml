@@ -1,0 +1,43 @@
+---
+- name: ensure packages is installed
+  ansible.builtin.package:
+    name:
+      - python3-venv
+    state: present
+
+- name: pdm build on current repo
+  become: false
+  ansible.builtin.command: pdm build --no-sdist
+  delegate_to: localhost
+  run_once: true
+
+- name: set_fact on pdm_wheel
+  ansible.builtin.set_fact:
+    pdm_wheel: "{{ lookup('ansible.builtin.fileglob', playbook_dir ~ '/dist/*.whl').split() | list | last }}"
+
+- name: debug_var on pdm_wheel
+  ansible.builtin.debug:
+    var: pdm_wheel
+
+- name: copy pdm_wheel to remote
+  ansible.builtin.copy:
+    src: "{{ pdm_wheel }}"
+    dest: "{{ sing_box_state_dir }}/"
+
+- name: install pdm_wheel on remote venv
+  vars:
+    relpath: "{{ pdm_wheel | ansible.builtin.relpath(playbook_dir) }}"
+    pdm_wheel_dest: "{{ [sing_box_state_dir, pdm_wheel | ansible.builtin.basename] | ansible.builtin.path_join }}"
+  block:
+    - name: install pdm_wheel on remote venv
+      ansible.builtin.pip:
+        name: "file://{{ pdm_wheel_dest }}"
+        virtualenv: "{{ sing_box_state_dir }}/.venv"
+        virtualenv_command: python3 -m venv
+      notify:
+        - ensure sing-box working directory ownership
+
+    - name: remove pdm_wheel_dest
+      ansible.builtin.file:
+        path: "{{ pdm_wheel_dest }}"
+        state: absent
