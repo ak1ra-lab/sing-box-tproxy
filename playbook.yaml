@@ -15,6 +15,7 @@
     sing_box_route_default_mark: 225
 
     # systemd timer 还是要安装, 新增一个允许不启用的选项以应对当前订阅链接"阅后即焚"的状况
+    sing_box_config_updater_service_state: started
     sing_box_config_updater_timer_state: started
     sing_box_config_updater_timer_enabled: true
 

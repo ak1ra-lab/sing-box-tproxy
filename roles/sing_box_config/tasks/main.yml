@@ -87,4 +87,4 @@
 - name: ensure /etc/sing-box/config.json generated
   ansible.builtin.systemd_service:
     name: sing-box-config-updater.service
-    state: "{{ sing_box_config_updater_timer_state }}"
+    state: "{{ sing_box_config_updater_service_state }}"
