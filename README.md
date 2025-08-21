@@ -21,9 +21,9 @@ sing-box-config 需要读取 `config/` 目录下的两个 Jinja2 template, Ansib
   - `subscriptions.type` 当前仅支持 Shadowsocks `SIP002`, 后续如有需求可另行适配
   - `outbounds` 配置段中包含一些按地区分组与预定义的 proxy groups
 
-### playbook.yaml 与 Ansible roles
+### site.yaml 与 Ansible roles
 
-- [playbook.yaml](./playbook.yaml) 是 ansible-playbook 的入口文件.
+- [site.yaml](./site.yaml) 是 ansible-playbook 的入口文件.
   - 在 playbook 的 tasks 中使用 `import_role` 静态导入了项目中的 Ansible roles.
   - 使用 Ansible roles 封装复杂任务可以简化 playbook 的结构.
 - [roles/sing_box_install](./roles/sing_box_install/)
@@ -93,10 +93,10 @@ sing-box-config 需要读取 `config/` 目录下的两个 Jinja2 template, Ansib
    }
    ```
 
-5. 执行 playbook.yaml:
+5. 执行 site.yaml:
 
    ```ShellSession
-   $ ansible-playbook playbook.yaml -e 'playbook_hosts=pve-sing-box-tproxy'
+   $ ansible-playbook site.yaml -e 'playbook_hosts=pve-sing-box-tproxy'
    ```
 
 ## 参考资料

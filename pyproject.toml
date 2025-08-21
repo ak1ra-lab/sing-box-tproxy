@@ -48,7 +48,7 @@ distribution = true
 
 
 [tool.pdm.build]
-includes = ["config", "roles", "src", "tests", "ansible.cfg", "playbook.yaml"]
+includes = ["config", "roles", "src", "tests", "ansible.cfg", "site.yaml"]
 
 
 [tool.pdm.version]
