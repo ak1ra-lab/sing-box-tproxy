@@ -21,6 +21,8 @@ def get_proxies_from_subscriptions(
     name: str, subscription: dict, retries: int, timeout: int
 ) -> list:
     proxies = []
+    if not subscription.get("enabled", True):
+        return proxies
     exclude = subscription.pop("exclude", [])
     if subscription["type"].upper() not in supported_types:
         return proxies
@@ -37,6 +39,7 @@ def get_proxies_from_subscriptions(
             logger.warning(err)
             proxies_lines = []
         logger.debug("url = %s, proxies_lines = %s", subscription["url"], proxies_lines)
+
         for line in proxies_lines:
             proxy = decode_sip002_to_singbox(line, name + " - ")
             if not proxy:
