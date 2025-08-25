@@ -38,7 +38,7 @@ logging_dir = Path(f"~/.local/state/{__package__}/log").expanduser()
 
 
 def setup_logger(
-    name: str, filename: str | None = None, debug: bool = os.environ.get("DEBUG", False)
+    name: str, logfile: bool = False, debug: bool = os.environ.get("DEBUG", False)
 ) -> logging.Logger:
     """
     Sets up and configures a logger for the application.
@@ -49,8 +49,8 @@ def setup_logger(
 
     Args:
         name (str): The name of the logger to create or retrieve.
-        filename (str | None, optional): The name of the log file for file-based logging.
-            If None, only console logging is used. Defaults to None.
+        logfile (bool): Whether to enable file-based logging.
+            If False, only console logging is used. Defaults to False.
         debug (bool, optional): Whether to enable debug-level logging.
             Defaults to the value of the `DEBUG` environment variable, or False if not set.
 
@@ -67,7 +67,7 @@ def setup_logger(
     if debug:
         logging_config["root"]["level"] = "DEBUG"
 
-    if not filename:
+    if not logfile:
         logging.config.dictConfig(logging_config)
         return logging.getLogger(name)
 
@@ -77,7 +77,7 @@ def setup_logger(
     logfile_handler = {
         "logfile": {
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": logging_dir / filename,
+            "filename": logging_dir / f"{name}.log",
             "formatter": "precise",
             "maxBytes": 10 * 1024 * 1024,
             "backupCount": 5,
