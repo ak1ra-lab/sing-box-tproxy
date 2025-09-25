@@ -1,5 +1,10 @@
 # sing-box-tproxy
 
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/ak1ra-lab/sing-box-tproxy/.github%2Fworkflows%2Fpublish-to-pypi.yaml)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/sing-box-config)
+![PyPI - Version](https://img.shields.io/pypi/v/sing-box-config)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ak1ra-lab/sing-box-tproxy)
+
 ## 项目简介
 
 本项目使用 Ansible 将 [SagerNet/sing-box](https://github.com/SagerNet/sing-box) 配置为 [Tproxy](https://sing-box.sagernet.org/configuration/inbound/tproxy/) 模式透明代理.
