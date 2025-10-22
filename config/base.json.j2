@@ -38,35 +38,25 @@
             {
                 "action": "route",
                 "rule_set": [
-                    "geosite-geolocation-cn",
-                    "geosite-win-update",
-                    "geosite-apple"
+                    "geosite-geolocation-cn"
                 ],
                 "server": "dns_direct"
             },
             {
                 "action": "route",
-                "query_type": [
-                    "A"
-                ],
                 "rule_set": [
                     "geosite-google",
+                    "geosite-win-update",
+                    "geosite-apple",
                     "geosite-github",
                     "geosite-telegram",
+                    "geosite-bing",
                     "geosite-category-ai-!cn",
                     "geosite-steam",
+                    "geosite-debian",
                     "geosite-gfw"
                 ],
                 "server": "dns_fakeip"
-            },
-            {
-                "action": "route",
-                "query_type": [
-                    "A",
-                    "CNAME",
-                    "HTTPS"
-                ],
-                "server": "dns_proxy"
             }
         ],
         "final": "dns_proxy",
