@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
 
 import argparse
@@ -6,6 +5,7 @@ from pathlib import Path
 
 import argcomplete
 from chaos_utils.logging import setup_json_logger
+from chaos_utils.text_utils import read_json
 
 from sing_box_config.export import save_config_from_subscriptions
 
@@ -40,26 +40,11 @@ def main() -> None:
         metavar="config.json",
         help="sing-box output config, default: %(default)s",
     )
-    parser.add_argument(
-        "-r",
-        "--retries",
-        type=int,
-        default=5,
-        help="Maximum number of retry attempts, default: %(default)s",
-    )
-    parser.add_argument(
-        "-t",
-        "--timeout",
-        type=int,
-        default=60,
-        help="Timeout in seconds for each request, default: %(default)s",
-    )
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
-    save_config_from_subscriptions(args)
-
-
-if __name__ == "__main__":
-    main()
+    base_config = read_json(Path(args.base))
+    subscriptions_config = read_json(Path(args.subscriptions))
+    output_path = Path(args.output)
+    save_config_from_subscriptions(base_config, subscriptions_config, output_path)

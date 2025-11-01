@@ -1,11 +1,11 @@
-import argparse
 import copy
 import logging
 import re
 from pathlib import Path
 
-from chaos_utils.http_utils import fetch_url_with_retries
-from chaos_utils.text_utils import b64decode, read_json, save_json
+import httpx
+import tenacity
+from chaos_utils.text_utils import b64decode, save_json
 
 from sing_box_config.parser.shadowsocks import decode_sip002_to_singbox
 
@@ -14,21 +14,32 @@ logger = logging.getLogger(__name__)
 supported_types = ["SIP002"]
 
 
-def get_proxies_from_subscriptions(
-    name: str, subscription: dict, retries: int, timeout: int
-) -> list:
+@tenacity.retry(
+    stop=tenacity.stop_after_attempt(5),
+    wait=tenacity.wait_exponential_jitter(initial=1, max=30),
+    before_sleep=tenacity.before_sleep_log(logger, logging.WARNING),
+    reraise=True,
+)
+def fetch_url_with_retries(url: str, **kwargs) -> httpx.Response:
+    resp = httpx.get(url, **kwargs)
+    resp.raise_for_status()
+    return resp
+
+
+def get_proxies_from_subscriptions(name: str, subscription: dict) -> list:
     proxies = []
     if not subscription.get("enabled", True):
         return proxies
-    exclude = subscription.pop("exclude", [])
     if subscription["type"].upper() not in supported_types:
         return proxies
 
-    resp = fetch_url_with_retries(subscription["url"], retries, timeout)
-    logger.debug("resp.text = %s", resp.text)
+    resp = fetch_url_with_retries(subscription["url"], follow_redirects=True)
+
+    logger.info("resp.text = %s", resp.text[:100])
     if not resp:
         return proxies
 
+    exclude = subscription.pop("exclude", [])
     if subscription["type"].upper() == "SIP002":
         try:
             proxies_lines = b64decode(resp.text).splitlines()
@@ -96,17 +107,13 @@ def remove_invalid_outbounds(outbounds: list) -> None:
         ]
 
 
-def save_config_from_subscriptions(args: argparse.Namespace) -> None:
-    base_config = read_json(Path(args.base))
-    subscriptions_config = read_json(Path(args.subscriptions))
-    output = Path(args.output)
-
+def save_config_from_subscriptions(
+    base_config: dict, subscriptions_config: dict, output_path: Path
+) -> None:
     proxies = []
     subscriptions = subscriptions_config.pop("subscriptions")
     for name, subscription in subscriptions.items():
-        proxies += get_proxies_from_subscriptions(
-            name, subscription, args.retries, args.timeout
-        )
+        proxies += get_proxies_from_subscriptions(name, subscription)
 
     outbounds = subscriptions_config.pop("outbounds")
 
@@ -117,7 +124,7 @@ def save_config_from_subscriptions(args: argparse.Namespace) -> None:
     outbounds += proxies
     base_config["outbounds"] += outbounds
 
-    if not output.parent.exists():
-        output.parent.mkdir(parents=True, exist_ok=True)
+    if not output_path.parent.exists():
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    save_json(output, base_config)
+    save_json(output_path, base_config)

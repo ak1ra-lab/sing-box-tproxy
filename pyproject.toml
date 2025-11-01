@@ -6,6 +6,8 @@ authors = [{ name = "ak1ra", email = "git@ak1ra.xyz" }]
 dependencies = [
     "argcomplete>=3.6.2",
     "chaos-utils>=0.1.1",
+    "httpx>=0.28.1",
+    "tenacity>=9.1.2",
 ]
 requires-python = ">=3.11"
 classifiers = [
@@ -31,7 +33,7 @@ Homepage = "https://github.com/ak1ra-lab/sing-box-tproxy"
 Changelog = "https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/CHANGELOG.md"
 
 [project.scripts]
-sing-box-config = "sing_box_config.cmd:main"
+sing-box-config = "sing_box_config.main:main"
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
