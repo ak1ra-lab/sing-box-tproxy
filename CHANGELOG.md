@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - add status shields.io badges
 - remove download_detour on config/base.json.j2
 - update dns_fakeip on config/base.json.j2
+- rename pdm_wheel.yml to dist_wheel.yml
 
 ## [0.4.0] - 2025-08-04
 

@@ -30,10 +30,10 @@
   loop_control:
     loop_var: directory
 
-- name: install sing-box-config from pdm_wheel
+- name: install sing-box-config from dist_wheel
   when:
     - sing_box_config_install_source == 'local'
-  ansible.builtin.include_tasks: pdm_wheel.yml
+  ansible.builtin.include_tasks: dist_wheel.yml
 
 - name: install sing-box-config from PyPI
   when:

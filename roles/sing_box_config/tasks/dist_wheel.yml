@@ -1,0 +1,43 @@
+---
+- name: ensure packages is installed
+  ansible.builtin.package:
+    name:
+      - python3-venv
+    state: present
+
+- name: uv build on current repo
+  become: false
+  ansible.builtin.command: uv build
+  delegate_to: localhost
+  run_once: true
+
+- name: set_fact on dist_wheel
+  ansible.builtin.set_fact:
+    dist_wheel: "{{ lookup('ansible.builtin.fileglob', playbook_dir ~ '/dist/*.whl').split() | list | last }}"
+
+- name: debug_var on dist_wheel
+  ansible.builtin.debug:
+    var: dist_wheel
+
+- name: copy dist_wheel to remote
+  ansible.builtin.copy:
+    src: "{{ dist_wheel }}"
+    dest: "{{ sing_box_state_dir }}/"
+
+- name: install dist_wheel on remote venv
+  vars:
+    relpath: "{{ dist_wheel | ansible.builtin.relpath(playbook_dir) }}"
+    dist_wheel_dest: "{{ [sing_box_state_dir, dist_wheel | ansible.builtin.basename] | ansible.builtin.path_join }}"
+  block:
+    - name: install dist_wheel on remote venv
+      ansible.builtin.pip:
+        name: "file://{{ dist_wheel_dest }}"
+        virtualenv: "{{ sing_box_state_dir }}/.venv"
+        virtualenv_command: python3 -m venv
+      notify:
+        - ensure sing-box working directory ownership
+
+    - name: remove dist_wheel_dest
+      ansible.builtin.file:
+        path: "{{ dist_wheel_dest }}"
+        state: absent
