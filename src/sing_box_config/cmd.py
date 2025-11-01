@@ -5,11 +5,11 @@ import argparse
 from pathlib import Path
 
 import argcomplete
+from chaos_utils.logging import setup_json_logger
 
 from sing_box_config.export import save_config_from_subscriptions
-from sing_box_config.logging import setup_logger
 
-logger = setup_logger(__name__)
+logger = setup_json_logger(__name__)
 
 
 def main() -> None:

@@ -4,13 +4,10 @@ import logging
 import re
 from pathlib import Path
 
+from chaos_utils.http_utils import fetch_url_with_retries
+from chaos_utils.text_utils import b64decode, read_json, save_json
+
 from sing_box_config.parser.shadowsocks import decode_sip002_to_singbox
-from sing_box_config.utils import (
-    b64decode,
-    fetch_url_with_retries,
-    read_json,
-    save_json,
-)
 
 logger = logging.getLogger(__name__)
 

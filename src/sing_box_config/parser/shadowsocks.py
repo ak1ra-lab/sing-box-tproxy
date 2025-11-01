@@ -4,7 +4,7 @@
 import logging
 import urllib.parse
 
-from sing_box_config.utils import b64decode
+from chaos_utils.text_utils import b64decode
 
 logger = logging.getLogger(__name__)
 

@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2025-11-01
+
+### 🚀 Features
+
+- migrate pdm to uv and many more
+
+### 🚜 Refactor
+
+- impl roles/sing_box_defaults/defaults/main.yml
+
+### ⚙️ Miscellaneous Tasks
+
+- impl sing_box_config_updater_service_state on roles/sing_box_config
+- rename playbook.yaml to site.yaml
+- update pdm.lock
+- update setup_logger
+- add enabled option on subscriptions
+- add status shields.io badges
+- remove download_detour on config/base.json.j2
+- update dns_fakeip on config/base.json.j2
+
 ## [0.4.0] - 2025-08-04
 
 ### 🚀 Features
