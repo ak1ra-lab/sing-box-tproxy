@@ -26,7 +26,7 @@ sing-box-config 需要读取 `config/` 目录下的两个 Jinja2 template, Ansib
   - `subscriptions.type` 当前仅支持 Shadowsocks `SIP002`, 后续如有需求可另行适配
   - `outbounds` 配置段中包含一些按地区分组与预定义的 proxy groups
 
-### site.yaml 与 Ansible roles
+### Ansible playbook site.yaml 与 Ansible roles
 
 - [site.yaml](./site.yaml) 是 ansible-playbook 的入口文件.
   - 在 playbook 的 tasks 中使用 `import_role` 静态导入了项目中的 Ansible roles.
@@ -47,11 +47,13 @@ sing-box-config 需要读取 `config/` 目录下的两个 Jinja2 template, Ansib
 要顺利使用本项目, 需要具备一定的 Linux 和 Ansible 基础. 如果您对 Ansible 完全不了解, 可以参考 [Getting started with Ansible](https://docs.ansible.com/ansible/latest/getting_started/index.html) 快速入门.
 
 1. 安装 Ansible:
-   使用 `pipx` 安装 Ansible, 具体步骤请参考 [Installing and upgrading Ansible with pipx](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-and-upgrading-ansible-with-pipx), 注意安装后将 `${HOME}/.local/bin` 目录加入系统 PATH,
+   使用 `pipx install --include-deps ansible` 或 `uv tool install --with-executables-from ansible-core ansible` 安装 `ansible`, 注意安装后将 `${HOME}/.local/bin` 目录加入系统 PATH, 此处使用 `uv tool` 替代 `pipx`,
 
    ```ShellSession
-   $ pipx install --include-deps ansible
-     installed package ansible 11.5.0, installed using Python 3.11.2
+      $ uv tool install --with-executables-from ansible-core ansible
+      ... ...
+      Installed 10 executables from `ansible-core`: ansible, ansible-config, ansible-console, ansible-doc, ansible-galaxy, ansible-inventory, ansible-playbook, ansible-pull, ansible-test, ansible-vault
+      Installed 1 executable: ansible-community
    ```
 
 2. 配置 Linux 虚拟机, SSH credentials 和 [Ansible Inventory](https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html). 以下是示例配置:
@@ -61,7 +63,7 @@ sing-box-config 需要读取 `config/` 目录下的两个 Jinja2 template, Ansib
    all:
      hosts:
        pve-sing-box-tproxy-253:
-         ansible_host: 10.42.0.253
+         ansible_host: 10.0.42.253
          ansible_user: debian
 
    pve-sing-box-tproxy:
@@ -69,7 +71,7 @@ sing-box-config 需要读取 `config/` 目录下的两个 Jinja2 template, Ansib
        pve-sing-box-tproxy-253:
    ```
 
-3. 验证主机连接:
+3. 验证主机连接性:
 
    ```ShellSession
    $ ansible -m ping pve-sing-box-tproxy
@@ -89,16 +91,15 @@ sing-box-config 需要读取 `config/` 目录下的两个 Jinja2 template, Ansib
      "subscriptions": {
        "example": {
          "type": "SIP002",
-         "exclude": [
-           "过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"
-         ],
+         "enabled": true,
+         "exclude": ["过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"],
          "url": "https://sub.example.com/subscriptions.txt"
        }
      }
    }
    ```
 
-5. 执行 site.yaml:
+5. 执行 Ansible playbook site.yaml:
 
    ```ShellSession
    $ ansible-playbook site.yaml -e 'playbook_hosts=pve-sing-box-tproxy'
