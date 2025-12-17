@@ -1,0 +1,69 @@
+---
+# Pre-flight validation checks for sing-box-tproxy deployment
+# This file contains all prerequisite validations that must pass before deployment
+
+- name: verify sing_box_mode is valid
+  ansible.builtin.assert:
+    that:
+      - sing_box_mode in ['mixed', 'local', 'gateway']
+    fail_msg: "sing_box_mode must be one of: mixed, local, gateway (got: {{ sing_box_mode }})"
+    quiet: true
+
+- name: verify required variables are defined
+  ansible.builtin.assert:
+    that:
+      - sing_box_config_subscriptions is defined
+      - sing_box_config_subscriptions is mapping
+      - sing_box_config_subscriptions | length > 0
+    fail_msg: |
+      Required variable sing_box_config_subscriptions is not defined or invalid.
+      Please define it in group_vars or host_vars.
+      Ensure vault is unlocked and group_vars contains sing_box_config_subscriptions.
+      Run with: ansible-playbook site.yaml --ask-vault-pass
+    quiet: true
+
+- name: validate each subscription entry
+  ansible.builtin.assert:
+    that:
+      - item.value.type is defined
+      - item.value.url is defined
+      - item.value.type in ['SIP002']
+    fail_msg: "subscription '{{ item.key }}' must have 'type' and 'url' defined, and type must be 'SIP002'"
+    quiet: true
+  loop: "{{ sing_box_config_subscriptions | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+
+- name: validate port numbers
+  ansible.builtin.assert:
+    that:
+      - sing_box_tproxy_port | int > 0
+      - sing_box_tproxy_port | int < 65536
+      - sing_box_mixed_port | int > 0
+      - sing_box_mixed_port | int < 65536
+    fail_msg: "Port numbers must be between 1 and 65535"
+    quiet: true
+
+- name: test subscription url accessibility (optional)
+  when: sing_box_validate_subscription_urls | default(false) | ansible.builtin.bool
+  block:
+    - name: check subscription urls
+      ansible.builtin.uri:
+        url: "{{ item.value.url }}"
+        method: HEAD
+        timeout: 10
+        follow_redirects: safe
+        validate_certs: true
+      loop: "{{ sing_box_config_subscriptions | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+      register: subscription_url_checks
+      failed_when: false
+      changed_when: false
+
+    - name: report subscription url check results
+      ansible.builtin.debug:
+        msg: "subscription '{{ item.item.key }}': {{ 'accessible' if item.status == 200 else 'FAILED (' + (item.status | string) + ')' }}"
+      loop: "{{ subscription_url_checks.results }}"
+      loop_control:
+        label: "{{ item.item.key }}"
