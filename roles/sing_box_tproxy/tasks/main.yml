@@ -22,7 +22,8 @@
     loop_var: module
 
 # should we enable net.ipv4.conf.all.route_localnet=1 ?
-- name: ensure ip_forward is enabled
+- name: ensure ip_forward is enabled (gateway mode only)
+  when: (_sing_box_enable_ip_forward | ansible.builtin.bool)
   ansible.posix.sysctl:
     name: "{{ item.name }}"
     value: "{{ item.value }}"
@@ -38,18 +39,14 @@
 
 - name: enable tcp_bbr
   when:
-    - ansible_kernel >= '4.9.0'
+    - ansible_kernel is version('4.9.0', '>=')
     - (tcp_bbr_enabled | ansible.builtin.bool)
   block:
     - name: load tcp_bbr module
       community.general.modprobe:
-        name: "{{ module }}"
+        name: tcp_bbr
         state: present
         persistent: present
-      loop:
-        - tcp_bbr
-      loop_control:
-        loop_var: module
 
     - name: enable tcp_bbr
       ansible.posix.sysctl:
@@ -57,20 +54,18 @@
         value: "{{ item.value }}"
         state: present
       loop:
-        # default 'pfifo_fast'
         - name: net.core.default_qdisc
           value: fq
         - name: net.ipv4.tcp_congestion_control
           value: bbr
 
-# 系统目录不能设置 permission 和 ownership
-- name: create system drop-in directory
+- name: create drop-in directory
   ansible.builtin.file:
     path: "{{ directory }}"
     state: directory
+    mode: "0755"
   loop:
     - /etc/netplan
-    - /etc/systemd/system
     - /etc/iproute2/rt_tables.d
   loop_control:
     loop_var: directory
@@ -79,28 +74,30 @@
   ansible.builtin.template:
     src: etc/iproute2/rt_tables.d/sing_box_tproxy.conf.j2
     dest: /etc/iproute2/rt_tables.d/sing_box_tproxy.conf
+    mode: "0644"
 
 - name: template nftables.conf on remote
   ansible.builtin.template:
     src: etc/nftables.conf.j2
     dest: /etc/nftables.conf
+    mode: "0755"
   notify:
     - systemctl restart nftables.service
 
-- name: template systemd service on remote
-  ansible.builtin.template:
-    src: "{{ template }}"
-    dest: "{{ ['/', template] | ansible.builtin.path_join | ansible.builtin.splitext | first }}"
-  loop:
-    - etc/systemd/system/sing-box.service.j2
-    - etc/systemd/system/sing-box-reload.path.j2
-    - etc/systemd/system/sing-box-reload.service.j2
-  loop_control:
-    loop_var: template
-  notify:
-    - systemctl daemon-reload
+- name: ensure nftables.service enabled
+  ansible.builtin.systemd_service:
+    name: nftables.service
+    enabled: true
 
-- name: template netplan config on remote
+- name: install tproxy toggle script (local mode only)
+  when: sing_box_mode == 'local'
+  ansible.builtin.copy:
+    src: usr/local/bin/sing-box-tproxy-toggle.sh
+    dest: /usr/local/bin/sing-box-tproxy-toggle.sh
+    mode: "0755"
+
+- name: template netplan config on remote (gateway mode only)
+  when: (_sing_box_enable_netplan_routing | ansible.builtin.bool)
   ansible.builtin.template:
     src: etc/netplan/99-sing_box_tproxy.yaml.j2
     dest: /etc/netplan/99-sing_box_tproxy.yaml
@@ -108,20 +105,9 @@
   notify:
     - netplan apply
 
-- name: ensure nftables.service started and enabled
-  ansible.builtin.systemd_service:
-    name: nftables.service
-    state: started
-    enabled: true
-
-- name: ensure sing-box-reload.path started and enabled
-  ansible.builtin.systemd_service:
-    name: sing-box-reload.path
-    state: started
-    enabled: true
-
-- name: ensure sing-box.service restarted
+- name: ensure sing-box.service is started
+  when: (_sing_box_enable_tproxy | ansible.builtin.bool)
   ansible.builtin.systemd_service:
     name: sing-box.service
-    state: restarted
+    state: started
     enabled: true
