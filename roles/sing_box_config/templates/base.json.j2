@@ -1,14 +1,87 @@
 {
-    "subscriptions": {
-        "example": {
-            "type": "SIP002",
-            "enabled": true,
-            "exclude": [
-                "过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"
-            ],
-            "url": "https://sub.example.com/subscriptions.txt"
-        }
+    "log": {
+        "disabled": false,
+        "level": "warn",
+        "timestamp": true
     },
+    "dns": {
+        "servers": [
+            {
+                "tag": "dns_resolver",
+                "type": "udp",
+                "server": "223.5.5.5",
+                "server_port": 53
+            },
+            {
+                "tag": "dns_direct",
+                "type": "tls",
+                "server": "dns.alidns.com",
+                "server_port": 853,
+                "domain_resolver": "dns_resolver"
+            },
+            {
+                "tag": "dns_proxy",
+                "type": "https",
+                "server": "1.1.1.1",
+                "path": "/dns-query",
+                "server_port": 443,
+                "detour": "PROXY"
+            },
+            {
+                "tag": "dns_fakeip",
+                "type": "fakeip",
+                "inet4_range": "198.18.0.0/15",
+                "inet6_range": "fc00::/18"
+            }
+        ],
+        "rules": [
+            {
+                "action": "route",
+                "rule_set": [
+                    "geosite-geolocation-cn"
+                ],
+                "server": "dns_direct"
+            },
+            {
+                "action": "route",
+                "rule_set": [
+                    "geosite-google",
+                    "geosite-win-update",
+                    "geosite-apple",
+                    "geosite-github",
+                    "geosite-telegram",
+                    "geosite-bing",
+                    "geosite-category-ai-!cn",
+                    "geosite-steam",
+                    "geosite-debian",
+                    "geosite-gfw"
+                ],
+                "server": "dns_fakeip"
+            }
+        ],
+        "final": "dns_proxy",
+        "strategy": "ipv4_only",
+        "disable_cache": false,
+        "disable_expire": false
+    },
+    "inbounds": [
+        {
+            "tag": "MIXED-IN",
+            "type": "mixed",
+            "listen": "{{ '0.0.0.0' if sing_box_mode == 'gateway' else '127.0.0.1' }}",
+            "listen_port": {{ sing_box_mixed_port | int }},
+            "udp_timeout": 180,
+            "sniff": true
+        }{% if sing_box_mode in ['local', 'gateway'] %},
+        {
+            "tag": "TPROXY-IN",
+            "type": "tproxy",
+            "listen": "{{ '0.0.0.0' if sing_box_mode == 'gateway' else '127.0.0.1' }}",
+            "listen_port": {{ sing_box_tproxy_port | int }},
+            "udp_timeout": 180,
+            "sniff": true
+        }{% endif %}
+    ],
     "outbounds": [
         {
             "tag": "DIRECT",
@@ -356,5 +429,206 @@
             ],
             "interrupt_exist_connections": false
         }
-    ]
+    ],
+    "route": {
+        "rules": [
+            {
+                "action": "hijack-dns",
+                "port": 53
+            },
+            {
+                "action": "hijack-dns",
+                "protocol": "dns"
+            },
+            {
+                "action": "route",
+                "port": 22,
+                "outbound": "SSH"
+            },
+            {
+                "action": "route",
+                "clash_mode": "direct",
+                "outbound": "DIRECT"
+            },
+            {
+                "action": "route",
+                "clash_mode": "global",
+                "outbound": "PROXY"
+            },
+            {
+                "action": "route",
+                "rule_set": [
+                    "geoip-private",
+                    "geosite-private"
+                ],
+                "outbound": "DIRECT"
+            },
+            {
+                "action": "route",
+                "rule_set": "geosite-steam",
+                "outbound": "STEAM"
+            },
+            {
+                "action": "route",
+                "rule_set": "geosite-apple",
+                "outbound": "APPLE"
+            },
+            {
+                "action": "route",
+                "rule_set": "geosite-category-ai-!cn",
+                "outbound": "AI"
+            },
+            {
+                "action": "route",
+                "rule_set": [
+                    "geosite-telegram",
+                    "geoip-telegram"
+                ],
+                "outbound": "TELEGRAM"
+            },
+            {
+                "action": "route",
+                "rule_set": [
+                    "geosite-google",
+                    "geosite-github",
+                    "geosite-debian",
+                    "geosite-gfw"
+                ],
+                "outbound": "PROXY"
+            },
+            {
+                "action": "route",
+                "rule_set": [
+                    "geoip-cn",
+                    "geosite-geolocation-cn",
+                    "geosite-win-update"
+                ],
+                "outbound": "DIRECT"
+            }
+        ],
+        "rule_set": [
+            {
+                "tag": "geoip-private",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/private.srs",
+                "update_interval": "30d"
+            },
+            {
+                "tag": "geosite-private",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/private.srs",
+                "update_interval": "30d"
+            },
+            {
+                "tag": "geosite-google",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/google.srs",
+                "update_interval": "30d"
+            },
+            {
+                "tag": "geosite-geolocation-cn",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/geolocation-cn.srs",
+                "update_interval": "30d"
+            },
+            {
+                "tag": "geosite-win-update",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/win-update.srs",
+                "update_interval": "30d"
+            },
+            {
+                "tag": "geosite-apple",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/apple.srs",
+                "update_interval": "30d"
+            },
+            {
+                "tag": "geosite-github",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/github.srs",
+                "update_interval": "30d"
+            },
+            {
+                "tag": "geoip-telegram",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/telegram.srs",
+                "update_interval": "30d"
+            },
+            {
+                "tag": "geosite-telegram",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/telegram.srs",
+                "update_interval": "30d"
+            },
+            {
+                "tag": "geosite-bing",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bing.srs",
+                "update_interval": "30d"
+            },
+            {
+                "tag": "geosite-category-ai-!cn",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-ai-!cn.srs",
+                "update_interval": "30d"
+            },
+            {
+                "tag": "geosite-steam",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/steam.srs",
+                "update_interval": "30d"
+            },
+            {
+                "tag": "geosite-debian",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/debian.srs",
+                "update_interval": "30d"
+            },
+            {
+                "tag": "geosite-gfw",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/gfw.srs",
+                "update_interval": "30d"
+            },
+            {
+                "tag": "geoip-cn",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/cn.srs",
+                "update_interval": "30d"
+            }
+        ],
+        "final": "FINAL",
+        "auto_detect_interface": true,
+        "default_domain_resolver": "dns_direct"
+    },
+    "experimental": {
+        "cache_file": {
+            "enabled": true,
+            "store_fakeip": true,
+            "store_rdrc": true
+        },
+        "clash_api": {
+            "external_controller": "0.0.0.0:9090",
+            "external_ui": "yacd",
+            "external_ui_download_url": "{{ sing_box_github_proxy }}https://github.com/MetaCubeX/Yacd-meta/archive/gh-pages.zip",
+            "secret": "",
+            "default_mode": "rule"
+        }
+    }
 }

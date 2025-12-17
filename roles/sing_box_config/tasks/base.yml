@@ -1,0 +1,32 @@
+---
+- name: template sing-box-config config/base.json on remote
+  ansible.builtin.template:
+    src: "{{ sing_box_config_base_template }}"
+    dest: "{{ sing_box_config_base_dest }}"
+    owner: "{{ proxy_user.name }}"
+    group: "{{ proxy_group.name }}"
+    mode: "0600"
+
+- name: write sing-box-config config/subscriptions.json to remote
+  ansible.builtin.copy:
+    content: "{{ sing_box_config_subscriptions | ansible.builtin.to_nice_json }}"
+    dest: "{{ sing_box_config_subscriptions_dest }}"
+    owner: "{{ proxy_user.name }}"
+    group: "{{ proxy_group.name }}"
+    mode: "0600"
+
+- name: template systemd timer on remote
+  ansible.builtin.template:
+    src: "{{ template }}"
+    dest: "{{ ['/', template] | ansible.builtin.path_join | ansible.builtin.splitext | first }}"
+    mode: "0644"
+  loop:
+    - etc/systemd/system/sing-box-config-updater.service.j2
+    - etc/systemd/system/sing-box-config-updater.timer.j2
+  loop_control:
+    loop_var: template
+  notify:
+    - systemctl daemon-reload
+
+- name: flush handlers to ensure daemon-reload completes
+  ansible.builtin.meta: flush_handlers

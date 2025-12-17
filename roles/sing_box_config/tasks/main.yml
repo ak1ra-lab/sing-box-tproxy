@@ -1,43 +1,26 @@
 ---
 # tasks file for sing_box_config
-- name: ensure proxy group exists
-  ansible.builtin.group:
-    name: "{{ proxy_group.name }}"
-    gid: "{{ proxy_group.gid | int }}"
-    state: present
+- name: verify sing_box_state_dir exists
+  ansible.builtin.stat:
+    path: "{{ sing_box_state_dir }}"
+  register: sing_box_state_dir_stat
+  failed_when:
+    - not sing_box_state_dir_stat.stat.exists
+    - not sing_box_state_dir_stat.stat.isdir
 
-- name: ensure proxy user exists
-  ansible.builtin.user:
-    name: "{{ proxy_user.name }}"
-    uid: "{{ proxy_user.uid | int }}"
-    home: "{{ proxy_user.home }}"
-    shell: "{{ proxy_user.shell }}"
-    group: "{{ proxy_group.name }}"
+- name: ensure packages is installed
+  ansible.builtin.package:
+    name:
+      - python3-packaging
+      - python3-venv
     state: present
-
-- name: create drop-in directory
-  ansible.builtin.file:
-    path: "{{ directory }}"
-    owner: "{{ proxy_user.name }}"
-    group: "{{ proxy_group.name }}"
-    mode: "0700"
-    state: directory
-  loop:
-    - "{{ sing_box_etc_dir }}"
-    - "{{ sing_box_log_dir }}"
-    - "{{ sing_box_state_dir }}"
-    - "{{ sing_box_config_dir }}"
-  loop_control:
-    loop_var: directory
 
 - name: install sing-box-config from dist_wheel
-  when:
-    - sing_box_config_install_source == 'local'
+  when: sing_box_config_install_source == 'local'
   ansible.builtin.include_tasks: dist_wheel.yml
 
 - name: install sing-box-config from PyPI
-  when:
-    - sing_box_config_install_source in ['pypi', 'testpypi']
+  when: sing_box_config_install_source in ['pypi', 'testpypi']
   ansible.builtin.pip:
     name: sing-box-config
     state: latest
@@ -47,44 +30,38 @@
   notify:
     - ensure sing-box working directory ownership
 
-- name: template sing-box-config base.json and subscriptions.json on remote
+- name: ensure sing-box-config configuration files
   vars:
-    basename: "{{ template | ansible.builtin.basename | ansible.builtin.splitext | first }}"
-  ansible.builtin.template:
-    src: "{{ template }}"
-    dest: "{{ [sing_box_config_dir, basename] | ansible.builtin.path_join }}"
-    owner: "{{ proxy_user.name }}"
-    group: "{{ proxy_group.name }}"
-    mode: "0600"
-  loop:
-    - "{{ [playbook_dir, 'config/base.json.j2'] | ansible.builtin.path_join }}"
-    - "{{ [playbook_dir, 'config/subscriptions.json.j2'] | ansible.builtin.path_join }}"
-  loop_control:
-    loop_var: template
+    # sing_box_config_base_template 用于从外部传入不同的 template 覆盖 templates/base.json.j2
+    # sing_box_config_base_template: "{{ playbook_dir }}/config/base.json.j2"
+    basename: "{{ sing_box_config_base_template | ansible.builtin.basename | ansible.builtin.splitext | first }}"
+    sing_box_config_base_dest: "{{ [sing_box_config_dir, basename] | ansible.builtin.path_join }}"
+    sing_box_config_subscriptions_dest: "{{ [sing_box_config_dir, 'subscriptions.json'] | ansible.builtin.path_join }}"
+  ansible.builtin.include_tasks: base.yml
 
-- name: template systemd timer on remote
-  ansible.builtin.template:
-    src: "{{ template }}"
-    dest: "{{ ['/', template] | ansible.builtin.path_join | ansible.builtin.splitext | first }}"
-  loop:
-    - etc/systemd/system/sing-box-config-updater.service.j2
-    - etc/systemd/system/sing-box-config-updater.timer.j2
-  loop_control:
-    loop_var: template
-
-- name: ensure sing-box-config-updater.timer enabled
+- name: ensure sing-box-config-updater.timer state
   ansible.builtin.systemd_service:
     name: sing-box-config-updater.timer
     state: "{{ sing_box_config_updater_timer_state }}"
     enabled: "{{ sing_box_config_updater_timer_enabled }}"
-  notify:
-    - systemctl daemon-reload
 
-# FATAL[0000] initialize outbound[14]: missing tags
-# 我们在 config/subscriptions.json 的 outbounds 中预先定义了 "欧洲节点" 和 "韩国节点" filter
-# 并非所有订阅源都有该地区节点, 而订阅源可能因为网络错误, 未能成功获取订阅节点, 使得对应地区的 outbounds 为空
-# 从而使得 sing-box.service:ExecStartPre= 校验配置文件失败, 导致 sing-box.service 启动失败
-- name: ensure /etc/sing-box/config.json generated
+- name: update /etc/sing-box/config.json if requested
+  when: sing_box_config_updater_service_state in sing_box_config_updater_service_active_state
   ansible.builtin.systemd_service:
     name: sing-box-config-updater.service
     state: "{{ sing_box_config_updater_service_state }}"
+
+- name: verify sing-box configuration syntax (if config exists)
+  ansible.builtin.command:
+    cmd: "sing-box check -c {{ sing_box_etc_dir }}/config.json"
+  changed_when: false
+  failed_when: false
+  register: sing_box_check_result
+  when: sing_box_config_updater_service_state in sing_box_config_updater_service_active_state
+
+- name: display configuration check result
+  ansible.builtin.debug:
+    msg: "sing-box configuration check: {{ 'PASSED' if sing_box_check_result.rc == 0 else 'FAILED' }}"
+  when:
+    - sing_box_config_updater_service_state in sing_box_config_updater_service_active_state
+    - sing_box_check_result is defined

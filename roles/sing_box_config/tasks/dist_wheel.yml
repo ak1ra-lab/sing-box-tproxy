@@ -1,19 +1,15 @@
 ---
-- name: ensure packages is installed
-  ansible.builtin.package:
-    name:
-      - python3-venv
-    state: present
-
 - name: uv build on current repo
   become: false
-  ansible.builtin.command: uv build
+  ansible.builtin.command: uv build --wheel
   delegate_to: localhost
   run_once: true
 
+# Returns a string list of paths joined by commas, or an empty list if no files match.
+# For a 'true list' pass wantlist=True to the lookup.
 - name: set_fact on dist_wheel
   ansible.builtin.set_fact:
-    dist_wheel: "{{ lookup('ansible.builtin.fileglob', playbook_dir ~ '/dist/*.whl').split() | list | last }}"
+    dist_wheel: "{{ lookup('ansible.builtin.fileglob', playbook_dir ~ '/dist/*.whl', wantlist=True) | last }}"
 
 - name: debug_var on dist_wheel
   ansible.builtin.debug:
