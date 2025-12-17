@@ -1,7 +1,15 @@
+---
 - name: deploy sing-box tproxy
   hosts: "{{ playbook_hosts | default('pve-sing-box-tproxy') }}"
   become: true
+
   vars:
+    # sing-box 安装模式: [mixed, local, gateway]
+    # mixed: 仅安装并启用 mixed port, 不配置透明代理, 需要额外配置 system proxy
+    # local: 本地透明代理, 不代理内网中其它主机的流量
+    # gateway: 用作透明代理网关, 这也是目前的默认行为
+    sing_box_mode: gateway
+
     # 对应 sing-box 中 type = tproxy 的 inbounds
     sing_box_tproxy_port: 7895
 
@@ -19,18 +27,23 @@
     sing_box_config_updater_timer_state: started
     sing_box_config_updater_timer_enabled: true
 
+  pre_tasks:
+    - name: run pre-flight validation checks
+      ansible.builtin.import_tasks: tasks/pre_flight_checks.yml
+
   tasks:
     - name: install sing-box package
       ansible.builtin.import_role:
         name: sing_box_install
       vars:
         apt_repo_packages:
-          - sing-box-beta
+          - sing-box
 
     - name: setup sing-box-config timer
       ansible.builtin.import_role:
         name: sing_box_config
 
     - name: setup sing-box-tproxy
+      when: sing_box_mode in ['local', 'gateway']
       ansible.builtin.import_role:
         name: sing_box_tproxy
