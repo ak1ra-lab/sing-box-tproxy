@@ -5,110 +5,119 @@
 ![PyPI - Version](https://img.shields.io/pypi/v/sing-box-config)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ak1ra-lab/sing-box-tproxy)
 
-## 项目简介
+使用 Ansible 自动部署 [SagerNet/sing-box](https://github.com/SagerNet/sing-box) TPROXY 透明代理.
 
-本项目使用 Ansible 将 [SagerNet/sing-box](https://github.com/SagerNet/sing-box) 配置为 [Tproxy](https://sing-box.sagernet.org/configuration/inbound/tproxy/) 模式透明代理.
+## 特性
+
+- 🚀 三种部署模式: mixed (代理) / local (本机透明代理) / gateway (网关)
+- 🔄 自动订阅更新与节点管理
+- ⚙️ systemd 服务与配置热重载
+- 🛡️ nftables + fwmark 策略路由
+- 📦 Python 配置生成工具 ([PyPI](https://pypi.org/project/sing-box-config/))
+
+## 快速开始
+
+### 前置要求
+
+- 目标主机: Debian/Ubuntu Linux
+- Ansible core >= 2.18
+
+### 基本部署
+
+1. 克隆仓库
+
+   ```shell
+   git clone https://github.com/ak1ra-lab/sing-box-tproxy.git
+   cd sing-box-tproxy
+   ```
+
+2. 配置 inventory
+
+   编辑 `~/.ansible/inventory/hosts.yaml`:
+
+   ```yaml
+   all:
+     hosts:
+       gateway:
+         ansible_host: 10.0.42.253
+         ansible_user: debian
+   ```
+
+3. 添加订阅
+
+   ```shell
+   ansible-vault create host_vars/gateway.yml
+   ```
+
+   内容示例:
+
+   ```yaml
+   sing_box_config_subscriptions:
+     provider:
+       type: SIP002
+       enabled: true
+       url: "https://example.com/api/subscribe?token=xxx"
+   ```
+
+4. 执行部署
+
+   ```shell
+   ansible-playbook site.yaml --ask-vault-pass
+   ```
+
+5. 验证服务
+
+   ```shell
+   ssh gateway
+   systemctl status sing-box
+   ```
+
+## 部署模式
+
+| 模式      | 场景     | 透明代理 | IP 转发 | TPROXY 监听 |
+| --------- | -------- | -------- | ------- | ----------- |
+| `mixed`   | 手动代理 | ❌       | ❌      | N/A         |
+| `local`   | 工作站   | ✅ 本机  | ❌      | 127.0.0.1   |
+| `gateway` | 网关     | ✅ 全网  | ✅      | 0.0.0.0     |
+
+配置方式: 在 `site.yaml` 或 `host_vars/` 目录下设置 `sing_box_mode` 变量.
+
+> 注意:
+>
+> - Ansible Playbook 中的 vars 优先级高于 `host_vars/`.
+> - gateway 模式下 TPROXY 必须监听 0.0.0.0 以处理来自局域网设备的流量.
+
+## 文档
+
+详细文档请参考:
+
+- `docs/architecture.md`
+  - 架构设计, 透明代理原理, fwmark 机制, nftables 规则详解
 
 ## 项目结构
 
-### PyPI package [sing-box-config](https://pypi.org/project/sing-box-config/)
+```
+sing-box-tproxy/
+├── src/sing_box_config/     # Python 配置生成工具
+├── roles/                   # Ansible 角色
+│   ├── sing_box_install/    # 安装 sing-box
+│   ├── sing_box_config/     # 配置管理
+│   └── sing_box_tproxy/     # 透明代理 (nftables/策略路由)
+├── docs/                    # 文档
+│   └── architecture.md      # 架构设计文档
+├── site.yaml                # Playbook 入口
+└── README.md                # 本文件
+```
 
-sing-box-config 只是整个项目中用于生成 sing-box 配置文件的一部分.
+## License
 
-由于 [SagerNet/sing-box](https://github.com/SagerNet/sing-box) 不像 [Dreamacro/clash](https://github.com/Dreamacro/clash) 那样支持 proxy-providers, 因此在使用第三方的代理节点时, 需要自行处理节点更新. 再加上我有一些自定义 routes 和 proxy groups 的需求, 于是编写了这个 sing-box-config, 用于定时更新 sing-box 配置文件.
-
-sing-box-config 需要读取 `config/` 目录下的两个 Jinja2 template, Ansible 将其渲染为 .json 文件作为 sing-box-config 工具的输入文件, 根据 subscriptions.url 获取到 proxies 后将两个 .json 文件合并为最终的 /etc/sing-box/config.json 文件.
-
-- [config/base.json.j2](./config/base.json.j2)
-  - sing-box 的基础配置文件, 包含 `dns`, `route` 和 `inbounds` 等不容易发生变更的配置段
-- [config/subscriptions.json.j2](./config/subscriptions.json.j2)
-  - `subscriptions` 配置是 sing-box-config 工具的自定义配置段, 合并最终配置文件前会被移除
-  - `subscriptions.type` 当前仅支持 Shadowsocks `SIP002`, 后续如有需求可另行适配
-  - `outbounds` 配置段中包含一些按地区分组与预定义的 proxy groups
-
-### Ansible playbook site.yaml 与 Ansible roles
-
-- [site.yaml](./site.yaml) 是 ansible-playbook 的入口文件.
-  - 在 playbook 的 tasks 中使用 `import_role` 静态导入了项目中的 Ansible roles.
-  - 使用 Ansible roles 封装复杂任务可以简化 playbook 的结构.
-- [roles/sing_box_install](./roles/sing_box_install/)
-  - 用于在远程主机上设置 sing-box 的 apt 仓库并安装 sing-box.
-- [roles/sing_box_config](./roles/sing_box_config/)
-  - 在远程主机上创建 proxy 用户和工作目录
-  - 安装 sing-box-config 命令行工具
-  - 可选配置 sing-box-config-updater.timer 以实现定时更新 sing-box config.json
-- [roles/sing_box_tproxy](./roles/sing_box_tproxy/)
-  - 用于将远程主机配置为 Tproxy 模式的透明代理.
-  - 包括加载必要的内核模块, 启用 IP 转发, 配置 nftables 防火墙规则, 开启 TCP BBR 拥塞控制协议等.
-  - 配置 sing-box-reload.path 监听 /etc/sing-box/config.json 文件的变化, 如发生变化则 reload sing-box 进程
-
-## 使用指南
-
-要顺利使用本项目, 需要具备一定的 Linux 和 Ansible 基础. 如果您对 Ansible 完全不了解, 可以参考 [Getting started with Ansible](https://docs.ansible.com/ansible/latest/getting_started/index.html) 快速入门.
-
-1. 安装 Ansible:
-   使用 `pipx install --include-deps ansible` 或 `uv tool install --with-executables-from ansible-core ansible` 安装 `ansible`, 注意安装后将 `${HOME}/.local/bin` 目录加入系统 PATH, 此处使用 `uv tool` 替代 `pipx`,
-
-   ```ShellSession
-      $ uv tool install --with-executables-from ansible-core ansible
-      ... ...
-      Installed 10 executables from `ansible-core`: ansible, ansible-config, ansible-console, ansible-doc, ansible-galaxy, ansible-inventory, ansible-playbook, ansible-pull, ansible-test, ansible-vault
-      Installed 1 executable: ansible-community
-   ```
-
-2. 配置 Linux 虚拟机, SSH credentials 和 [Ansible Inventory](https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html). 以下是示例配置:
-
-   ```yaml
-   # ~/.ansible/inventory/pve-sing-box-tproxy.yaml
-   all:
-     hosts:
-       pve-sing-box-tproxy-253:
-         ansible_host: 10.0.42.253
-         ansible_user: debian
-
-   pve-sing-box-tproxy:
-     hosts:
-       pve-sing-box-tproxy-253:
-   ```
-
-3. 验证主机连接性:
-
-   ```ShellSession
-   $ ansible -m ping pve-sing-box-tproxy
-   pve-sing-box-tproxy-253 | SUCCESS => {
-       "ansible_facts": {
-           "discovered_interpreter_python": "/usr/bin/python3"
-       },
-       "changed": false,
-       "ping": "pong"
-   }
-   ```
-
-4. 修改 `config/subscriptions.json.j2` 文件中的 `subscriptions` 配置段, 注意将示例配置中的 example 和 url 替换为真实的值, 目前 type 仅支持 Shadowsocks `SIP002`.
-
-   ```json
-   {
-     "subscriptions": {
-       "example": {
-         "type": "SIP002",
-         "enabled": true,
-         "exclude": ["过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"],
-         "url": "https://sub.example.com/subscriptions.txt"
-       }
-     }
-   }
-   ```
-
-5. 执行 Ansible playbook site.yaml:
-
-   ```ShellSession
-   $ ansible-playbook site.yaml -e 'playbook_hosts=pve-sing-box-tproxy'
-   ```
+MIT License. See `LICENSE` file for details.
 
 ## 参考资料
 
-- [sing-box](https://github.com/SagerNet/sing-box)
-- [Tproxy](https://sing-box.sagernet.org/configuration/inbound/tproxy/)
-- [sing-box tproxy](https://lhy.life/20231012-sing-box-tproxy/)
-- [SagerNet/serenity](https://github.com/SagerNet/serenity)
-- [SIP002](https://github.com/shadowsocks/shadowsocks-org/wiki/SIP002-URI-Scheme)
+- [sing-box 官方文档](https://sing-box.sagernet.org/)
+- [sing-box tproxy inbound](https://sing-box.sagernet.org/configuration/inbound/tproxy/)
+- [sing-box tproxy 透明代理教程](https://lhy.life/20231012-sing-box-tproxy/)
+- [nftables wiki](https://wiki.nftables.org/)
+- [SIP002 URI Scheme](https://github.com/shadowsocks/shadowsocks-org/wiki/SIP002-URI-Scheme)
+- [Ansible Documentation](https://docs.ansible.com/)
