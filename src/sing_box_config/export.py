@@ -2,6 +2,7 @@ import copy
 import logging
 import re
 from pathlib import Path
+from typing import Any
 
 import httpx
 import tenacity
@@ -11,7 +12,7 @@ from sing_box_config.parser.shadowsocks import decode_sip002_to_singbox
 
 logger = logging.getLogger(__name__)
 
-supported_types = ["SIP002"]
+SUPPORTED_TYPES = ["SIP002"]
 
 
 @tenacity.retry(
@@ -20,31 +21,63 @@ supported_types = ["SIP002"]
     before_sleep=tenacity.before_sleep_log(logger, logging.WARNING),
     reraise=True,
 )
-def fetch_url_with_retries(url: str, **kwargs) -> httpx.Response:
+def fetch_url_with_retries(url: str, **kwargs: Any) -> httpx.Response:
+    """
+    Fetch URL with exponential backoff retry strategy.
+
+    Args:
+        url: The URL to fetch
+        **kwargs: Additional arguments to pass to httpx.get()
+
+    Returns:
+        httpx.Response object
+
+    Raises:
+        httpx.HTTPError: If all retry attempts fail
+    """
     resp = httpx.get(url, **kwargs)
     resp.raise_for_status()
     return resp
 
 
-def get_proxies_from_subscriptions(name: str, subscription: dict) -> list:
+def get_proxies_from_subscriptions(
+    name: str, subscription: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """
+    Parse subscription URL and extract proxy configurations.
+
+    Args:
+        name: Subscription name for proxy tag prefix
+        subscription: Subscription configuration dict
+
+    Returns:
+        List of proxy configuration dicts
+    """
     proxies = []
     if not subscription.get("enabled", True):
         return proxies
-    if subscription["type"].upper() not in supported_types:
+    if subscription["type"].upper() not in SUPPORTED_TYPES:
+        logger.warning(
+            "Unsupported subscription type: %s (supported: %s)",
+            subscription["type"],
+            ", ".join(SUPPORTED_TYPES),
+        )
         return proxies
 
-    resp = fetch_url_with_retries(subscription["url"], follow_redirects=True)
+    try:
+        resp = fetch_url_with_retries(subscription["url"], follow_redirects=True)
+    except httpx.HTTPError as err:
+        logger.error("Failed to fetch subscription %s: %s", name, err)
+        return proxies
 
     logger.info("resp.text = %s", resp.text[:100])
-    if not resp:
-        return proxies
 
     exclude = subscription.pop("exclude", [])
     if subscription["type"].upper() == "SIP002":
         try:
             proxies_lines = b64decode(resp.text).splitlines()
         except UnicodeDecodeError as err:
-            logger.warning(err)
+            logger.warning("Failed to decode subscription %s: %s", name, err)
             proxies_lines = []
         logger.debug("url = %s, proxies_lines = %s", subscription["url"], proxies_lines)
 
@@ -53,33 +86,49 @@ def get_proxies_from_subscriptions(name: str, subscription: dict) -> list:
             if not proxy:
                 continue
             if any(re.search(p, proxy["tag"], re.IGNORECASE) for p in exclude):
+                logger.debug("Excluding proxy: %s", proxy["tag"])
                 continue
             proxies.append(proxy)
 
     return proxies
 
 
-def filter_valid_proxies(outbounds: list, proxies: list) -> None:
+def filter_valid_proxies(
+    outbounds: list[dict[str, Any]], proxies: list[dict[str, Any]]
+) -> None:
+    """
+    Filter proxies and populate outbound groups based on filter/exclude patterns.
+
+    Args:
+        outbounds: List of outbound group configurations (modified in-place)
+        proxies: List of available proxy configurations
+    """
     for outbound in outbounds:
         if all(k not in outbound.keys() for k in ["exclude", "filter"]):
             continue
 
         exclude = outbound.pop("exclude", [])
-        filter = outbound.pop("filter", [])
+        filter_patterns = outbound.pop("filter", [])
 
         for proxy in proxies:
             if any(re.search(p, proxy["tag"], re.IGNORECASE) for p in exclude):
                 continue
 
-            if any(re.search(p, proxy["tag"], re.IGNORECASE) for p in filter):
+            if any(re.search(p, proxy["tag"], re.IGNORECASE) for p in filter_patterns):
                 outbound["outbounds"].append(proxy["tag"])
 
 
-def remove_invalid_outbounds(outbounds: list) -> None:
+def remove_invalid_outbounds(outbounds: list[dict[str, Any]]) -> None:
+    """
+    Remove outbound groups that have no valid proxies.
+
+    Args:
+        outbounds: List of outbound configurations (modified in-place)
+    """
     invalid_tags = set()
     logger.debug("outbounds = %s", outbounds)
-    # 遍历 lists 时修改 lists 的长度 (如移除某些成员)，可能会导致 IndexError 或者跳过某些元素
-    # 这里需要使用 copy.deepcopy() 来避免这个问题
+
+    # Use copy to avoid modifying list during iteration
     for outbound in copy.deepcopy(outbounds):
         if "outbounds" not in outbound.keys():
             continue
@@ -87,7 +136,6 @@ def remove_invalid_outbounds(outbounds: list) -> None:
             continue
         if len(outbound["outbounds"]) == 0:
             logger.info("removing outbound = %s", outbound)
-            # 这里移除的是 copy.deepcopy() 之前的 outbounds
             outbounds.remove(outbound)
             invalid_tags.add(outbound["tag"])
 
@@ -96,35 +144,48 @@ def remove_invalid_outbounds(outbounds: list) -> None:
         return
 
     # Remove invalid tags from all outbounds' "outbounds" lists
-    logger.debug("outbounds = %s", outbounds)
     for outbound in outbounds:
         if "outbounds" not in outbound.keys():
             continue
         if not isinstance(outbound["outbounds"], list):
             continue
+
         outbound["outbounds"] = [
             tag for tag in outbound["outbounds"] if tag not in invalid_tags
         ]
 
 
 def save_config_from_subscriptions(
-    base_config: dict, subscriptions_config: dict, output_path: Path
+    base_config: dict[str, Any],
+    subscriptions_config: dict[str, Any],
+    output_path: Path,
 ) -> None:
+    """
+    Generate final sing-box configuration by merging base config with subscription proxies.
+
+    Args:
+        base_config: Base configuration dict
+        subscriptions_config: Subscriptions configuration dict
+        output_path: Path to save the generated config
+    """
     proxies = []
-    subscriptions = subscriptions_config.pop("subscriptions")
-    for name, subscription in subscriptions.items():
+    for name, subscription in subscriptions_config.items():
         proxies += get_proxies_from_subscriptions(name, subscription)
 
-    outbounds = subscriptions_config.pop("outbounds")
+    if not proxies:
+        logger.warning("No proxies found from subscriptions")
 
-    # modify outbounds directly
+    outbounds = base_config.pop("outbounds")
+
+    # Modify outbounds directly
     filter_valid_proxies(outbounds, proxies)
     remove_invalid_outbounds(outbounds)
 
     outbounds += proxies
-    base_config["outbounds"] += outbounds
+    base_config["outbounds"] = outbounds
 
     if not output_path.parent.exists():
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
     save_json(output_path, base_config)
+    logger.info("Configuration saved to %s", output_path)
