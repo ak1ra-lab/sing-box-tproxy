@@ -3,11 +3,13 @@
   ansible.builtin.file:
     path: "{{ apt_keyrings_dest | ansible.builtin.dirname }}"
     state: directory
+    mode: "0755"
 
 - name: get apt key from apt_key_url
   ansible.builtin.get_url:
     url: "{{ apt_key_url }}"
     dest: "{{ apt_keyrings_dest }}"
+    mode: "0644"
 
 - name: add apt repo in DEB822 format
   vars:
@@ -40,3 +42,9 @@
     name: "{{ apt_repo_packages }}"
     update_cache: true
     state: present
+
+- name: ensure proxy_user exists
+  ansible.builtin.include_tasks: proxy_user.yml
+
+- name: template systemd service
+  ansible.builtin.include_tasks: systemd.yml

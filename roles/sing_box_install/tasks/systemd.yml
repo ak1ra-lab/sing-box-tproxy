@@ -1,0 +1,36 @@
+---
+- name: create drop-in directory
+  ansible.builtin.file:
+    path: /etc/systemd/system
+    state: directory
+    mode: "0755"
+
+- name: template systemd service on remote
+  ansible.builtin.template:
+    src: "{{ template }}"
+    dest: "{{ ['/', template] | ansible.builtin.path_join | ansible.builtin.splitext | first }}"
+    mode: "0644"
+  loop:
+    - etc/systemd/system/sing-box.service.j2
+    - etc/systemd/system/sing-box-reload.path.j2
+    - etc/systemd/system/sing-box-reload.service.j2
+  loop_control:
+    loop_var: template
+  notify:
+    - systemctl daemon-reload
+
+- name: flush handlers to ensure daemon-reload completes
+  ansible.builtin.meta: flush_handlers
+
+- name: ensure sing-box-reload.path started and enabled
+  ansible.builtin.systemd_service:
+    name: sing-box-reload.path
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: ensure sing-box.service enabled
+  ansible.builtin.systemd_service:
+    name: sing-box.service
+    enabled: true
+    daemon_reload: true

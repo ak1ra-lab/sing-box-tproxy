@@ -1,0 +1,30 @@
+---
+- name: ensure proxy group exists
+  ansible.builtin.group:
+    name: "{{ proxy_group.name }}"
+    gid: "{{ proxy_group.gid | int }}"
+    state: present
+
+- name: ensure proxy user exists
+  ansible.builtin.user:
+    name: "{{ proxy_user.name }}"
+    uid: "{{ proxy_user.uid | int }}"
+    home: "{{ proxy_user.home }}"
+    shell: "{{ proxy_user.shell }}"
+    group: "{{ proxy_group.name }}"
+    state: present
+
+- name: create drop-in directory
+  ansible.builtin.file:
+    path: "{{ directory }}"
+    owner: "{{ proxy_user.name }}"
+    group: "{{ proxy_group.name }}"
+    mode: "0700"
+    state: directory
+  loop:
+    - "{{ sing_box_etc_dir }}"
+    - "{{ sing_box_log_dir }}"
+    - "{{ sing_box_state_dir }}"
+    - "{{ sing_box_config_dir }}"
+  loop_control:
+    loop_var: directory
