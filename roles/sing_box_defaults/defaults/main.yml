@@ -1,4 +1,16 @@
 ---
+# sing-box 安装模式: [mixed, local, gateway]
+# mixed: 仅安装并启用 mixed port, 不配置透明代理, 需要额外配置 system proxy
+# local: 本地透明代理, 不代理内网中其它主机的流量
+# gateway: 用作透明代理网关, 这也是目前的默认行为
+sing_box_mode: gateway
+
+# 基于模式自动计算的特性开关 (内部使用, 不要手动修改)
+_sing_box_enable_tproxy: "{{ sing_box_mode in ['local', 'gateway'] }}"
+_sing_box_enable_nftables: "{{ sing_box_mode in ['local', 'gateway'] }}"
+_sing_box_enable_ip_forward: "{{ sing_box_mode == 'gateway' }}"
+_sing_box_enable_netplan_routing: "{{ sing_box_mode in ['local', 'gateway'] }}"
+
 # https://wiki.debian.org/SystemGroups#Groups_with_an_associated_user
 # proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
 proxy_user:
@@ -30,3 +42,12 @@ sing_box_log_dir: /var/log/sing-box
 sing_box_state_dir: /var/lib/sing-box
 sing_box_venv_dir: "{{ sing_box_state_dir }}/.venv"
 sing_box_config_dir: "{{ sing_box_state_dir }}/config"
+
+# 新增一个允许不启用 systemd timer 的选项以应对当前订阅链接强制"阅后即焚"的状况
+sing_box_config_updater_service_state: started
+sing_box_config_updater_timer_state: started
+sing_box_config_updater_timer_enabled: true
+sing_box_config_updater_timer_interval: 1d
+
+# ansible.builtin.systemd_service active state
+sing_box_config_updater_service_active_state: ['started', 'restarted', 'reloaded']
