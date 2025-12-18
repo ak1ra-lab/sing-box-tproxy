@@ -1,5 +1,5 @@
 ---
-- name: uv build on current repo
+- name: uv build on src/sing_box_config
   become: false
   ansible.builtin.command: uv build --wheel
   delegate_to: localhost
@@ -15,16 +15,16 @@
   ansible.builtin.debug:
     var: dist_wheel
 
-- name: copy dist_wheel to remote
-  ansible.builtin.copy:
-    src: "{{ dist_wheel }}"
-    dest: "{{ sing_box_state_dir }}/"
-
 - name: install dist_wheel on remote venv
   vars:
     relpath: "{{ dist_wheel | ansible.builtin.relpath(playbook_dir) }}"
     dist_wheel_dest: "{{ [sing_box_state_dir, dist_wheel | ansible.builtin.basename] | ansible.builtin.path_join }}"
   block:
+    - name: copy dist_wheel to remote
+      ansible.builtin.copy:
+        src: "{{ dist_wheel }}"
+        dest: "{{ dist_wheel_dest }}"
+
     - name: install dist_wheel on remote venv
       ansible.builtin.pip:
         name: "file://{{ dist_wheel_dest }}"

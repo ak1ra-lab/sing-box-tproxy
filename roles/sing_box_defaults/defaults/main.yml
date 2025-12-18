@@ -50,4 +50,4 @@ sing_box_config_updater_timer_enabled: true
 sing_box_config_updater_timer_interval: 1d
 
 # ansible.builtin.systemd_service active state
-sing_box_config_updater_service_active_state: ['started', 'restarted', 'reloaded']
+sing_box_config_updater_service_active_state: ['started', 'restarted']

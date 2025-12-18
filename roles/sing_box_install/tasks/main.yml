@@ -44,7 +44,7 @@
     state: present
 
 - name: ensure proxy_user exists
-  ansible.builtin.include_tasks: proxy_user.yml
+  ansible.builtin.import_tasks: proxy_user.yml
 
 - name: template systemd service
-  ansible.builtin.include_tasks: systemd.yml
+  ansible.builtin.import_tasks: systemd.yml

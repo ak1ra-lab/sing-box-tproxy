@@ -10,6 +10,9 @@
     # gateway: 用作透明代理网关, 这也是目前的默认行为
     sing_box_mode: gateway
 
+    # 对应 sing-box 中 type = mixed 的 inbounds
+    sing_box_mixed_port: 7890
+
     # 对应 sing-box 中 type = tproxy 的 inbounds
     sing_box_tproxy_port: 7895
 
