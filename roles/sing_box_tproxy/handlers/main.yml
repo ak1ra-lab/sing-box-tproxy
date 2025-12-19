@@ -11,8 +11,3 @@
 
 - name: netplan apply
   ansible.builtin.command: netplan apply
-
-- name: systemctl restart sing-box.service
-  ansible.builtin.systemd_service:
-    name: sing-box.service
-    state: restarted

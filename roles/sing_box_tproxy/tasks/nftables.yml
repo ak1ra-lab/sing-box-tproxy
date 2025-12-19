@@ -1,0 +1,37 @@
+---
+- name: ensure required kernel module is loaded
+  community.general.modprobe:
+    name: "{{ module }}"
+    state: present
+    persistent: present
+  loop:
+    - nft_tproxy
+    - nft_socket
+    - nf_tproxy_ipv4
+    - nf_tproxy_ipv6
+  loop_control:
+    loop_var: module
+
+- name: copy nftables.service systemd service unit
+  ansible.builtin.copy:
+    src: etc/systemd/system/nftables.service
+    dest: /etc/systemd/system/nftables.service
+    mode: "0644"
+  notify:
+    - systemctl daemon-reload
+
+- name: flush handlers to ensure daemon-reload completes
+  ansible.builtin.meta: flush_handlers
+
+- name: template nftables.conf on remote
+  ansible.builtin.template:
+    src: etc/nftables.conf.j2
+    dest: /etc/nftables.conf
+    mode: "0755"
+  notify:
+    - systemctl restart nftables.service
+
+- name: ensure nftables.service enabled
+  ansible.builtin.systemd_service:
+    name: nftables.service
+    enabled: true
