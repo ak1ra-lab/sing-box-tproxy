@@ -6,8 +6,8 @@ on:
     paths:
       - "docs/**"
       - "README.md"
-      - "mkdocs.yml"
-      - ".github/workflows/docs.yml"
+      - "mkdocs.yaml"
+      - ".github/workflows/docs.yaml"
   workflow_dispatch:
 
 permissions:
@@ -32,10 +32,10 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Install the project
-        run: uv sync --locked --all-extras --dev
+        run: uv sync --locked --all-extras --group docs
 
       - name: Build documentation
-        run: mkdocs build --strict
+        run: uv run mkdocs build --strict
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4

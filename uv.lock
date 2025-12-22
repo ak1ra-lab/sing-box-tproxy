@@ -897,7 +897,9 @@ dev = [
     { name = "ruff" },
 ]
 docs = [
+    { name = "mkdocs" },
     { name = "mkdocs-material" },
+    { name = "pymdown-extensions" },
 ]
 lint = [
     { name = "ruff" },
@@ -922,7 +924,11 @@ dev = [
     { name = "pytest-cov", specifier = ">=6.0.0" },
     { name = "ruff", specifier = ">=0.9.4" },
 ]
-docs = [{ name = "mkdocs-material", specifier = ">=9.7.1" }]
+docs = [
+    { name = "mkdocs", specifier = ">=1.6.1" },
+    { name = "mkdocs-material", specifier = ">=9.7.1" },
+    { name = "pymdown-extensions", specifier = ">=10.19.1" },
+]
 lint = [{ name = "ruff", specifier = ">=0.9.4" }]
 tests = [
     { name = "pytest", specifier = ">=8.3.4" },
