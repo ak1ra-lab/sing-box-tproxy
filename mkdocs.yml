@@ -1,3 +1,4 @@
+---
 site_name: sing-box-tproxy
 site_description: Automated sing-box TPROXY transparent proxy deployment with Ansible
 site_author: ak1ra-lab
