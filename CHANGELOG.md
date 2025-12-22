@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2025-12-22
+
+### 🚀 Features
+
+- introduce sing_box_defaults role with mode-based deployment
+- *(sing_box_tproxy)* add mode-aware tproxy and toggle script
+- add pre-flight validation checks
+- *(playbook)* integrate mode-based deployment and validation
+- add nftables.service with ExecStartPre and reorganize task files
+
+### 🚜 Refactor
+
+- *(sing_box_install)* modularize tasks and relocate systemd templates
+- *(sing_box_config)* consolidate templates and improve configuration
+- *(export.py)* improve code quality with type hints and docs
+- use import_tasks instead of include_tasks
+
+### 📚 Documentation
+
+- update README with deployment modes
+- add docs/architecture.md
+- add mkdocs.yml and mkdocs-material deps
+
+### ⚙️ Miscellaneous Tasks
+
+- use tenacity retries on httpx.get, also rename cmd.py to main.py
+- uv sync -U, pre-commit autoupdate and fixup README.md
+- add .editorconfig, .yamlfmt.yaml and update .gitignore
+- add clash_api options in main.yml and base.json.j2
+- uv sync -U and pre-commit autoupdate
+- add task to delete dist/ directory before uv build
+- improve comments on defaults and playbook
+- add GitHub Actions workflow for documentation deployment
+- apply yamlfmt
+- bump version
+
 ## [0.5.0] - 2025-11-01
 
 ### 🚀 Features
