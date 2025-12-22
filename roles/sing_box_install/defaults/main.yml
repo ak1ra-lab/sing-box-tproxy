@@ -7,5 +7,6 @@ apt_repo_uris: https://deb.sagernet.org/
 apt_repo_suites: "*"
 apt_repo_components: "*"
 
+# [sing-box, sing-box-beta]
 apt_repo_packages:
   - sing-box

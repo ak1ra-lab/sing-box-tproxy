@@ -17,23 +17,21 @@ sing_box_validate_subscription_urls: false
 #   ansible-vault encrypt group_vars/pve-sing-box-tproxy/vault.yml
 # sing_box_config_subscriptions 的内容将会原样写入 /var/lib/sing-box/config/subscriptions.json
 # 而 /var/lib/sing-box/config/subscriptions.json 会作为 sing-box-config 程序的输入文件
-sing_box_config_subscriptions:
-  {}
-  # provider_example_1:
-  #   type: SIP002
-  #   enabled: true
-  #   url: "https://sub.example.com/api/v1/client/subscribe?token=YOUR_TOKEN_HERE"
-  #   exclude:
-  #     - "过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"
+sing_box_config_subscriptions: {}
+#   provider_example_1:
+#     type: SIP002
+#     enabled: true
+#     url: "https://sub.example.com/api/v1/client/subscribe?token=YOUR_TOKEN_HERE"
+#     exclude:
+#       - "过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"
+#   provider_example_2:
+#     type: SIP002
+#     enabled: false
+#     url: "https://sub.example.net/api/v1/client/subscribe?token=YOUR_TOKEN_HERE"
+#     exclude:
+#       - "过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"
 
-  # provider_example_2:
-  #   type: SIP002
-  #   enabled: false
-  #   url: "https://sub.example.net/api/v1/client/subscribe?token=YOUR_TOKEN_HERE"
-  #   exclude:
-  #     - "过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"
-
-# sing_box_config_base_template 用于从外部传入不同的 template 覆盖 templates/base.json.j2
+# 用于从外部传入不同的 template 覆盖 templates/base.json.j2
 # sing_box_config_base_template: "{{ playbook_dir }}/config/base.json.j2"
 sing_box_config_base_template: base.json.j2
 
