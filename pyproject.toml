@@ -50,3 +50,6 @@ dev = [
     { include-group = "lint" },
     "pre-commit>=4.2.0",
 ]
+docs = [
+    "mkdocs-material>=9.7.1",
+]

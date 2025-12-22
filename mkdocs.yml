@@ -1,0 +1,67 @@
+site_name: sing-box-tproxy
+site_description: Automated sing-box TPROXY transparent proxy deployment with Ansible
+site_author: ak1ra-lab
+site_url: https://ak1ra-lab.github.io/sing-box-tproxy
+
+repo_name: ak1ra-lab/sing-box-tproxy
+repo_url: https://github.com/ak1ra-lab/sing-box-tproxy
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: zh
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+
+plugins:
+  - search:
+      lang:
+        - en
+        - zh
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ak1ra-lab/sing-box-tproxy
