@@ -1,4 +1,12 @@
 ---
+- name: delete dist/ before uv build
+  become: false
+  ansible.builtin.file:
+    path: "{{ [playbook_dir, 'dist'] | ansible.builtin.path_join }}"
+    state: absent
+  delegate_to: localhost
+  run_once: true
+
 - name: uv build on src/sing_box_config
   become: false
   ansible.builtin.command: uv build --wheel
