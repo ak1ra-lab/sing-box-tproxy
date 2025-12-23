@@ -3,3 +3,6 @@
 
 # sing-box 作为 tproxy gateway 时有必要开启 TCP BBR 吗? 以往都是在 vps 侧设置
 tcp_bbr_enabled: true
+
+# 是否启用 IPv6
+_sing_box_enable_ipv6: "{{ ansible_default_ipv6 is defined and ansible_default_ipv6.interface is defined }}"

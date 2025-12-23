@@ -1,6 +1,10 @@
 # /etc/netplan/99-sing_box_tproxy.yaml
 # ip -f inet rule add fwmark $PROXY_MARK lookup $PROXY_ROUTE_TABLE
 # ip -f inet route add local default dev $INTERFACE table $PROXY_ROUTE_TABLE
+{% if _sing_box_enable_ipv6 %}
+# ip -f inet6 rule add fwmark $PROXY_MARK lookup $PROXY_ROUTE_TABLE
+# ip -f inet6 route add local default dev $INTERFACE6 table $PROXY_ROUTE_TABLE
+{% endif %}
 network:
   version: 2
   ethernets:
@@ -9,7 +13,17 @@ network:
         - to: 0.0.0.0/0
           type: local
           table: {{ sing_box_proxy_route_table }}
+{% if _sing_box_enable_ipv6 %}
+        - to: ::/0
+          type: local
+          table: {{ sing_box_proxy_route_table }}
+{% endif %}
       routing-policy:
         - from: 0.0.0.0/0
           mark: {{ sing_box_proxy_mark }}
           table: {{ sing_box_proxy_route_table }}
+{% if _sing_box_enable_ipv6 %}
+        - from: ::/0
+          mark: {{ sing_box_proxy_mark }}
+          table: {{ sing_box_proxy_route_table }}
+{% endif %}
