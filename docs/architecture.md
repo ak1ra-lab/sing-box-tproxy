@@ -85,9 +85,9 @@ App → nftables (output) → fwmark 224 → TPROXY → sing-box → Internet
 
 透明代理基于 Linux 内核特性:
 
-1. Netfilter/nftables - packet filtering and marking
-2. Policy routing - fwmark-based routing decision
-3. TPROXY - transparent TCP/UDP hijacking
+- Netfilter/nftables - packet filtering and marking
+- Policy routing - fwmark-based routing decision
+- TPROXY - transparent TCP/UDP hijacking
 
 ### 数据流处理过程
 
@@ -146,9 +146,9 @@ local default dev lo scope host
 
 工作原理:
 
-1. sing-box 以 proxy 用户 (UID=13, GID=13) 身份运行
-2. 该用户发出的所有流量被标记为 225
-3. nftables 规则直接放行, 不进入 TPROXY 处理
+- sing-box 以 proxy 用户 (UID=13, GID=13) 身份运行
+- 该用户发出的所有流量被标记为 225
+- nftables 规则直接放行, 不进入 TPROXY 处理
 
 nftables 规则:
 
@@ -190,9 +190,9 @@ flowchart TD
 
 实现关键:
 
-1. sing-box 使用独立系统用户运行 (UID=13)
-2. UID/GID 是内核级稳定标识
-3. nftables 优先匹配 UID, 直接放行 sing-box 流量
+- sing-box 使用独立系统用户运行 (UID=13)
+- UID/GID 是内核级稳定标识
+- nftables 优先匹配 UID, 直接放行 sing-box 流量
 
 ## 策略路由详解 {#policy-routing-details}
 
@@ -239,9 +239,9 @@ local default dev lo scope host
 
 为什么使用 local 路由:
 
-1. 允许绑定远程地址: TPROXY 需要绑定原始目标地址 (如 8.8.8.8:53)
-2. 配合 SO_TRANSPARENT: 套接字选项允许绑定非本地地址
-3. 防止真正路由: dev lo 确保数据包不会被发送到物理接口
+- 允许绑定远程地址: TPROXY 需要绑定原始目标地址 (如 8.8.8.8:53)
+- 配合 SO_TRANSPARENT: 套接字选项允许绑定非本地地址
+- 防止真正路由: dev lo 确保数据包不会被发送到物理接口
 
 ### Netplan 配置示例
 
@@ -340,40 +340,30 @@ chain prerouting_tproxy {
 
 规则执行顺序:
 
-1. **DNS 请求直接劫持** (最高优先级)
-
-   - 确保局域网 DNS 请求被正确捕获
-   - 必须在任何绕过规则之前执行
-   - 防止 DNS 请求被本地或保留地址规则提前放行
-
-2. **拒绝直接访问 TPROXY 端口** (防止回环攻击)
-
-   - 阻止恶意客户端直接连接 7895 端口
-   - 防止意外的服务发现和安全风险
-
-3. **本地流量和保留地址放行** (最常见的排除场景)
-
-   - `fib daddr type local`: 本地地址 (127.0.0.0/8)
-   - `@reserved_ip4`: RFC 定义的私有/保留地址
-   - 规则紧密相邻, 利于 CPU 缓存
-
-4. **用户自定义排除地址放行**
-
-   - 支持动态添加自定义绕过规则
-   - 通过 `nft` 命令管理 `custom_bypassed_ip4` 集合
-
-5. **已建立的透明代理连接标记后放行**
-
-   - `socket transparent 1`: 检测已被 TPROXY 劫持的连接
-   - 避免重复处理, 提升性能
-
-6. **其他流量 TPROXY + 标记**
-   - 最终匹配所有需要代理的流量
-   - 同时设置 fwmark 用于策略路由
+- DNS 请求直接劫持 (最高优先级)
+  - 确保局域网 DNS 请求被正确捕获
+  - 必须在任何绕过规则之前执行
+  - 防止 DNS 请求被本地或保留地址规则提前放行
+- 拒绝直接访问 TPROXY 端口 (防止回环攻击)
+  - 阻止恶意客户端直接连接 7895 端口
+  - 防止意外的服务发现和安全风险
+- 本地流量和保留地址放行 (最常见的排除场景)
+  - `fib daddr type local`: 本地地址 (127.0.0.0/8)
+  - `@reserved_ip4`: RFC 定义的私有/保留地址
+  - 规则紧密相邻, 利于 CPU 缓存
+- 用户自定义排除地址放行
+  - 支持动态添加自定义绕过规则
+  - 通过 `nft` 命令管理 `custom_bypassed_ip4` 集合
+- 已建立的透明代理连接标记后放行
+  - `socket transparent 1`: 检测已被 TPROXY 劫持的连接
+  - 避免重复处理, 提升性能
+- 其他流量 TPROXY + 标记
+  - 最终匹配所有需要代理的流量
+  - 同时设置 fwmark 用于策略路由
 
 关键设计:
 
-- **DNS 规则必须放在最前面**: 在 gateway 模式下, 来自局域网的 DNS 请求必须在任何绕过规则之前被捕获, 否则可能被 `fib daddr type local` 或 `@reserved_ip4` 规则提前放行导致 DNS 解析失败
+- DNS 规则必须放在最前面: 在 gateway 模式下, 来自局域网的 DNS 请求必须在任何绕过规则之前被捕获, 否则可能被 `fib daddr type local` 或 `@reserved_ip4` 规则提前放行导致 DNS 解析失败
 - 提前拒绝无效流量, 减少后续规则检查
 - 本地和保留地址检查紧密相邻, 利于 CPU 缓存
 
@@ -417,54 +407,40 @@ chain output_tproxy {
 
 规则优化:
 
-1. **规则 1: 网卡过滤优先级最高**
-
-   - 快速排除非目标接口流量 (如 docker0, lo)
-   - 减少不必要的规则遍历
-
-2. **规则 2: UID/GID 检查次之**
-
-   - sing-box 持续产生大量出站流量
-   - 提前匹配可减少 90%+ 后续规则检查开销
-
-3. **规则 3: 绕过已标记流量**
-
-   - 防止重复标记
-   - 配合其他工具使用 fwmark 225 时自动放行
-
-4. **规则 4: DNS 规则前置**
-
-   - 必须在本地/保留地址检查之前
-   - 确保本机 DNS 请求 (如 127.0.0.53:53) 被正确代理
-   - 避免被 `fib daddr type local` 规则提前放行
-
-5. **规则 5: 绕过 NetBIOS 和 SMB**
-
-   - 端口: 137 (netbios-ns), 138 (netbios-dgm), 139 (netbios-ssn), 445 (microsoft-ds)
-   - 防止局域网文件共享流量被代理
-   - Windows 网络发现和文件共享正常工作
-
-6. **规则 6-7: 本地和保留地址检查**
-
-   - CPU 缓存友好, 减少内存访问
-   - 处理常见的本地流量场景
-
-7. **规则 8: 用户自定义排除地址**
-
-   - 灵活扩展性
-
-8. **规则 9: 标记其他流量**
-   - 最终匹配所有需要代理的流量
-   - 仅标记不使用 TPROXY (配合策略路由工作)
+- 规则 1: 网卡过滤优先级最高
+  - 快速排除非目标接口流量 (如 docker0, lo)
+  - 减少不必要的规则遍历
+- 规则 2: UID/GID 检查次之
+  - sing-box 持续产生大量出站流量
+  - 提前匹配可减少 90%+ 后续规则检查开销
+- 规则 3: 绕过已标记流量
+  - 防止重复标记
+  - 配合其他工具使用 fwmark 225 时自动放行
+- 规则 4: DNS 规则前置
+  - 必须在本地/保留地址检查之前
+  - 确保本机 DNS 请求 (如 127.0.0.53:53) 被正确代理
+  - 避免被 `fib daddr type local` 规则提前放行
+- 规则 5: 绕过 NetBIOS 和 SMB
+  - 端口: 137 (netbios-ns), 138 (netbios-dgm), 139 (netbios-ssn), 445 (microsoft-ds)
+  - 防止局域网文件共享流量被代理
+  - Windows 网络发现和文件共享正常工作
+- 规则 6-7: 本地和保留地址检查
+  - CPU 缓存友好, 减少内存访问
+  - 处理常见的本地流量场景
+- 规则 8: 用户自定义排除地址
+  - 灵活扩展性
+- 规则 9: 标记其他流量
+  - 最终匹配所有需要代理的流量
+  - 仅标记不使用 TPROXY (配合策略路由工作)
 
 关键优化:
 
-- **网卡过滤最优先**: 快速排除非目标接口流量
-- **UID/GID 检查次之**: 大幅减少 sing-box 自身流量的规则遍历开销
-- **DNS 规则前置**: 确保本机 DNS 请求 (如 systemd-resolved 的 127.0.0.53:53) 被正确代理
-- **NetBIOS/SMB 排除**: 保证局域网文件共享和服务发现正常工作
-- **本地和保留地址检查合并**: CPU 缓存友好
-- **仅标记不使用 TPROXY**: output 链配合策略路由工作
+- 网卡过滤最优先: 快速排除非目标接口流量
+- UID/GID 检查次之: 大幅减少 sing-box 自身流量的规则遍历开销
+- DNS 规则前置: 确保本机 DNS 请求 (如 systemd-resolved 的 127.0.0.53:53) 被正确代理
+- NetBIOS/SMB 排除: 保证局域网文件共享和服务发现正常工作
+- 本地和保留地址检查合并: CPU 缓存友好
+- 仅标记不使用 TPROXY: output 链配合策略路由工作
 
 ### nftables vs iptables
 
@@ -519,22 +495,18 @@ gateway 模式 (默认):
 
 关键差异说明:
 
-1. TPROXY 监听地址:
-
-   - local 模式: 监听 127.0.0.1 (仅处理本机流量)
-   - gateway 模式: 监听 0.0.0.0 (处理本机和转发流量)
-   - gateway 模式必须监听 0.0.0.0: nftables TPROXY 机制虽在内核层劫持, 但来自局域网设备的流量源地址非 127.0.0.1, 若 sing-box 仅监听 127.0.0.1 则无法正确处理
-   - nftables 显式拒绝直接访问 TPROXY 端口的流量 (防回环)
-
-2. local vs gateway 唯一区别:
-
-   - IP forwarding 开关 (sysctl net.ipv4.ip_forward)
-   - gateway 模式处理转发流量, local 模式仅处理本机流量
-   - nftables 规则集完全相同
-
-3. Toggle 脚本仅用于 local 模式:
-   - 工作站/笔记本需要灵活切换透明代理
-   - gateway 模式通常持续运行, 无需切换
+- TPROXY 监听地址:
+  - local 模式: 监听 127.0.0.1 (仅处理本机流量)
+  - gateway 模式: 监听 0.0.0.0 (处理本机和转发流量)
+  - gateway 模式必须监听 0.0.0.0: nftables TPROXY 机制虽在内核层劫持, 但来自局域网设备的流量源地址非 127.0.0.1, 若 sing-box 仅监听 127.0.0.1 则无法正确处理
+  - nftables 显式拒绝直接访问 TPROXY 端口的流量 (防回环)
+- local vs gateway 唯一区别:
+  - IP forwarding 开关 (sysctl net.ipv4.ip_forward)
+  - gateway 模式处理转发流量, local 模式仅处理本机流量
+  - nftables 规则集完全相同
+- Toggle 脚本仅用于 local 模式:
+  - 工作站/笔记本需要灵活切换透明代理
+  - gateway 模式通常持续运行, 无需切换
 
 ### 部署选型建议
 
