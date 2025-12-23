@@ -61,9 +61,6 @@ table inet sing_box_tproxy {
 		# DNS 透明代理
 		meta l4proto { tcp, udp } th dport 53 tproxy to :$TPROXY_PORT accept comment "DNS 透明代理"
 
-		# 绕过自定义地址
-		ip daddr @custom_bypassed_ip4 accept comment "绕过自定义地址"
-
 		# 拒绝直接访问 tproxy 端口, 防止回环
 		fib daddr type local meta l4proto { tcp, udp } \
 			th dport $TPROXY_PORT reject with icmpx type host-unreachable comment "拒绝直接访问 tproxy 端口, 防止回环"
@@ -73,6 +70,9 @@ table inet sing_box_tproxy {
 
 		# 绕过保留地址
 		ip daddr @reserved_ip4 accept comment "绕过保留地址"
+
+		# 绕过自定义地址
+		ip daddr @custom_bypassed_ip4 accept comment "绕过自定义地址"
 
 		# 绕过已建立透明代理连接
 		meta l4proto tcp socket transparent 1 meta mark set $PROXY_MARK accept comment "绕过已建立透明代理连接"
@@ -98,16 +98,16 @@ table inet sing_box_tproxy {
 		meta l4proto { tcp, udp } th dport 53 meta mark set $PROXY_MARK accept comment "重路由 DNS"
 
 		# 绕过 NetBIOS
-		udp dport { netbios-ns, netbios-dgm, netbios-ssn } accept comment "绕过 NetBIOS"
-
-		# 绕过自定义地址
-		ip daddr @custom_bypassed_ip4 accept comment "绕过自定义地址"
+		udp dport { netbios-ns, netbios-dgm, netbios-ssn, microsoft-ds } accept comment "绕过 NetBIOS"
 
 		# 绕过本机流量
 		fib daddr type local accept comment "绕过本机流量"
 
 		# 绕过保留地址
 		ip daddr @reserved_ip4 accept comment "绕过保留地址"
+
+		# 绕过自定义地址
+		ip daddr @custom_bypassed_ip4 accept comment "绕过自定义地址"
 
 		# 为其他流量设置 PROXY_MARK 标记
 		meta l4proto { tcp, udp } meta mark set $PROXY_MARK comment "为其他流量设置 PROXY_MARK 标记"
