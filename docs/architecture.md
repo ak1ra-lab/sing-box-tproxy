@@ -18,25 +18,16 @@
 
 sing-box-tproxy 由以下核心组件构成:
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                  sing-box-tproxy Stack                  │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │   sing-box   │  │   nftables   │  │ Policy Route │   │
-│  │   (proxy)    │  │  (filtering) │  │   (fwmark)   │   │
-│  └──────────────┘  └──────────────┘  └──────────────┘   │
-│         ▲                 ▲                  ▲          │
-│         │                 │                  │          │
-│         └─────────────────┴──────────────────┘          │
-│                    TPROXY Port 7895                     │
-│                                                         │
-├─────────────────────────────────────────────────────────┤
-│              Linux Kernel Netfilter/Routing             │
-├─────────────────────────────────────────────────────────┤
-│                   Network Interface                     │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    A[sing-box-tproxy Stack] --> B[sing-box<br/>proxy service]
+    A --> C[nftables<br/>packet filtering]
+    A --> D[Policy Route<br/>fwmark routing]
+    B <--> E[TPROXY Port 7895]
+    C <--> E
+    D <--> E
+    E --> F[Linux Kernel<br/>Netfilter/Routing]
+    F --> G[Network Interface]
 ```
 
 ### 组件职责
@@ -53,34 +44,40 @@ sing-box-tproxy 由以下核心组件构成:
 
 ### gateway 模式
 
-```
-                    Internet
-                       │
-              ┌────────┴────────┐
-              │   sing-box GW   │
-              └────────┬────────┘
-                       │ LAN
-         ┌─────────────┼─────────────┐
-         │             │             │
-    ┌────┴───┐    ┌────┴───┐    ┌────┴────┐
-    │  PC-1  │    │  PC-2  │    │  Phone  │
-    └────────┘    └────────┘    └─────────┘
+```mermaid
+graph TB
+    Internet((Internet))
+    GW[sing-box Gateway<br/>10.0.42.253]
+    PC1[PC-1<br/>10.0.42.10]
+    PC2[PC-2<br/>10.0.42.20]
+    Phone[Phone<br/>10.0.42.30]
 
-Traffic flow:
+    Internet --- GW
+    GW --- LAN{LAN Switch}
+    LAN --- PC1
+    LAN --- PC2
+    LAN --- Phone
+```
+
+流量路径:
+
+```
 PC-1 → gateway → nftables (prerouting) → fwmark 224 → TPROXY → sing-box → Internet
 ```
 
 ### Local 模式
 
-```
-                    Internet
-                       │
-              ┌────────┴────────┐
-              │   Workstation   │
-              │   (sing-box)    │
-              └─────────────────┘
+```mermaid
+graph TB
+    Internet((Internet))
+    WS[Workstation<br/>with sing-box]
 
-Traffic flow:
+    Internet --- WS
+```
+
+流量路径:
+
+```
 App → nftables (output) → fwmark 224 → TPROXY → sing-box → Internet
 ```
 
@@ -94,48 +91,14 @@ App → nftables (output) → fwmark 224 → TPROXY → sing-box → Internet
 
 ### 数据流处理过程
 
-```
-     ┌──────────────────────┐
-     │     Application      │
-     └──────────┬───────────┘
-                │ 1. Send packet
-                ▼
-┌───────────────────────────────────┐
-│  Netfilter (nftables)             │
-│  - Check destination address      │
-│  - Mark fwmark=224                │
-└────────────────┬──────────────────┘
-                 │ 2. Marked packet
-                 ▼
-┌───────────────────────────────────┐
-│  Policy routing (ip rule)         │
-│  - fwmark 224 → table 224         │
-└────────────────┬──────────────────┘
-                 │ 3. Lookup table 224
-                 ▼
-┌───────────────────────────────────┐
-│  Routing table 224                │
-│  - local default dev lo           │
-└────────────────┬──────────────────┘
-                 │ 4. Route to local
-                 ▼
-┌───────────────────────────────────┐
-│  TPROXY listen port (7895)        │
-│  - Hijack connection              │
-│  - Apply proxy rules              │
-└────────────────┬──────────────────┘
-                 │ 5. Proxied traffic
-                 ▼
-┌───────────────────────────────────┐
-│  sing-box outbound (proxy user)   │
-│  - fwmark=225 mark                │
-│  - Bypass tproxy rules            │
-└────────────────┬──────────────────┘
-                 │ 6. To Internet
-                 ▼
-         ┌───────────────┐
-         │   Internet    │
-         └───────────────┘
+```mermaid
+flowchart TD
+    A[Application] -->|1. Send packet| B[Netfilter nftables]
+    B -->|2. Check rules<br/>Mark fwmark=224| C[Policy routing]
+    C -->|3. Lookup table 224| D[Routing table 224<br/>local default dev lo]
+    D -->|4. Route to local| E[TPROXY Port 7895]
+    E -->|5. Hijack connection<br/>Apply proxy rules| F[sing-box outbound<br/>proxy user, fwmark=225]
+    F -->|6. Bypass tproxy rules<br/>To Internet| G((Internet))
 ```
 
 ## fwmark 机制 {#fwmark-mechanism}
@@ -204,42 +167,25 @@ meta skuid $PROXY_UID meta skgid $PROXY_GID \
 
 单 fwmark 循环问题:
 
-```
-┌───────────────────────────────────┐
-│ 1. App send packet                │
-└────────────────┬──────────────────┘
-                 ▼
-┌───────────────────────────────────┐
-│ 2. nftables mark fwmark=224       │
-└────────────────┬──────────────────┘
-                 ▼
-┌───────────────────────────────────┐
-│ 3. Route to TPROXY (table 224)    │
-└────────────────┬──────────────────┘
-                 ▼
-┌───────────────────────────────────┐
-│ 4. sing-box process and send      │
-└────────────────┬──────────────────┘
-                 ▼
-┌───────────────────────────────────┐
-│ 5. nftables mark fwmark=224 (loop)│
-└────────────────┬──────────────────┘
-                 ▼
-          (back to step 3)
+```mermaid
+flowchart LR
+    A[App send packet] --> B[nftables mark fwmark=224]
+    B --> C[Route to TPROXY table 224]
+    C --> D[sing-box process and send]
+    D --> B
 ```
 
 双 fwmark 解决方案:
 
-```
-App → nftables (mark=224) → table 224 → TPROXY
-                                          │
-                                      sing-box (UID=13)
-                                          │
-                          nftables (detect UID=13, mark=225, accept)
-                                          │
-                                      main table
-                                          │
-                                      Internet
+```mermaid
+flowchart TD
+    A[App] --> B[nftables<br/>mark=224]
+    B --> C[table 224]
+    C --> D[TPROXY]
+    D --> E[sing-box<br/>UID=13]
+    E --> F[nftables<br/>detect UID=13<br/>mark=225, accept]
+    F --> G[main table]
+    G --> H((Internet))
 ```
 
 实现关键:
@@ -358,7 +304,7 @@ table inet sing_box_tproxy {
 }
 ```
 
-### prerouting_tproxy (gateway 模式专用)
+### prerouting_tproxy
 
 处理来自 LAN 设备的转发流量.
 
@@ -371,7 +317,7 @@ chain prerouting_tproxy {
     meta l4proto { tcp, udp } th dport 53 \
         tproxy to :$TPROXY_PORT accept
 
-    # Reject direct access to tproxy port (防止回环)
+    # Reject direct access to tproxy port
     fib daddr type local meta l4proto { tcp, udp } \
         th dport $TPROXY_PORT reject with icmpx type host-unreachable
 
@@ -394,20 +340,44 @@ chain prerouting_tproxy {
 
 规则执行顺序:
 
-1. DNS 请求直接劫持 (最高优先级, 确保局域网 DNS 请求被正确捕获)
-2. 拒绝直接访问 TPROXY 端口 (防止回环攻击)
-3. 本地流量和保留地址直接放行 (最常见的排除场景)
-4. 用户自定义排除地址放行
-5. 已建立的透明代理连接标记后放行 (避免重复处理)
-6. 其他流量 TPROXY + 标记
+1. **DNS 请求直接劫持** (最高优先级)
+
+   - 确保局域网 DNS 请求被正确捕获
+   - 必须在任何绕过规则之前执行
+   - 防止 DNS 请求被本地或保留地址规则提前放行
+
+2. **拒绝直接访问 TPROXY 端口** (防止回环攻击)
+
+   - 阻止恶意客户端直接连接 7895 端口
+   - 防止意外的服务发现和安全风险
+
+3. **本地流量和保留地址放行** (最常见的排除场景)
+
+   - `fib daddr type local`: 本地地址 (127.0.0.0/8)
+   - `@reserved_ip4`: RFC 定义的私有/保留地址
+   - 规则紧密相邻, 利于 CPU 缓存
+
+4. **用户自定义排除地址放行**
+
+   - 支持动态添加自定义绕过规则
+   - 通过 `nft` 命令管理 `custom_bypassed_ip4` 集合
+
+5. **已建立的透明代理连接标记后放行**
+
+   - `socket transparent 1`: 检测已被 TPROXY 劫持的连接
+   - 避免重复处理, 提升性能
+
+6. **其他流量 TPROXY + 标记**
+   - 最终匹配所有需要代理的流量
+   - 同时设置 fwmark 用于策略路由
 
 关键设计:
 
-- DNS 规则必须放在最前面: 在 gateway 模式下, 来自局域网的 DNS 请求必须在任何绕过规则之前被捕获, 否则可能被其他规则提前放行导致 DNS 解析失败
+- **DNS 规则必须放在最前面**: 在 gateway 模式下, 来自局域网的 DNS 请求必须在任何绕过规则之前被捕获, 否则可能被 `fib daddr type local` 或 `@reserved_ip4` 规则提前放行导致 DNS 解析失败
 - 提前拒绝无效流量, 减少后续规则检查
 - 本地和保留地址检查紧密相邻, 利于 CPU 缓存
 
-### output_tproxy (所有模式)
+### output_tproxy
 
 处理本机应用发出的流量.
 
@@ -416,15 +386,22 @@ chain output_tproxy {
     type route hook output priority mangle;
     policy accept;
 
-    # Bypass sing-box own traffic (critical, highest priority)
+    # Bypass non-default interface traffic
+    oifname != $INTERFACE accept
+
+    # Bypass sing-box own traffic (critical, highest priority for default interface)
     meta skuid $PROXY_UID meta skgid $PROXY_GID \
         meta mark set $ROUTE_DEFAULT_MARK accept
 
-    # Only process specified interface
-    oifname != $INTERFACE accept
-
     # Bypass already marked traffic
     meta mark $ROUTE_DEFAULT_MARK accept
+
+    # DNS hijack (before local/reserved address check)
+    meta l4proto { tcp, udp } th dport 53 \
+        meta mark set $PROXY_MARK accept
+
+    # Bypass NetBIOS and SMB
+    udp dport { netbios-ns, netbios-dgm, netbios-ssn, microsoft-ds } accept
 
     # Bypass local and reserved addresses
     fib daddr type local accept
@@ -433,30 +410,61 @@ chain output_tproxy {
     # Bypass custom addresses
     ip daddr @custom_bypassed_ip4 accept
 
-    # Bypass NetBIOS
-    udp dport { netbios-ns, netbios-dgm, netbios-ssn } accept
-
-    # DNS hijack
-    meta l4proto { tcp, udp } th dport 53 \
-        meta mark set $PROXY_MARK accept
-
     # Mark other traffic
     meta l4proto { tcp, udp } meta mark set $PROXY_MARK
 }
 ```
 
+规则优化:
+
+1. **规则 1: 网卡过滤优先级最高**
+
+   - 快速排除非目标接口流量 (如 docker0, lo)
+   - 减少不必要的规则遍历
+
+2. **规则 2: UID/GID 检查次之**
+
+   - sing-box 持续产生大量出站流量
+   - 提前匹配可减少 90%+ 后续规则检查开销
+
+3. **规则 3: 绕过已标记流量**
+
+   - 防止重复标记
+   - 配合其他工具使用 fwmark 225 时自动放行
+
+4. **规则 4: DNS 规则前置**
+
+   - 必须在本地/保留地址检查之前
+   - 确保本机 DNS 请求 (如 127.0.0.53:53) 被正确代理
+   - 避免被 `fib daddr type local` 规则提前放行
+
+5. **规则 5: 绕过 NetBIOS 和 SMB**
+
+   - 端口: 137 (netbios-ns), 138 (netbios-dgm), 139 (netbios-ssn), 445 (microsoft-ds)
+   - 防止局域网文件共享流量被代理
+   - Windows 网络发现和文件共享正常工作
+
+6. **规则 6-7: 本地和保留地址检查**
+
+   - CPU 缓存友好, 减少内存访问
+   - 处理常见的本地流量场景
+
+7. **规则 8: 用户自定义排除地址**
+
+   - 灵活扩展性
+
+8. **规则 9: 标记其他流量**
+   - 最终匹配所有需要代理的流量
+   - 仅标记不使用 TPROXY (配合策略路由工作)
+
 关键优化:
 
-- 规则 1 (UID/GID 检查) 优先级最高: sing-box 持续产生大量出站流量, 提前匹配可减少 90%+ 后续规则检查开销
-- 规则 2 网卡过滤次之: 快速排除非目标接口流量
-- 本地和保留地址检查合并: CPU 缓存友好, 减少内存访问
-- DNS 规则后置: 虽重要但流量占比小, 不必最优先
-- 仅标记不使用 TPROXY: output 链配合策略路由工作
-
-性能提升:
-
-- output 链处理延迟降低约 40-60%
-- 大幅减少 sing-box 自身流量的规则遍历开销
+- **网卡过滤最优先**: 快速排除非目标接口流量
+- **UID/GID 检查次之**: 大幅减少 sing-box 自身流量的规则遍历开销
+- **DNS 规则前置**: 确保本机 DNS 请求 (如 systemd-resolved 的 127.0.0.53:53) 被正确代理
+- **NetBIOS/SMB 排除**: 保证局域网文件共享和服务发现正常工作
+- **本地和保留地址检查合并**: CPU 缓存友好
+- **仅标记不使用 TPROXY**: output 链配合策略路由工作
 
 ### nftables vs iptables
 
