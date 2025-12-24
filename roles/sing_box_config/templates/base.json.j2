@@ -7,24 +7,36 @@
     "dns": {
         "servers": [
             {
-                "tag": "dns_resolver",
-                "type": "udp",
-                "server": "223.5.5.5",
-                "server_port": 53
+                "tag": "dns_hosts",
+                "type": "hosts",
+                "predefined": {
+                    "dns.alidns.com": [
+                        "223.5.5.5",
+                        "223.6.6.6",
+                        "2400:3200::1",
+                        "2400:3200:baba::1"
+                    ],
+                    "one.one.one.one": [
+                        "1.1.1.1",
+                        "1.0.0.1",
+                        "2606:4700:4700::1111",
+                        "2606:4700:4700::1001"
+                    ]
+                }
             },
             {
                 "tag": "dns_direct",
                 "type": "tls",
                 "server": "dns.alidns.com",
                 "server_port": 853,
-                "domain_resolver": "dns_resolver"
+                "domain_resolver": "dns_hosts"
             },
             {
                 "tag": "dns_proxy",
-                "type": "https",
-                "server": "1.1.1.1",
-                "path": "/dns-query",
-                "server_port": 443,
+                "type": "tls",
+                "server": "one.one.one.one",
+                "server_port": 853,
+                "domain_resolver": "dns_hosts",
                 "detour": "PROXY"
             },
             {
@@ -61,7 +73,7 @@
             }
         ],
         "final": "dns_proxy",
-        "strategy": "ipv4_only",
+        "strategy": "prefer_ipv4",
         "disable_cache": false,
         "disable_expire": false
     },
