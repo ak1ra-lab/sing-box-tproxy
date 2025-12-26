@@ -12,6 +12,7 @@
       - bash
       - curl
       - iproute2
+      - netplan.io
       - nftables
     state: present
 
