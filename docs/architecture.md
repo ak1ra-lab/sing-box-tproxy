@@ -30,7 +30,7 @@ graph TB
     LAN[LAN Devices] --> Netfilter
     LocalApp[Local Apps] --> Netfilter
 
-    Netfilter -- fwmark --> Routing
+    Netfilter -- fwmark 224 --> Routing
     Routing -- local route --> Netfilter
     Netfilter -- tproxy --> TPROXY
     TPROXY -- socket --> SingBox
@@ -54,24 +54,24 @@ graph TB
 
 来自局域网设备的流量进入网关:
 
-1.  Prerouting: 流量进入 `prerouting_tproxy` 链.
-2.  Filtering: 排除本地保留地址, 自定义绕过地址.
-3.  TPROXY: 命中 `tproxy` 规则, 被重定向到 sing-box 监听的 TPROXY 端口 (7895), 并打上 `fwmark 224`.
-4.  Routing: 策略路由根据 `fwmark 224` 查表, 但此时流量已被 TPROXY 劫持, 内核直接将数据包分发给 sing-box socket.
+1. Prerouting: 流量进入 `prerouting_tproxy` 链.
+2. Filtering: 排除本地保留地址, 自定义绕过地址.
+3. TPROXY: 命中 `tproxy` 规则, 被重定向到 sing-box 监听的 TPROXY 端口 (7895), 并打上 `fwmark 224`.
+4. Routing: 策略路由根据 `fwmark 224` 查表, 但此时流量已被 TPROXY 劫持, 内核直接将数据包分发给 sing-box socket.
 
 #### 2. 本机流量 (local 模式)
 
 本机应用程序发出的流量:
 
-1.  Output: 流量进入 `output_tproxy` 链.
-2.  Filtering: 排除 sing-box 自身流量 (防回环), 本地保留地址等.
-3.  Marking: 命中规则, 打上 `fwmark 224`.
-4.  Reroute: 由于 fwmark 改变, 内核触发重路由 (Reroute Check).
-5.  Policy Routing: `ip rule` 匹配 `fwmark 224`, 查询路由表 224.
-6.  Local Route: 路由表 224 中包含 `local default dev eth0` 路由. 关键点: `type local` 告诉内核该数据包的目标是"本机".
-7.  Loopback: 内核将数据包"环回" (Loopback), 使其重新进入网络协议栈的入站路径.
-8.  Prerouting: 环回的数据包再次触发 `prerouting_tproxy` 链.
-9.  TPROXY: 命中 `prerouting` 中的 `tproxy` 规则, 最终被重定向到 sing-box.
+1. Output: 流量进入 `output_tproxy` 链.
+2. Filtering: 排除 sing-box 自身流量 (防回环), 本地保留地址等.
+3. Marking: 命中规则, 打上 `fwmark 224`.
+4. Reroute: 由于 fwmark 改变, 内核触发重路由 (Reroute Check).
+5. Policy Routing: `ip rule` 匹配 `fwmark 224`, 查询路由表 224.
+6. Local Route: 路由表 224 中包含 `local default dev eth0` 路由. 关键点: `type local` 告诉内核该数据包的目标是"本机".
+7. Loopback: 内核将数据包"环回" (Loopback), 使其重新进入网络协议栈的入站路径.
+8. Prerouting: 环回的数据包再次触发 `prerouting_tproxy` 链.
+9. TPROXY: 命中 `prerouting` 中的 `tproxy` 规则, 最终被重定向到 sing-box.
 
 ### 防回环机制 (Loop Prevention)
 
@@ -82,13 +82,13 @@ graph TB
 
 处理流程:
 
-1.  sing-box 以独立用户 `proxy` (UID 13) 运行.
-2.  `output_tproxy` 链首先检查 UID:
-    ```nft
-    meta skuid 13 meta mark set 225 accept
-    ```
-3.  sing-box 的流量被打上 225 标记并直接放行 (Accept), 跳过后续的 224 打标规则.
-4.  策略路由中没有针对 fwmark 225 的特殊规则, 流量走默认路由表 (main) 直连互联网.
+1. sing-box 以独立用户 `proxy` (UID 13) 运行.
+2. `output_tproxy` 链首先检查 UID:
+   ```nft
+   meta skuid 13 meta mark set 225 accept
+   ```
+3. sing-box 的流量被打上 225 标记并直接放行 (Accept), 跳过后续的 224 打标规则.
+4. 策略路由中没有针对 fwmark 225 的特殊规则, 流量走默认路由表 (main) 直连互联网.
 
 ## 核心配置解析 {#configuration-analysis}
 
@@ -119,20 +119,20 @@ local default dev eth0 proto static scope host
 
 负责处理来自 LAN 的流量和本机环回的流量.
 
-1.  DNS 劫持: `udp/tcp dport 53 tproxy to :7895`. 必须最先执行, 确保 DNS 请求被捕获.
-2.  防直接访问: 拒绝直接访问 7895 端口的非 TPROXY 流量.
-3.  绕过规则: 放行 `fib daddr type local` (本机目标), 保留地址 (RFC 1918 等) 和用户自定义地址.
-4.  TPROXY: `meta mark set 224 tproxy to :7895`. 捕获剩余流量.
+1. DNS 劫持: `udp/tcp dport 53 tproxy to :7895`. 必须最先执行, 确保 DNS 请求被捕获.
+2. 防直接访问: 拒绝直接访问 7895 端口的非 TPROXY 流量.
+3. 绕过规则: 放行 `fib daddr type local` (本机目标), 保留地址 (RFC 1918 等) 和用户自定义地址.
+4. TPROXY: `meta mark set 224 tproxy to :7895`. 捕获剩余流量.
 
 #### output_tproxy (本机出站)
 
 负责处理本机发出的流量.
 
-1.  接口过滤: 仅处理默认出口接口的流量.
-2.  防回环: `meta skuid 13 accept`. 至关重要.
-3.  DNS 标记: 显式标记 DNS 流量 (防止被后续的保留地址规则排除).
-4.  绕过规则: 放行本地和保留地址.
-5.  打标记: `meta mark set 224`. 仅打标记, 不做 TPROXY (交由策略路由处理).
+1. 接口过滤: 仅处理默认出口接口的流量.
+2. 防回环: `meta skuid 13 accept`. 至关重要.
+3. DNS 标记: 显式标记 DNS 流量 (防止被后续的保留地址规则排除).
+4. 绕过规则: 放行本地和保留地址.
+5. 打标记: `meta mark set 224`. 仅打标记, 不做 TPROXY (交由策略路由处理).
 
 ### IPv6 支持
 
