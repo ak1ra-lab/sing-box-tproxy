@@ -1,19 +1,19 @@
-from sing_box_config.parser.shadowsocks import decode_sip002_to_singbox
+from sing_box_config.parser.shadowsocks import ShadowsocksParser
 
 
 def test_decode_invalid_scheme():
     uri = "http://YWVzLTEyOC1nY206OTI2NDAzNTEtOTViMS00NjJjLTkzNzgtYTRjZDAzOWY0Yzlh@server01.example.com:2333/?plugin=simple-obfs%3Bobfs%3Dhttp%3Bobfs-host%3Dexample.com#example-server01"
-    assert decode_sip002_to_singbox(uri) == {}
+    assert ShadowsocksParser().parse(uri) is None
 
 
 def test_decode_invalid_userinfo():
     uri = "ss://invaliduserinfo@server01.example.com:2333/?plugin=simple-obfs%3Bobfs%3Dhttp%3Bobfs-host%3Dexample.com#example-server01"
-    assert decode_sip002_to_singbox(uri) == {}
+    assert ShadowsocksParser().parse(uri) is None
 
 
 def test_decode_unsupported_plugin():
     uri = "ss://YWVzLTEyOC1nY206OTI2NDAzNTEtOTViMS00NjJjLTkzNzgtYTRjZDAzOWY0Yzlh@server01.example.com:2333/?plugin=unsupported-plugin%3Bobfs%3Dhttp%3Bobfs-host%3Dexample.com#example-server01"
-    assert decode_sip002_to_singbox(uri) == {}
+    assert ShadowsocksParser().parse(uri) is None
 
 
 def test_decode_without_plugin():
@@ -29,7 +29,7 @@ def test_decode_without_plugin():
         "plugin": "",
         "plugin_opts": "",
     }
-    assert decode_sip002_to_singbox(uri, tag_prefix) == expected_config
+    assert ShadowsocksParser().parse(uri, tag_prefix) == expected_config
 
 
 def test_decode_valid_sip002_uri():
@@ -45,4 +45,4 @@ def test_decode_valid_sip002_uri():
         "plugin": "obfs-local",
         "plugin_opts": "obfs=http;obfs-host=example.com",
     }
-    assert decode_sip002_to_singbox(uri, tag_prefix) == expected_config
+    assert ShadowsocksParser().parse(uri, tag_prefix) == expected_config

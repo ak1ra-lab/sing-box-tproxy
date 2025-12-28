@@ -8,7 +8,7 @@ import httpx
 import tenacity
 from chaos_utils.text_utils import b64decode, save_json
 
-from sing_box_config.parser.shadowsocks import decode_sip002_to_singbox
+from sing_box_config.parser.shadowsocks import ShadowsocksParser
 
 logger = logging.getLogger(__name__)
 
@@ -81,8 +81,9 @@ def get_proxies_from_subscriptions(
             proxies_lines = []
         logger.debug("url = %s, proxies_lines = %s", subscription["url"], proxies_lines)
 
+        parser = ShadowsocksParser()
         for line in proxies_lines:
-            proxy = decode_sip002_to_singbox(line, name + " - ")
+            proxy = parser.parse(line, name + " - ")
             if not proxy:
                 continue
             if any(re.search(p, proxy["tag"], re.IGNORECASE) for p in exclude_patterns):
