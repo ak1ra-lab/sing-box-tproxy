@@ -26,7 +26,7 @@ graph TB
             end
 
             subgraph Policy_Routing["Policy Routing"]
-                Route_Table["Routing Table<br/>with mark 224"]
+                Route_Table["Routing Table<br/>mark 224"]
             end
         end
 
@@ -41,33 +41,30 @@ graph TB
     Internet((Internet))
 
     %% LAN Traffic (Solid Lines)
-    LAN -->|"(1). Ingress"| NF_PREROUTING
-    NF_PREROUTING -->|"(2)/4. Redirect to TPROXY_PORT"| SingBox
+    LAN -->|"Ingress"| NF_PREROUTING
+    NF_PREROUTING -->|"to TPROXY_PORT"| SingBox
 
     %% Local Traffic (Dotted Lines)
-    LocalApp -.->|"1. Output"| NF_OUTPUT
-    NF_OUTPUT -.->|"2. Set mark 224"| Policy_Routing
-    Policy_Routing -.->|"3. Reroute to PREROUTING"| NF_PREROUTING
+    LocalApp -.-> NF_OUTPUT
+    NF_OUTPUT -.->|"mark 224"| Route_Table
+    Route_Table -.-> NF_PREROUTING
 
     %% Common Egress Path
-    SingBox -->|"(3)/5. Set mark 225"| NF_OUTPUT
-    NF_OUTPUT -->|"(4)/6. Egress"| Internet
+    SingBox -->|"mark 225"| NF_OUTPUT
+    NF_OUTPUT -->|"Egress"| Internet
 
-    %% 样式定义
-    classDef host fill:#f5f5f5,stroke:#666,stroke-width:3px,stroke-dasharray: 5 5
-    classDef kernel fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef user fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef external fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
-    classDef netfilterComponent fill:#bbdefb,stroke:#0d47a1,stroke-width:2px
+    %% Styles (neutral + low saturation)
+    classDef host fill:#eeeeee,stroke:#777,stroke-width:2px,stroke-dasharray:5 5,color:#444
+    classDef kernel fill:#e9ecef,stroke:#666,stroke-width:1.5px,color:#444
+    classDef user fill:#f1f1f1,stroke:#666,stroke-width:1.5px,color:#444
+    classDef external fill:#ededed,stroke:#666,stroke-width:1.5px,color:#444
+    classDef netfilter fill:#e3e7eb,stroke:#555,stroke-width:1.5px,color:#444
 
     class Host host
     class Kernel_Space,Policy_Routing kernel
     class LocalApp,SingBox user
     class LAN,Internet external
-
-    %% 特殊样式：Netfilter 内部组件
-    style NF_PREROUTING fill:#bbdefb,stroke:#0d47a1,stroke-width:2px
-    style NF_OUTPUT fill:#bbdefb,stroke:#0d47a1,stroke-width:2px
+    class NF_PREROUTING,NF_OUTPUT netfilter
 ```
 
 ### 核心组件
