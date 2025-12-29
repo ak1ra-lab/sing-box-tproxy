@@ -18,25 +18,56 @@ sing-box-tproxy 利用 Linux 内核的 TPROXY 特性, 结合 nftables 和策略�
 
 ```mermaid
 graph TB
-    subgraph Kernel Space
-        Netfilter[Netfilter/nftables]
-        Routing[Policy Routing]
-        TPROXY[TPROXY Module]
+    subgraph Host["Host Machine"]
+        subgraph Kernel_Space["Kernel Space"]
+            subgraph Netfilter_Framework["Netfilter Framework"]
+                NF_PREROUTING["PREROUTING chain"]
+                NF_OUTPUT["OUTPUT chain"]
+            end
+
+            subgraph Policy_Routing["Policy Routing"]
+                Route_Table["Routing Table<br/>with mark 224"]
+            end
+        end
+
+        subgraph User_Space["User Space"]
+            LocalApp["Local Apps"]
+            SingBox["sing-box<br/>(Proxy Service)"]
+        end
     end
 
-    subgraph User Space
-        SingBox["sing-box<br/>(Proxy Service)"]
-    end
+    %% External entities
+    LAN["LAN Devices"]
+    Internet((Internet))
 
-    LAN[LAN Devices] --> Netfilter
-    LocalApp[Local Apps] --> Netfilter
+    %% LAN Traffic (Solid Lines)
+    LAN -->|"(1). Ingress"| NF_PREROUTING
+    NF_PREROUTING -->|"(2)/4. Redirect to TPROXY_PORT"| SingBox
 
-    Netfilter -- fwmark 224 --> Routing
-    Routing -- local route --> Netfilter
-    Netfilter -- tproxy --> TPROXY
-    TPROXY -- socket --> SingBox
-    SingBox -- fwmark 225 --> Netfilter
-    Netfilter --> Internet((Internet))
+    %% Local Traffic (Dotted Lines)
+    LocalApp -.->|"1. Output"| NF_OUTPUT
+    NF_OUTPUT -.->|"2. Set mark 224"| Policy_Routing
+    Policy_Routing -.->|"3. Reroute to PREROUTING"| NF_PREROUTING
+
+    %% Common Egress Path
+    SingBox -->|"(3)/5. Set mark 225"| NF_OUTPUT
+    NF_OUTPUT -->|"(4)/6. Egress"| Internet
+
+    %% 样式定义
+    classDef host fill:#f5f5f5,stroke:#666,stroke-width:3px,stroke-dasharray: 5 5
+    classDef kernel fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef user fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef external fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef netfilterComponent fill:#bbdefb,stroke:#0d47a1,stroke-width:2px
+
+    class Host host
+    class Kernel_Space,Policy_Routing kernel
+    class LocalApp,SingBox user
+    class LAN,Internet external
+
+    %% 特殊样式：Netfilter 内部组件
+    style NF_PREROUTING fill:#bbdefb,stroke:#0d47a1,stroke-width:2px
+    style NF_OUTPUT fill:#bbdefb,stroke:#0d47a1,stroke-width:2px
 ```
 
 ### 核心组件
@@ -51,36 +82,32 @@ graph TB
 
 ### 流量路径详解
 
-#### 1. 转发流量 (gateway 模式)
+#### 1. 转发流量 (LAN Devices)
 
-来自局域网设备的流量进入网关:
+适用于 Gateway 模式.
+
+流量路径为实线所示: `LAN -> Prerouting -> TPROXY -> sing-box`.
 
 1. Prerouting: 流量进入 `prerouting_tproxy` 链.
 2. Filtering: 排除本地保留地址, 自定义绕过地址.
 3. TPROXY: 命中 `tproxy` 规则, 被重定向到 sing-box 监听的 TPROXY 端口 (7895), 并打上 `fwmark 224`.
 4. Routing: 策略路由根据 `fwmark 224` 查表, 但此时流量已被 TPROXY 劫持, 内核直接将数据包分发给 sing-box socket.
 
-#### 2. 本机流量 (local 模式)
+#### 2. 本机流量 (Local Apps)
+
+适用于 Local 模式.
+
+流量路径为虚线所示: `Local App -> Output -> Routing -> Loopback -> Prerouting -> TPROXY -> sing-box`.
 
 本机应用程序发出的流量处理流程较为复杂, 需要通过环回机制才能被 TPROXY 处理:
 
 1. Output: 流量进入 `output_tproxy` 链 (mangle 表的 output hook).
-2. Filtering: 排除 sing-box 自身流量 (通过 UID/GID, 防回环), 本地目标地址, 保留地址等.
-3. Marking: 命中规则后, 数据包被打上 `fwmark 224` (注意: 仅标记, 不应用 TPROXY).
-4. Reroute: 由于 fwmark 改变, 内核触发重路由检查 (Reroute Check).
-5. Policy Routing: `ip rule` 匹配到 `fwmark 224`, 查询路由表 224.
-6. Local Route: 路由表 224 中的 `local default dev eth0` 路由被匹配. 关键点: `type local` 告诉内核该数据包的目标是"本机", 即使原始目标不是本机地址 (如 8.8.8.8), 内核也会将其视为本地流量.
-7. Loopback: 内核将数据包从出站路径 (OUTPUT) 转向入站路径 (INPUT), 在内核内部"环回", 重新进入网络协议栈.
-8. Prerouting: 环回的数据包作为入站流量触发 `prerouting_tproxy` 链.
-9. TPROXY: 命中 `prerouting` 中的 `tproxy to :7895` 规则, 最终被重定向到 sing-box.
-
-为什么不能在 output_tproxy 直接使用 TPROXY?
-
-- Linux 内核限制: `tproxy` 动作只能在 `PREROUTING` 链中使用
-- 必须通过环回机制让本机流量重新进入 `PREROUTING` 链
-- `prerouting_tproxy` 链对本机流量和 LAN 流量同等重要, 缺一不可
-
-验证要点: 如果删除 `prerouting_tproxy` 链, 本机流量虽然会被标记和环回, 但没有 TPROXY 规则来接管, 导致透明代理失败.
+2. Marking: 排除 sing-box 自身流量 (防回环) 和保留地址后, 数据包被打上 `fwmark 224`. 注意此时仅标记, 无法直接应用 TPROXY (内核限制 TPROXY 只能用于 PREROUTING).
+3. Reroute: 由于 fwmark 改变, 内核触发重路由检查 (Reroute Check).
+4. Policy Routing: `ip rule` 匹配到 `fwmark 224`, 查询路由表 224.
+5. Loopback: 路由表 224 中的 `local default dev eth0` 路由被匹配. `type local` 告诉内核该数据包的目标是"本机", 即使原始目标是外部地址. 这会触发内核将数据包从出站路径 (OUTPUT) 转向入站路径 (INPUT).
+6. Prerouting: 环回的数据包作为入站流量再次触发 `prerouting_tproxy` 链.
+7. TPROXY: 此时流量已位于 PREROUTING 链, 命中 `tproxy` 规则, 最终被重定向到 sing-box.
 
 ### 防回环机制 (Loop Prevention)
 
@@ -186,74 +213,7 @@ _注: 在 gateway 模式下, sing-box TPROXY 入站必须监听 `::` (或 `0.0.0
 
 ## 常见问题 FAQ {#faq}
 
-### Q1: 本机流量经过 output_tproxy 后如何进入 sing-box TPROXY 端口?
-
-本机流量在 `output_tproxy` 链被标记 fwmark 224 后, 会通过策略路由触发内核环回 (loopback), 重新进入 `prerouting_tproxy` 链, 然后才被 TPROXY 重定向到 sing-box.
-
-#### 详细流程
-
-1. Output 链标记: 本机应用发出的流量进入 `output_tproxy` 链, 被打上 `fwmark 224`
-2. 触发重路由: 内核检测到 fwmark 变化, 触发重路由 (Reroute Check)
-3. 策略路由匹配: `ip rule` 匹配到 `fwmark 224`, 查询路由表 224
-4. Local 路由: 路由表 224 中的 `local default dev eth0` 路由告诉内核将数据包视为目的地是"本机"
-5. 内核环回: 内核将数据包从出站路径 (OUTPUT) 转向入站路径, 这个过程称为 "loopback"
-6. 重新进入 Prerouting: 环回的数据包作为"入站"流量重新进入网络协议栈, 触发 `prerouting_tproxy` 链
-7. TPROXY 处理: `prerouting_tproxy` 链中的 `tproxy to :7895` 规则将流量重定向到 sing-box 的 TPROXY socket
-
-#### 为什么需要 prerouting_tproxy?
-
-- TPROXY 限制: 在 Linux 内核中, `tproxy` 动作只能在 `PREROUTING` 链中使用, 不能在 `OUTPUT` 链中使用
-- 设计原理: TPROXY 需要在路由决策之前 (pre-routing) 劫持流量, 而 OUTPUT 链虽然在 mangle 表中, 但它的执行时机不适合直接使用 TPROXY
-- 解决方案: 通过 `type local` 路由触发环回, 让本机流量重新走入站路径, 从而可以在 PREROUTING 链使用 TPROXY
-
-#### 验证方法
-
-如果删除 `prerouting_tproxy` 链:
-
-- 本机 DNS 查询失败 (因为 DNS 流量无法被 TPROXY 劫持)
-- 本机应用无法透明代理 (虽然被标记了 fwmark 224 并触发了环回, 但没有 TPROXY 规则来接管流量)
-- LAN 流量不受影响 (因为 LAN 流量直接进入 PREROUTING, 不需要环回)
-
-这证明了 `prerouting_tproxy` 链对本机流量透明代理是必不可少的.
-
-### Q2: 本机流量和 LAN 设备流量的区别是什么?
-
-两种流量的主要区别在于进入 Netfilter 的路径:
-
-#### LAN 设备流量 (转发流量)
-
-```
-LAN 设备 → 网络接口 → PREROUTING (prerouting_tproxy) → TPROXY → sing-box
-```
-
-- 直接进入 `prerouting_tproxy` 链
-- 一次性被 TPROXY 处理
-- 不需要环回机制
-- 不经过 `output_tproxy` 链
-
-#### 本机流量
-
-```
-本机应用 → OUTPUT (output_tproxy, 标记 fwmark 224) → 重路由 → Local 路由触发环回
-    → PREROUTING (prerouting_tproxy) → TPROXY → sing-box
-```
-
-- 先进入 `output_tproxy` 链 (仅标记, 不做 TPROXY)
-- 通过策略路由和 local 路由触发环回
-- 重新进入 `prerouting_tproxy` 链
-- 被 TPROXY 处理
-
-#### 对比表
-
-| 特性                 | LAN 设备流量      | 本机流量                     |
-| -------------------- | ----------------- | ---------------------------- |
-| 进入链               | prerouting_tproxy | output_tproxy → prerouting_tproxy |
-| 是否需要环回         | 否                | 是                           |
-| 是否依赖策略路由     | 否                | 是 (触发环回)                |
-| 是否需要 local 路由  | 否                | 是 (关键)                    |
-| TPROXY 应用位置      | prerouting        | prerouting (环回后)          |
-
-### Q3: TPROXY 和 IP_TRANSPARENT 是什么?
+### Q1: TPROXY 和 IP_TRANSPARENT 是什么?
 
 TPROXY 是 Netfilter 提供的透明代理机制, IP_TRANSPARENT 是应用程序需要设置的 socket 选项.
 
@@ -275,12 +235,12 @@ TPROXY 是 Netfilter 提供的透明代理机制, IP_TRANSPARENT 是应用程序
 #### 流程总结
 
 ```
-应用流量 → Netfilter (TPROXY 规则) → 修改并标记数据包 
+应用流量 → Netfilter (TPROXY 规则) → 修改并标记数据包
     → 内核 socket 查找 → sing-box socket (IP_TRANSPARENT)
     → sing-box 读取原始目标地址 → 建立代理连接
 ```
 
-### Q4: 为什么 `local default` 路由能触发环回?
+### Q2: 为什么 `local default` 路由能触发环回?
 
 #### 路由类型
 
@@ -320,7 +280,7 @@ ip route show table 224
 
 只有 `type local` 路由才能实现本机流量的透明代理.
 
-### Q5: 如何调试和验证流量路径?
+### Q3: 如何调试和验证流量路径?
 
 #### 使用 nftables trace
 
