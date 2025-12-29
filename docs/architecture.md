@@ -62,29 +62,25 @@ graph TB
 
 #### 2. 本机流量 (local 模式)
 
-本机应用程序发出的流量处理流程较为复杂, 需要通过**环回机制**才能被 TPROXY 处理:
+本机应用程序发出的流量处理流程较为复杂, 需要通过环回机制才能被 TPROXY 处理:
 
-1. **Output Hook**: 流量进入 `output_tproxy` 链 (mangle 表的 output hook).
-2. **过滤与排除**: 排除 sing-box 自身流量 (通过 UID/GID, 防回环), 本地目标地址, 保留地址等.
-3. **标记 fwmark**: 命中规则后, 数据包被打上 `fwmark 224` (注意: 仅标记, **不应用 TPROXY**).
-4. **触发重路由**: 由于 fwmark 改变, 内核触发重路由检查 (Reroute Check).
-5. **策略路由查询**: `ip rule` 匹配到 `fwmark 224`, 查询路由表 224.
-6. **Local 路由匹配**: 路由表 224 中的 `local default dev eth0` 路由被匹配.
-   - **关键**: `type local` 告诉内核该数据包的目标是"本机"
-   - 即使原始目标不是本机地址 (如 8.8.8.8), 内核也会将其视为本地流量
-7. **内核环回 (Loopback)**: 内核将数据包从出站路径 (OUTPUT) 转向入站路径 (INPUT).
-   - 数据包在内核内部"环回", 重新进入网络协议栈
-   - **这是实现本机透明代理的核心机制**
-8. **重新进入 Prerouting**: 环回的数据包作为入站流量触发 `prerouting_tproxy` 链.
-9. **TPROXY 重定向**: 命中 `prerouting` 中的 `tproxy to :7895` 规则, 最终被重定向到 sing-box.
+1. Output: 流量进入 `output_tproxy` 链 (mangle 表的 output hook).
+2. Filtering: 排除 sing-box 自身流量 (通过 UID/GID, 防回环), 本地目标地址, 保留地址等.
+3. Marking: 命中规则后, 数据包被打上 `fwmark 224` (注意: 仅标记, 不应用 TPROXY).
+4. Reroute: 由于 fwmark 改变, 内核触发重路由检查 (Reroute Check).
+5. Policy Routing: `ip rule` 匹配到 `fwmark 224`, 查询路由表 224.
+6. Local Route: 路由表 224 中的 `local default dev eth0` 路由被匹配. 关键点: `type local` 告诉内核该数据包的目标是"本机", 即使原始目标不是本机地址 (如 8.8.8.8), 内核也会将其视为本地流量.
+7. Loopback: 内核将数据包从出站路径 (OUTPUT) 转向入站路径 (INPUT), 在内核内部"环回", 重新进入网络协议栈.
+8. Prerouting: 环回的数据包作为入站流量触发 `prerouting_tproxy` 链.
+9. TPROXY: 命中 `prerouting` 中的 `tproxy to :7895` 规则, 最终被重定向到 sing-box.
 
-**为什么不能在 output_tproxy 直接使用 TPROXY?**
+为什么不能在 output_tproxy 直接使用 TPROXY?
 
 - Linux 内核限制: `tproxy` 动作只能在 `PREROUTING` 链中使用
 - 必须通过环回机制让本机流量重新进入 `PREROUTING` 链
-- `prerouting_tproxy` 链对本机流量和 LAN 流量**同等重要**, 缺一不可
+- `prerouting_tproxy` 链对本机流量和 LAN 流量同等重要, 缺一不可
 
-**验证要点**: 如果删除 `prerouting_tproxy` 链, 本机流量虽然会被标记和环回, 但没有 TPROXY 规则来接管, 导致透明代理失败. 这证明了环回后必须重新进入 `prerouting_tproxy` 链.
+验证要点: 如果删除 `prerouting_tproxy` 链, 本机流量虽然会被标记和环回, 但没有 TPROXY 规则来接管, 导致透明代理失败.
 
 ### 防回环机制 (Loop Prevention)
 
@@ -123,50 +119,34 @@ routing-policy:
 local default dev eth0 proto static scope host
 ```
 
-**关键配置解析**:
+关键配置解析:
 
-- **`type local`**: 这是本机透明代理的核心机制
-  - 告诉内核将匹配的数据包视为目标是"本机"的流量
-  - 触发内核环回 (loopback): 将出站流量转向入站路径
-  - 使得流量重新经过 PREROUTING 钩子, 从而可以被 TPROXY 处理
-  - **没有这个配置, 本机透明代理无法工作**
-- **`default` (0.0.0.0/0)**: 匹配所有目标地址
-  - 确保所有被标记 fwmark 224 的流量都会触发环回
-  - 不限制具体的目标 IP 地址
-- **`dev eth0`**: 指定关联接口
-  - 主要用于满足命令语法要求
-  - 流量实际上是在内核内部环回, 不会真正经过物理接口
-  - 但某些内核检查需要指定接口
-- **`scope host`**: 限定为主机范围
-  - 表示这是本地路由, 不会传播到其他主机
+- `type local`: 告诉内核将匹配的数据包视为目标是"本机"的流量, 触发内核环回 (loopback), 将出站流量转向入站路径, 使得流量重新经过 PREROUTING 钩子, 从而可以被 TPROXY 处理. 没有这个配置, 本机透明代理无法工作.
+- `default` (0.0.0.0/0): 匹配所有目标地址, 确保所有被标记 fwmark 224 的流量都会触发环回.
+- `dev eth0`: 指定关联接口, 流量实际上是在内核内部环回, 不会真正经过物理接口, 但某些内核检查需要指定接口.
+- `scope host`: 限定为主机范围, 表示这是本地路由, 不会传播到其他主机.
 
 ### nftables 规则 (nftables Rules)
 
 #### prerouting_tproxy (入站/环回)
 
-**负责处理两种类型的流量**:
+负责处理两种类型的流量:
 
-1. **来自 LAN 设备的转发流量** (gateway 模式)
-2. **本机环回的流量** (local 模式, 通过策略路由和 local 路由触发的环回)
+1. 来自 LAN 设备的转发流量 (gateway 模式)
+2. 本机环回的流量 (local 模式, 通过策略路由和 local 路由触发的环回)
 
-**规则处理顺序**:
+规则处理顺序:
 
-1. **DNS 劫持**: `udp/tcp dport 53 tproxy to :7895`
-   - 必须最先执行, 确保所有 DNS 请求被捕获
-   - 对本机和 LAN 流量同等重要
-2. **防直接访问**: 拒绝直接访问 7895 端口的非 TPROXY 流量
-   - 防止应用直接连接 TPROXY 端口造成回环
-3. **绕过本机目标**: 放行 `fib daddr type local` (目标是本机地址的流量)
-   - 例如访问本机服务 (SSH, Web 等)
-4. **绕过保留地址**: 放行 RFC 1918 私有地址, 组播地址等
-5. **绕过自定义地址**: 放行用户自定义的绕过地址
-6. **TPROXY 捕获**: `meta mark set 224 tproxy to :7895`
-   - 捕获剩余的所有 TCP/UDP 流量
-   - 重定向到 sing-box 的 TPROXY socket
+1. DNS 劫持: `udp/tcp dport 53 tproxy to :7895`. 必须最先执行, 确保所有 DNS 请求被捕获, 对本机和 LAN 流量同等重要.
+2. 防直接访问: 拒绝直接访问 7895 端口的非 TPROXY 流量, 防止应用直接连接 TPROXY 端口造成回环.
+3. 绕过本机目标: 放行 `fib daddr type local` (目标是本机地址的流量), 例如访问本机服务 (SSH, Web 等).
+4. 绕过保留地址: 放行 RFC 1918 私有地址, 组播地址等.
+5. 绕过自定义地址: 放行用户自定义的绕过地址.
+6. TPROXY 捕获: `meta mark set 224 tproxy to :7895`. 捕获剩余的所有 TCP/UDP 流量, 重定向到 sing-box 的 TPROXY socket.
 
-**为什么这个链对本机流量至关重要?**
+为什么这个链对本机流量至关重要?
 
-- 本机流量在 `output_tproxy` 链**只能**打标记, 不能使用 TPROXY
+- 本机流量在 `output_tproxy` 链只能打标记, 不能使用 TPROXY
 - 必须通过环回机制重新进入 `prerouting_tproxy` 链
 - 如果缺少这个链, 本机流量会因为无法被 TPROXY 处理而透明代理失败
 
@@ -208,35 +188,33 @@ _注: 在 gateway 模式下, sing-box TPROXY 入站必须监听 `::` (或 `0.0.0
 
 ### Q1: 本机流量经过 output_tproxy 后如何进入 sing-box TPROXY 端口?
 
-这是一个经常引起混淆的问题. **简短答案**: 本机流量在 `output_tproxy` 链被标记 fwmark 224 后, 会通过策略路由触发内核环回 (loopback), **重新进入** `prerouting_tproxy` 链, 然后才被 TPROXY 重定向到 sing-box.
+本机流量在 `output_tproxy` 链被标记 fwmark 224 后, 会通过策略路由触发内核环回 (loopback), 重新进入 `prerouting_tproxy` 链, 然后才被 TPROXY 重定向到 sing-box.
 
 #### 详细流程
 
-1. **Output 链标记**: 本机应用发出的流量进入 `output_tproxy` 链, 被打上 `fwmark 224`
-2. **触发重路由**: 内核检测到 fwmark 变化, 触发重路由 (Reroute Check)
-3. **策略路由匹配**: `ip rule` 匹配到 `fwmark 224`, 查询路由表 224
-4. **关键: Local 路由**: 路由表 224 中的 `local default dev eth0` 路由告诉内核将数据包视为目的地是"本机"
-5. **内核环回**: 内核将数据包从出站路径 (OUTPUT) 转向入站路径, 这个过程称为 "loopback"
-6. **重新进入 Prerouting**: 环回的数据包作为"入站"流量重新进入网络协议栈, 触发 `prerouting_tproxy` 链
-7. **TPROXY 处理**: `prerouting_tproxy` 链中的 `tproxy to :7895` 规则将流量重定向到 sing-box 的 TPROXY socket
+1. Output 链标记: 本机应用发出的流量进入 `output_tproxy` 链, 被打上 `fwmark 224`
+2. 触发重路由: 内核检测到 fwmark 变化, 触发重路由 (Reroute Check)
+3. 策略路由匹配: `ip rule` 匹配到 `fwmark 224`, 查询路由表 224
+4. Local 路由: 路由表 224 中的 `local default dev eth0` 路由告诉内核将数据包视为目的地是"本机"
+5. 内核环回: 内核将数据包从出站路径 (OUTPUT) 转向入站路径, 这个过程称为 "loopback"
+6. 重新进入 Prerouting: 环回的数据包作为"入站"流量重新进入网络协议栈, 触发 `prerouting_tproxy` 链
+7. TPROXY 处理: `prerouting_tproxy` 链中的 `tproxy to :7895` 规则将流量重定向到 sing-box 的 TPROXY socket
 
 #### 为什么需要 prerouting_tproxy?
 
-很多人误以为 `output_tproxy` 链可以直接使用 `tproxy` 动作, 但实际上:
-
-- **TPROXY 限制**: 在 Linux 内核中, `tproxy` 动作只能在 `PREROUTING` 链中使用, 不能在 `OUTPUT` 链中使用
-- **设计原理**: TPROXY 需要在路由决策之前 (pre-routing) 劫持流量, 而 OUTPUT 链虽然在 mangle 表中, 但它的执行时机不适合直接使用 TPROXY
-- **解决方案**: 通过 `type local` 路由触发环回, 让本机流量重新走入站路径, 从而可以在 PREROUTING 链使用 TPROXY
+- TPROXY 限制: 在 Linux 内核中, `tproxy` 动作只能在 `PREROUTING` 链中使用, 不能在 `OUTPUT` 链中使用
+- 设计原理: TPROXY 需要在路由决策之前 (pre-routing) 劫持流量, 而 OUTPUT 链虽然在 mangle 表中, 但它的执行时机不适合直接使用 TPROXY
+- 解决方案: 通过 `type local` 路由触发环回, 让本机流量重新走入站路径, 从而可以在 PREROUTING 链使用 TPROXY
 
 #### 验证方法
 
-如果删除 `prerouting_tproxy` 链, 会发生什么?
+如果删除 `prerouting_tproxy` 链:
 
 - 本机 DNS 查询失败 (因为 DNS 流量无法被 TPROXY 劫持)
 - 本机应用无法透明代理 (虽然被标记了 fwmark 224 并触发了环回, 但没有 TPROXY 规则来接管流量)
-- 只有来自 LAN 的流量会受影响 (因为 LAN 流量直接进入 PREROUTING, 不需要环回)
+- LAN 流量不受影响 (因为 LAN 流量直接进入 PREROUTING, 不需要环回)
 
-这正是问题中提到的验证结果, 证明了 `prerouting_tproxy` 链对本机流量透明代理是**必不可少**的.
+这证明了 `prerouting_tproxy` 链对本机流量透明代理是必不可少的.
 
 ### Q2: 本机流量和 LAN 设备流量的区别是什么?
 
@@ -275,30 +253,21 @@ LAN 设备 → 网络接口 → PREROUTING (prerouting_tproxy) → TPROXY → si
 | 是否需要 local 路由  | 否                | 是 (关键)                    |
 | TPROXY 应用位置      | prerouting        | prerouting (环回后)          |
 
-### Q3: TPROXY "magic" 和 SO_TRANSPARENT 是什么?
+### Q3: TPROXY 和 IP_TRANSPARENT 是什么?
 
-**TPROXY 不是直接通过 SO_TRANSPARENT 进入应用的**, 这是一个常见误解.
+TPROXY 是 Netfilter 提供的透明代理机制, IP_TRANSPARENT 是应用程序需要设置的 socket 选项.
 
 #### TPROXY 工作机制
 
-1. **Netfilter TPROXY 模块**: 当 nftables 规则执行 `tproxy to :7895` 时:
-   - Netfilter 的 TPROXY 模块修改数据包的目标地址和端口
-   - 将数据包标记为"透明代理"状态
-   - 数据包被重定向到本机的 7895 端口
+1. Netfilter TPROXY 模块: 当 nftables 规则执行 `tproxy to :7895` 时, Netfilter 的 TPROXY 模块修改数据包的目标地址和端口, 将数据包标记为"透明代理"状态, 重定向到本机的 7895 端口.
 
-2. **Socket 查找**: 内核网络协议栈查找监听 7895 端口的 socket:
-   - sing-box 创建 socket 时使用了 `IP_TRANSPARENT` 选项 (对应 SO_TRANSPARENT)
-   - 这个选项允许 socket 接收目标地址不是本机地址的数据包
-   - 内核将 TPROXY 标记的数据包传递给这个 socket
+2. Socket 查找: 内核网络协议栈查找监听 7895 端口的 socket. sing-box 创建 socket 时使用了 `IP_TRANSPARENT` 选项, 这个选项允许 socket 接收目标地址不是本机地址的数据包. 内核将 TPROXY 标记的数据包传递给这个 socket.
 
-3. **保留原始地址**: TPROXY 的"魔法"在于:
-   - 数据包的原始源地址和目标地址被保留
-   - sing-box 可以通过 socket API 获取原始目标地址
-   - 这使得 sing-box 知道应用真正想访问的目标, 从而进行透明代理
+3. 保留原始地址: TPROXY 的特性在于数据包的原始源地址和目标地址被保留, sing-box 可以通过 socket API 获取原始目标地址, 从而知道应用真正想访问的目标, 进行透明代理.
 
-#### SO_TRANSPARENT 的作用
+#### IP_TRANSPARENT 的作用
 
-- **不是**流量重定向机制, 而是一个 socket 选项
+- 不是流量重定向机制, 而是一个 socket 选项
 - 允许应用绑定到非本机 IP 地址
 - 允许应用接收目标不是本机的数据包
 - 必须配合 Netfilter TPROXY 规则使用
@@ -313,8 +282,6 @@ LAN 设备 → 网络接口 → PREROUTING (prerouting_tproxy) → TPROXY → si
 
 ### Q4: 为什么 `local default` 路由能触发环回?
 
-这是 Linux 内核路由系统的特殊行为:
-
 #### 路由类型
 
 Linux 支持多种路由类型 (通过 `ip route` 的 `type` 参数):
@@ -323,16 +290,15 @@ Linux 支持多种路由类型 (通过 `ip route` 的 `type` 参数):
 - `local`: 表示目标是本机地址, 触发本地接收
 - `blackhole`: 丢弃数据包
 - `unreachable`: 返回 ICMP 不可达
-- 等等
 
 #### `type local` 的特殊性
 
 当数据包匹配到 `type local` 路由时:
 
-1. **内核判定**: 内核认为这个数据包的目标是"本机"
-2. **路径切换**: 即使数据包原本在 OUTPUT 路径 (出站), 内核也会将其转向 INPUT 路径 (入站)
-3. **触发 PREROUTING**: 转向 INPUT 路径时, 数据包会经过 PREROUTING 钩子
-4. **TPROXY 机会**: 这就给了 `prerouting_tproxy` 链处理本机流量的机会
+1. 内核判定: 内核认为这个数据包的目标是"本机"
+2. 路径切换: 即使数据包原本在 OUTPUT 路径 (出站), 内核也会将其转向 INPUT 路径 (入站)
+3. 触发 PREROUTING: 转向 INPUT 路径时, 数据包会经过 PREROUTING 钩子
+4. TPROXY 机会: 这就给了 `prerouting_tproxy` 链处理本机流量的机会
 
 #### 配置示例
 
@@ -350,12 +316,7 @@ ip route show table 224
 
 #### 为什么不用 `unicast` 路由?
 
-如果使用 `unicast default via xxx table 224`, 数据包会:
-
-- 被正常转发到下一跳
-- **不会**触发环回
-- **不会**重新进入 PREROUTING
-- 无法被 TPROXY 处理
+如果使用 `unicast default via xxx table 224`, 数据包会被正常转发到下一跳, 不会触发环回, 不会重新进入 PREROUTING, 无法被 TPROXY 处理.
 
 只有 `type local` 路由才能实现本机流量的透明代理.
 
