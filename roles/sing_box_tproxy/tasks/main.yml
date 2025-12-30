@@ -1,11 +1,4 @@
 ---
-- name: install tproxy toggle script (local mode only)
-  when: sing_box_mode == 'local'
-  ansible.builtin.copy:
-    src: usr/local/bin/sing-box-tproxy-toggle.sh
-    dest: /usr/local/bin/sing-box-tproxy-toggle.sh
-    mode: "0755"
-
 - name: ensure packages is installed
   ansible.builtin.package:
     name:
