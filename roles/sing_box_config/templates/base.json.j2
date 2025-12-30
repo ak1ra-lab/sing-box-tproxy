@@ -61,6 +61,8 @@
                     "geosite-telegram",
                     "geosite-bing",
                     "geosite-category-ai-!cn",
+                    "geosite-category-entertainment",
+                    "geosite-category-entertainment@!cn",
                     "geosite-steam",
                     "geosite-debian",
                     "geosite-gfw"
@@ -192,6 +194,30 @@
         },
         {
             "tag": "AI",
+            "type": "selector",
+            "outbounds": [
+                "PROXY",
+                "DIRECT",
+                "🇸🇬 狮城节点 - AUTO",
+                "🇭🇰 香港节点 - AUTO",
+                "🇯🇵 日本节点 - AUTO",
+                "🇹🇼 台湾节点 - AUTO",
+                "🇺🇸 美国节点 - AUTO",
+                "🏰 欧洲节点 - AUTO",
+                "🇰🇷 韩国节点 - AUTO",
+                "🇸🇬 狮城节点",
+                "🇭🇰 香港节点",
+                "🇯🇵 日本节点",
+                "🇹🇼 台湾节点",
+                "🇺🇸 美国节点",
+                "🏰 欧洲节点",
+                "🇰🇷 韩国节点"
+            ],
+            "default": "PROXY",
+            "interrupt_exist_connections": false
+        },
+        {
+            "tag": "entertainment",
             "type": "selector",
             "outbounds": [
                 "PROXY",
@@ -474,18 +500,32 @@
             },
             {
                 "action": "route",
-                "rule_set": "geosite-steam",
+                "rule_set": [
+                    "geosite-steam"
+                ],
                 "outbound": "STEAM"
             },
             {
                 "action": "route",
-                "rule_set": "geosite-apple",
+                "rule_set": [
+                    "geosite-apple"
+                ],
                 "outbound": "APPLE"
             },
             {
                 "action": "route",
-                "rule_set": "geosite-category-ai-!cn",
+                "rule_set": [
+                    "geosite-category-ai-!cn"
+                ],
                 "outbound": "AI"
+            },
+            {
+                "action": "route",
+                "rule_set": [
+                    "geosite-category-entertainment",
+                    "geosite-category-entertainment@!cn"
+                ],
+                "outbound": "entertainment"
             },
             {
                 "action": "route",
@@ -591,6 +631,20 @@
                 "type": "remote",
                 "format": "binary",
                 "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-ai-!cn.srs",
+                "update_interval": "30d"
+            },
+            {
+                "tag": "geosite-category-entertainment",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-entertainment.srs",
+                "update_interval": "30d"
+            },
+            {
+                "tag": "geosite-category-entertainment@!cn",
+                "type": "remote",
+                "format": "binary",
+                "url": "{{ sing_box_github_proxy }}https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-entertainment@!cn.srs",
                 "update_interval": "30d"
             },
             {
