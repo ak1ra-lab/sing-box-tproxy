@@ -1,0 +1,34 @@
+---
+# Main tasks for sing_box_server role
+
+- name: validate configuration parameters
+  ansible.builtin.import_tasks: validate.yml
+
+- name: generate credentials if not provided
+  ansible.builtin.import_tasks: generate_credentials.yml
+
+- name: ensure sing-box configuration directory exists
+  ansible.builtin.file:
+    path: "{{ sing_box_server_config_dir }}"
+    state: directory
+    owner: "{{ sing_box_user.name }}"
+    group: "{{ sing_box_group.name }}"
+    mode: "0755"
+
+- name: ensure ACME data directory exists
+  ansible.builtin.file:
+    path: "{{ sing_box_server_acme_data_directory }}"
+    state: directory
+    owner: "{{ sing_box_user.name }}"
+    group: "{{ sing_box_group.name }}"
+    mode: "0755"
+  when: sing_box_server_tls_mode == 'acme'
+
+- name: template sing-box server configuration
+  ansible.builtin.template:
+    src: config.json.j2
+    dest: "{{ sing_box_server_config_file }}"
+    owner: "{{ sing_box_user.name }}"
+    group: "{{ sing_box_group.name }}"
+    mode: "0644"
+    validate: sing-box check -c %s

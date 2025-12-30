@@ -1,0 +1,158 @@
+---
+# Validation tasks for sing_box_server role
+# Validates configuration parameters before deployment
+
+- name: validate required parameters
+  ansible.builtin.assert:
+    that:
+      - sing_box_server_hostname is defined
+      - sing_box_server_hostname | length > 0
+      - sing_box_server_acme_email is defined
+      - sing_box_server_acme_email | length > 0
+    fail_msg: "Missing required parameters: sing_box_server_hostname and sing_box_server_acme_email"
+    success_msg: "✓ Required parameters validated"
+  when: sing_box_server_tls_mode == 'acme'
+
+- name: validate shadowsocks configuration
+  when: sing_box_server_enable_shadowsocks
+  block:
+    - name: validate shadowsocks method
+      ansible.builtin.assert:
+        that:
+          - sing_box_server_shadowsocks_method in sing_box_server_shadowsocks_method_key_length.keys()
+        fail_msg: |
+          Invalid shadowsocks method: {{ sing_box_server_shadowsocks_method }}
+          Allowed methods: {{ sing_box_server_shadowsocks_method_key_length.keys() | list | join(', ') }}
+        success_msg: "✓ Shadowsocks method '{{ sing_box_server_shadowsocks_method }}' validated"
+
+    - name: warn about non-2022 ciphers
+      ansible.builtin.debug:
+        msg: |
+          ⚠ WARNING: Using non-2022 cipher '{{ sing_box_server_shadowsocks_method }}'
+          Recommendation: Use AEAD 2022 ciphers (2022-blake3-*) for better security and performance
+      when: not sing_box_server_shadowsocks_method.startswith('2022-')
+
+    - name: validate shadowsocks port
+      ansible.builtin.assert:
+        that:
+          - sing_box_server_shadowsocks_port >= 1
+          - sing_box_server_shadowsocks_port <= 65535
+        fail_msg: "Invalid shadowsocks port: {{ sing_box_server_shadowsocks_port }}"
+        success_msg: "✓ Shadowsocks port validated"
+
+- name: validate trojan configuration
+  when: sing_box_server_enable_trojan
+  block:
+    - name: validate trojan port
+      ansible.builtin.assert:
+        that:
+          - sing_box_server_trojan_port >= 1
+          - sing_box_server_trojan_port <= 65535
+        fail_msg: "Invalid trojan port: {{ sing_box_server_trojan_port }}"
+        success_msg: "✓ Trojan port validated"
+
+- name: validate hysteria2 configuration
+  when: sing_box_server_enable_hysteria2
+  block:
+    - name: validate hysteria2 port
+      ansible.builtin.assert:
+        that:
+          - sing_box_server_hysteria2_port >= 1
+          - sing_box_server_hysteria2_port <= 65535
+        fail_msg: "Invalid hysteria2 port: {{ sing_box_server_hysteria2_port }}"
+        success_msg: "✓ Hysteria2 port validated"
+
+    - name: validate hysteria2 bandwidth limits
+      ansible.builtin.assert:
+        that:
+          - sing_box_server_hysteria2_up_mbps > 0
+          - sing_box_server_hysteria2_down_mbps > 0
+        fail_msg: "Invalid hysteria2 bandwidth limits"
+        success_msg: "✓ Hysteria2 bandwidth limits validated"
+
+- name: validate vless configuration
+  when: sing_box_server_enable_vless
+  block:
+    - name: validate vless port
+      ansible.builtin.assert:
+        that:
+          - sing_box_server_vless_port >= 1
+          - sing_box_server_vless_port <= 65535
+        fail_msg: "Invalid vless port: {{ sing_box_server_vless_port }}"
+        success_msg: "✓ VLESS port validated"
+
+- name: validate tuic configuration
+  when: sing_box_server_enable_tuic
+  block:
+    - name: validate tuic port
+      ansible.builtin.assert:
+        that:
+          - sing_box_server_tuic_port >= 1
+          - sing_box_server_tuic_port <= 65535
+        fail_msg: "Invalid tuic port: {{ sing_box_server_tuic_port }}"
+        success_msg: "✓ Tuic port validated"
+
+    - name: validate tuic congestion control
+      ansible.builtin.assert:
+        that:
+          - sing_box_server_tuic_congestion_control in ['cubic', 'new_reno', 'bbr']
+        fail_msg: "Invalid tuic congestion_control: {{ sing_box_server_tuic_congestion_control }}"
+        success_msg: "✓ Tuic congestion control validated"
+
+    - name: validate tuic bandwidth limits
+      ansible.builtin.assert:
+        that:
+          - sing_box_server_tuic_up_mbps > 0
+          - sing_box_server_tuic_down_mbps > 0
+        fail_msg: "Invalid tuic bandwidth limits"
+        success_msg: "✓ Tuic bandwidth limits validated"
+
+- name: validate TLS configuration
+  block:
+    - name: validate TLS mode
+      ansible.builtin.assert:
+        that:
+          - sing_box_server_tls_mode in ['acme', 'manual']
+        fail_msg: "Invalid TLS mode: {{ sing_box_server_tls_mode }}"
+        success_msg: "✓ TLS mode validated"
+
+    - name: validate manual TLS certificates
+      when: sing_box_server_tls_mode == 'manual'
+      ansible.builtin.assert:
+        that:
+          - sing_box_server_tls_certificate_path | length > 0
+          - sing_box_server_tls_key_path | length > 0
+        fail_msg: "Manual TLS mode requires certificate_path and key_path"
+        success_msg: "✓ Manual TLS configuration validated"
+
+    - name: validate ACME provider
+      when: sing_box_server_tls_mode == 'acme'
+      ansible.builtin.assert:
+        that:
+          - sing_box_server_acme_provider in ['letsencrypt', 'zerossl']
+        fail_msg: "Invalid ACME provider: {{ sing_box_server_acme_provider }}"
+        success_msg: "✓ ACME provider validated"
+
+    - name: validate DNS-01 provider
+      when: sing_box_server_tls_mode == 'acme' and sing_box_server_acme_use_dns01
+      ansible.builtin.assert:
+        that:
+          - sing_box_server_acme_dns01_provider in ['cloudflare', 'alidns']
+        fail_msg: "Invalid DNS-01 provider: {{ sing_box_server_acme_dns01_provider }}"
+        success_msg: "✓ DNS-01 provider validated"
+
+- name: validate port conflicts
+  ansible.builtin.assert:
+    that:
+      - _used_ports | unique | length == _used_ports | length
+    fail_msg: "Port conflict detected: {{ _used_ports }}"
+    success_msg: "✓ No port conflicts detected"
+  vars:
+    _used_ports: >-
+      {{
+        ([sing_box_server_shadowsocks_port] if sing_box_server_enable_shadowsocks else []) +
+        ([sing_box_server_trojan_port] if sing_box_server_enable_trojan else []) +
+        ([sing_box_server_hysteria2_port] if sing_box_server_enable_hysteria2 else []) +
+        ([sing_box_server_vless_port] if sing_box_server_enable_vless else []) +
+        ([sing_box_server_tuic_port] if sing_box_server_enable_tuic else [])
+      }}

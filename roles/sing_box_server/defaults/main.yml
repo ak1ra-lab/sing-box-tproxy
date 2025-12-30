@@ -1,0 +1,156 @@
+---
+# Sing-box Server Role - Simplified Configuration
+# Auto-generates passwords and client configs if not provided
+
+# =============================================================================
+# Required Settings
+# =============================================================================
+
+# Server hostname (for TLS certificates)
+sing_box_server_hostname: "{{ ansible_fqdn }}"
+
+# ACME email (required for automatic TLS certificates)
+sing_box_server_acme_email: ""
+
+# Server region code (for client outbound tags, e.g., US, HK, SG, JP)
+sing_box_server_region: ""
+
+# Number of users to generate (1-10, default: 3)
+sing_box_server_user_count: 3
+
+# Predefined user names pool (randomly selected if not enough)
+sing_box_server_user_names:
+  - alice
+  - bob
+  - charlie
+  - david
+  - eve
+  - frank
+  - grace
+  - henry
+  - iris
+  - jack
+
+# =============================================================================
+# Protocol Enable/Disable
+# =============================================================================
+
+sing_box_server_enable_shadowsocks: true
+sing_box_server_enable_trojan: true
+sing_box_server_enable_hysteria2: true
+sing_box_server_enable_vless: false
+sing_box_server_enable_tuic: false
+
+# =============================================================================
+# Basic Protocol Configuration
+# =============================================================================
+
+# Ports
+sing_box_server_shadowsocks_port: 8388
+sing_box_server_trojan_port: 8443
+sing_box_server_hysteria2_port: 8845
+sing_box_server_vless_port: 8444
+sing_box_server_tuic_port: 8846
+
+# Bandwidth limits (Hysteria2/Tuic)
+sing_box_server_hysteria2_up_mbps: 500
+sing_box_server_hysteria2_down_mbps: 500
+sing_box_server_tuic_up_mbps: 500
+sing_box_server_tuic_down_mbps: 500
+
+# =============================================================================
+# Authentication (auto-generated if empty)
+# =============================================================================
+
+# Shadowsocks password (base64, auto-generated if empty)
+sing_box_server_shadowsocks_password: ""
+# Multi-user: leave empty to auto-generate based on user_count
+sing_box_server_shadowsocks_users: []
+
+# Trojan users: leave empty to auto-generate based on user_count
+sing_box_server_trojan_users: []
+
+# Hysteria2 users: leave empty to auto-generate based on user_count
+sing_box_server_hysteria2_users: []
+
+# VLESS users: leave empty to auto-generate based on user_count
+sing_box_server_vless_users: []
+
+# Tuic users: leave empty to auto-generate based on user_count
+sing_box_server_tuic_users: []
+
+# =============================================================================
+# TLS Configuration
+# =============================================================================
+
+# TLS mode: [acme, manual]
+sing_box_server_tls_mode: acme
+
+# ACME provider: [letsencrypt, zerossl]
+sing_box_server_acme_provider: letsencrypt
+sing_box_server_acme_domain:
+  - "{{ sing_box_server_hostname }}"
+
+# Use DNS-01 challenge? (recommended for NAT/firewall)
+sing_box_server_acme_use_dns01: true
+
+# DNS-01 provider: [cloudflare, alidns]
+sing_box_server_acme_dns01_provider: cloudflare
+sing_box_server_acme_dns01_cloudflare_api_token: ""
+sing_box_server_acme_dns01_cloudflare_zone_token: ""
+sing_box_server_acme_dns01_alidns_access_key_id: ""
+sing_box_server_acme_dns01_alidns_access_key_secret: ""
+sing_box_server_acme_dns01_alidns_region_id: ""
+
+# EAB (External Account Binding) for ZeroSSL/Google etc.
+sing_box_server_acme_eab_kid: ""
+sing_box_server_acme_eab_hmac_key: ""
+
+# Manual TLS (when tls_mode = manual)
+sing_box_server_tls_certificate_path: ""
+sing_box_server_tls_key_path: ""
+
+# =============================================================================
+# Advanced Options (rarely need to change)
+# =============================================================================
+
+sing_box_server_listen: "0.0.0.0"
+sing_box_server_shadowsocks_method: "2022-blake3-aes-128-gcm"
+sing_box_server_shadowsocks_method_key_length:
+  2022-blake3-aes-128-gcm: 16
+  2022-blake3-aes-256-gcm: 32
+  2022-blake3-chacha20-poly1305: 32
+  aes-128-gcm: 16
+  aes-192-gcm: 16
+  aes-256-gcm: 16
+  chacha20-ietf-poly1305: 16
+  xchacha20-ietf-poly1305: 16
+
+sing_box_server_trojan_multiplex_enabled: true
+sing_box_server_vless_flow: "" # xtls-rprx-vision for TLS, empty for reality
+sing_box_server_hysteria2_obfs_enabled: false
+sing_box_server_hysteria2_obfs_password: ""
+sing_box_server_hysteria2_masquerade_enabled: true
+sing_box_server_hysteria2_masquerade_url: "https://www.bing.com"
+sing_box_server_tuic_congestion_control: bbr
+
+# =============================================================================
+# Internal Variables (do not modify)
+# =============================================================================
+
+sing_box_server_config_dir: /etc/sing-box
+sing_box_server_config_file: "{{ sing_box_server_config_dir }}/config.json"
+sing_box_server_outbounds_dir: "{{ playbook_dir }}/outbounds"
+sing_box_server_acme_data_directory: /var/lib/sing-box/acme
+
+_sing_box_server_tls_alpn: [h3, h2, http/1.1]
+_sing_box_server_tls_min_version: "1.2"
+_sing_box_server_tls_max_version: "1.3"
+_sing_box_server_acme_default_server_name: "{{ sing_box_server_hostname }}"
+_sing_box_server_acme_disable_http_challenge: "{{ sing_box_server_acme_use_dns01 }}"
+_sing_box_server_acme_disable_tls_alpn_challenge: "{{ sing_box_server_acme_use_dns01 }}"
+_sing_box_server_dns_servers:
+  - {tag: google, type: tls, server: 8.8.8.8}
+  - {tag: cloudflare, type: tls, server: 1.1.1.1}
+_sing_box_server_default_outbound: direct
+_sing_box_server_hysteria2_masquerade_type: proxy

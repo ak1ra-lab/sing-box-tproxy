@@ -1,0 +1,79 @@
+{# TLS Configuration Template for Inbounds #}
+{%- macro get_tls_config() -%}
+{%- set tls_config = {
+  "enabled": true,
+  "server_name": sing_box_server_hostname,
+  "alpn": _sing_box_server_tls_alpn,
+  "min_version": _sing_box_server_tls_min_version,
+  "max_version": _sing_box_server_tls_max_version
+} -%}
+
+{%- if sing_box_server_tls_mode == 'manual' -%}
+  {%- if sing_box_server_tls_certificate_path -%}
+    {%- set _ = tls_config.update({"certificate_path": sing_box_server_tls_certificate_path}) -%}
+  {%- endif -%}
+  {%- if sing_box_server_tls_key_path -%}
+    {%- set _ = tls_config.update({"key_path": sing_box_server_tls_key_path}) -%}
+  {%- endif -%}
+
+{%- elif sing_box_server_tls_mode == 'acme' -%}
+  {%- set acme_config = {
+    "domain": sing_box_server_acme_domain,
+    "provider": sing_box_server_acme_provider,
+    "data_directory": sing_box_server_acme_data_directory,
+    "default_server_name": _sing_box_server_acme_default_server_name
+  } -%}
+
+  {%- if sing_box_server_acme_email -%}
+    {%- set _ = acme_config.update({"email": sing_box_server_acme_email}) -%}
+  {%- endif -%}
+
+  {%- if sing_box_server_acme_eab_kid and sing_box_server_acme_eab_hmac_key -%}
+    {%- set _ = acme_config.update({
+      "eab": {
+        "kid": sing_box_server_acme_eab_kid,
+        "hmac_key": sing_box_server_acme_eab_hmac_key
+      }
+    }) -%}
+  {%- endif -%}
+
+  {%- if _sing_box_server_acme_disable_http_challenge -%}
+    {%- set _ = acme_config.update({"disable_http_challenge": true}) -%}
+  {%- endif -%}
+
+  {%- if _sing_box_server_acme_disable_tls_alpn_challenge -%}
+    {%- set _ = acme_config.update({"disable_tls_alpn_challenge": true}) -%}
+  {%- endif -%}
+
+  {%- if sing_box_server_acme_use_dns01 -%}
+    {%- set dns01_config = {
+      "provider": sing_box_server_acme_dns01_provider
+    } -%}
+
+    {%- if sing_box_server_acme_dns01_provider == 'cloudflare' -%}
+      {%- if sing_box_server_acme_dns01_cloudflare_api_token -%}
+        {%- set _ = dns01_config.update({"api_token": sing_box_server_acme_dns01_cloudflare_api_token}) -%}
+      {%- endif -%}
+      {%- if sing_box_server_acme_dns01_cloudflare_zone_token -%}
+        {%- set _ = dns01_config.update({"zone_token": sing_box_server_acme_dns01_cloudflare_zone_token}) -%}
+      {%- endif -%}
+    {%- elif sing_box_server_acme_dns01_provider == 'alidns' -%}
+      {%- if sing_box_server_acme_dns01_alidns_access_key_id -%}
+        {%- set _ = dns01_config.update({"access_key_id": sing_box_server_acme_dns01_alidns_access_key_id}) -%}
+      {%- endif -%}
+      {%- if sing_box_server_acme_dns01_alidns_access_key_secret -%}
+        {%- set _ = dns01_config.update({"access_key_secret": sing_box_server_acme_dns01_alidns_access_key_secret}) -%}
+      {%- endif -%}
+      {%- if sing_box_server_acme_dns01_alidns_region_id -%}
+        {%- set _ = dns01_config.update({"region_id": sing_box_server_acme_dns01_alidns_region_id}) -%}
+      {%- endif -%}
+    {%- endif -%}
+
+    {%- set _ = acme_config.update({"dns01_challenge": dns01_config}) -%}
+  {%- endif -%}
+
+  {%- set _ = tls_config.update({"acme": acme_config}) -%}
+{%- endif -%}
+
+{{ tls_config | to_json }}
+{%- endmacro -%}

@@ -1,0 +1,58 @@
+---
+# Auto-generated host variables for {{ inventory_hostname }}
+# Generated on: {{ ansible_date_time.iso8601 }}
+
+sing_box_server_hostname: "{{ sing_box_server_hostname }}"
+
+{% if sing_box_server_enable_shadowsocks and sing_box_server_shadowsocks_password %}
+# Shadowsocks
+sing_box_server_shadowsocks_password: "{{ sing_box_server_shadowsocks_password }}"
+{% if sing_box_server_shadowsocks_users | length > 0 %}
+sing_box_server_shadowsocks_users:
+{% for user in sing_box_server_shadowsocks_users %}
+  - name: {{ user.name }}
+    password: "{{ user.password }}"
+{% endfor %}
+{% endif %}
+{% endif %}
+
+{% if sing_box_server_enable_trojan and sing_box_server_trojan_users | length > 0 %}
+# Trojan
+sing_box_server_trojan_users:
+{% for user in sing_box_server_trojan_users %}
+  - name: {{ user.name }}
+    password: "{{ user.password }}"
+{% endfor %}
+{% endif %}
+
+{% if sing_box_server_enable_hysteria2 and sing_box_server_hysteria2_users | length > 0 %}
+# Hysteria2
+{% if sing_box_server_hysteria2_obfs_enabled and sing_box_server_hysteria2_obfs_password %}
+sing_box_server_hysteria2_obfs_enabled: true
+sing_box_server_hysteria2_obfs_password: "{{ sing_box_server_hysteria2_obfs_password }}"
+{% endif %}
+sing_box_server_hysteria2_users:
+{% for user in sing_box_server_hysteria2_users %}
+  - name: {{ user.name }}
+    password: "{{ user.password }}"
+{% endfor %}
+{% endif %}
+
+{% if sing_box_server_enable_vless and sing_box_server_vless_users | length > 0 %}
+# VLESS
+sing_box_server_vless_users:
+{% for user in sing_box_server_vless_users %}
+  - name: {{ user.name }}
+    uuid: "{{ user.uuid }}"
+{% endfor %}
+{% endif %}
+
+{% if sing_box_server_enable_tuic and sing_box_server_tuic_users | length > 0 %}
+# Tuic
+sing_box_server_tuic_users:
+{% for user in sing_box_server_tuic_users %}
+  - name: {{ user.name }}
+    uuid: "{{ user.uuid }}"
+    password: "{{ user.password }}"
+{% endfor %}
+{% endif %}

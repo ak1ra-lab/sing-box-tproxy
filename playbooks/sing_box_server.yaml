@@ -1,0 +1,6 @@
+---
+- hosts: "{{ playbook_hosts | default('sing-box-server') }}"
+  become: true
+  roles:
+    - role: sing_box_install
+    - role: sing_box_server
