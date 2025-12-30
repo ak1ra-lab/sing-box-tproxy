@@ -5,7 +5,7 @@ description = "Yet another configuration generator for sing-box"
 authors = [{ name = "ak1ra", email = "git@ak1ra.xyz" }]
 dependencies = [
     "argcomplete>=3.6.2",
-    "chaos-utils>=0.3.0",
+    "chaos-utils>=0.3.1",
     "httpx>=0.28.1",
     "tenacity>=9.1.2",
 ]
