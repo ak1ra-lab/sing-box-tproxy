@@ -38,3 +38,10 @@ sing_box_config_base_template: base.json.j2
 # 对应 /etc/sing-box/config.json 中 experimental 配置项
 sing_box_clash_api_secret: ""
 sing_box_clash_api_external_controller: "0.0.0.0:9090"
+
+# DNS Internal Configuration
+sing_box_config_dns_internal: []
+
+# Custom Rules
+sing_box_config_custom_internal_rules: []
+sing_box_config_custom_direct_rules: []

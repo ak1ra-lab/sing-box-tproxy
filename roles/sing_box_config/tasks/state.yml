@@ -9,7 +9,7 @@
 
 - name: write sing-box-config config/subscriptions.json to remote
   ansible.builtin.copy:
-    content: "{{ sing_box_config_subscriptions | ansible.builtin.to_nice_json }}"
+    content: "{{ sing_box_config_subscriptions | ansible.builtin.to_nice_json(indent=4, ensure_ascii=false, sort_keys=false) }}"
     dest: "{{ sing_box_config_subscriptions_dest }}"
     owner: "{{ proxy_user.name }}"
     group: "{{ proxy_group.name }}"

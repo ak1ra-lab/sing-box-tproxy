@@ -1,0 +1,28 @@
+{%- macro get_inbounds_config() -%}
+{%- set inbounds_config = [] -%}
+
+{# Mixed Inbound #}
+{%- set _mixed_inbound = {
+    "tag": "MIXED-IN",
+    "type": "mixed",
+    "listen": "0.0.0.0" if sing_box_mode == 'gateway' else "127.0.0.1",
+    "listen_port": sing_box_mixed_port | int,
+    "udp_timeout": 180,
+    "sniff": true
+} -%}
+{%- set _ = inbounds_config.append(_mixed_inbound) -%}
+
+{# TProxy Inbound #}
+{%- if sing_box_mode in ['local', 'gateway'] -%}
+    {%- set _tproxy_inbound = {
+        "tag": "TPROXY-IN",
+        "type": "tproxy",
+        "listen": "0.0.0.0" if sing_box_mode == 'gateway' else "127.0.0.1",
+        "listen_port": sing_box_tproxy_port | int,
+        "udp_timeout": 180,
+        "sniff": true
+    } -%}
+    {%- set _ = inbounds_config.append(_tproxy_inbound) -%}
+{%- endif -%}
+{{ inbounds_config | to_json }}
+{%- endmacro -%}

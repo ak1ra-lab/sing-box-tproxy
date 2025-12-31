@@ -1,0 +1,103 @@
+{%- macro get_dns_config() -%}
+{%- set dns_servers = [] -%}
+
+{# Predefined hosts #}
+{%- set _dns_hosts_predefined = {
+    "dns.alidns.com": ["223.5.5.5", "223.6.6.6"],
+    "one.one.one.one": ["1.1.1.1", "1.0.0.1"]
+} -%}
+
+{%- if sing_box_config_dns_internal | length > 0 -%}
+    {%- set _ = _dns_hosts_predefined.update({"dns_internal": sing_box_config_dns_internal}) -%}
+{%- endif -%}
+
+{%- set _ = dns_servers.append({
+    "tag": "dns_hosts",
+    "type": "hosts",
+    "predefined": _dns_hosts_predefined
+}) -%}
+
+{# Internal DNS #}
+{%- if sing_box_config_dns_internal | length > 0 -%}
+    {%- set _ = dns_servers.append({
+        "tag": "dns_internal",
+        "type": "udp",
+        "server": "dns_internal",
+        "server_port": 53,
+        "domain_resolver": "dns_hosts"
+    }) -%}
+{%- endif -%}
+
+{# Public DNS #}
+{%- set _ = dns_servers.extend([
+    {
+        "tag": "dns_direct",
+        "type": "tls",
+        "server": "dns.alidns.com",
+        "server_port": 853,
+        "domain_resolver": "dns_hosts"
+    },
+    {
+        "tag": "dns_proxy",
+        "type": "tls",
+        "server": "one.one.one.one",
+        "server_port": 853,
+        "domain_resolver": "dns_hosts",
+        "detour": "PROXY"
+    },
+    {
+        "tag": "dns_fakeip",
+        "type": "fakeip",
+        "inet4_range": "198.18.0.0/15",
+        "inet6_range": "fc00::/18"
+    }
+]) -%}
+
+{# DNS Rules #}
+{%- set dns_rules = [] -%}
+
+{%- if sing_box_config_custom_internal_rules | length > 0 -%}
+    {%- set _ = dns_rules.append({
+        "action": "route",
+        "rule_set": ["custom-internal"],
+        "server": "dns_internal"
+    }) -%}
+{%- endif -%}
+
+{%- if sing_box_config_custom_direct_rules | length > 0 -%}
+    {%- set _ = dns_rules.append({
+        "action": "route",
+        "rule_set": ["custom-direct"],
+        "server": "dns_direct"
+    }) -%}
+{%- endif -%}
+
+{%- set _ = dns_rules.extend([
+    {
+        "action": "route",
+        "rule_set": ["geosite-private", "geosite-geolocation-cn"],
+        "server": "dns_direct"
+    },
+    {
+        "action": "route",
+        "rule_set": [
+            "geosite-google", "geosite-win-update", "geosite-apple",
+            "geosite-github", "geosite-telegram", "geosite-bing",
+            "geosite-category-ai-!cn", "geosite-category-entertainment",
+            "geosite-category-entertainment@!cn", "geosite-steam",
+            "geosite-debian", "geosite-gfw"
+        ],
+        "server": "dns_fakeip"
+    }
+]) -%}
+
+{%- set dns_config = {
+    "servers": dns_servers,
+    "rules": dns_rules,
+    "final": "dns_proxy",
+    "strategy": "prefer_ipv4",
+    "disable_cache": false,
+    "disable_expire": false
+} -%}
+{{ dns_config | to_json }}
+{%- endmacro -%}
