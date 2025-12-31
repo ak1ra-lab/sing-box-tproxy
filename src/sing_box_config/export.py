@@ -6,13 +6,13 @@ from typing import Any
 
 import httpx
 import tenacity
-from chaos_utils.text_utils import b64decode, save_json
+from chaos_utils.text_utils import b64decode, read_json, save_json
 
 from sing_box_config.parser.shadowsocks import ShadowsocksParser
 
 logger = logging.getLogger(__name__)
 
-SUPPORTED_TYPES = ["SIP002"]
+SUPPORTED_TYPES = ["local", "sip002"]
 
 
 @tenacity.retry(
@@ -56,7 +56,12 @@ def get_proxies_from_subscriptions(
     proxies = []
     if not subscription.get("enabled", True):
         return proxies
-    if subscription["type"].upper() not in SUPPORTED_TYPES:
+
+    if subscription["type"].lower() == "local":
+        proxies = read_json(Path(subscription["path"]))
+        return proxies
+
+    if subscription["type"].lower() not in SUPPORTED_TYPES:
         logger.warning(
             "Unsupported subscription type: %s (supported: %s)",
             subscription["type"],
@@ -73,7 +78,7 @@ def get_proxies_from_subscriptions(
     logger.info("resp.text = %s", resp.text[:100])
 
     exclude_patterns = subscription.pop("exclude", [])
-    if subscription["type"].upper() == "SIP002":
+    if subscription["type"].lower() == "sip002":
         try:
             proxies_lines = b64decode(resp.text).splitlines()
         except UnicodeDecodeError as err:
