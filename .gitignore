@@ -332,10 +332,15 @@ __marimo__/
 .github/copilot-instructions.md
 
 # Ansible
-host_vars/*
-group_vars/*
+inventory/*
+**/host_vars/*
+**/group_vars/*
 
 # General configuration file and examples folder
-cache.db
 examples/*
 config/*
+
+# sing-box
+**/credentials/*
+**/inbounds/*
+**/outbounds/*
