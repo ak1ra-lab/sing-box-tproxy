@@ -1,3 +1,28 @@
 ---
+# Role metadata for sing_box_tproxy
+
+galaxy_info:
+  author: ak1ra
+  description: Install and configure sing-box as a transparent proxy
+  license: MIT
+  min_ansible_version: "2.18"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+        - jammy
+    - name: Debian
+      versions:
+        - trixie
+        - bookworm
+
+  galaxy_tags:
+    - proxy
+    - tproxy
+    - sing-box
+
 dependencies:
   - sing_box_defaults
+
+allow_duplicates: false
