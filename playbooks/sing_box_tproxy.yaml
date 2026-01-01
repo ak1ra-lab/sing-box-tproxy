@@ -1,6 +1,6 @@
 ---
 - name: deploy sing-box tproxy
-  hosts: "{{ playbook_hosts | default('pve-sing-box-tproxy') }}"
+  hosts: "{{ playbook_hosts | default('sing-box-tproxy') }}"
   become: true
 
   vars:
