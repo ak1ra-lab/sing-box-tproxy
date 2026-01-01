@@ -12,7 +12,7 @@
 - name: enable tcp_bbr
   when:
     - ansible_kernel is version('4.9.0', '>=')
-    - (tcp_bbr_enabled | ansible.builtin.bool)
+    - (sing_box_tproxy_tcp_bbr_enabled | ansible.builtin.bool)
   ansible.builtin.import_tasks: tcp_bbr.yml
 
 - name: ensure ip_forward state

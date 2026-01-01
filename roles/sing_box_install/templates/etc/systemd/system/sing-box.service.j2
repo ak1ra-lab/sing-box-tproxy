@@ -4,8 +4,8 @@ Documentation=https://sing-box.sagernet.org
 After=network.target nss-lookup.target network-online.target
 
 [Service]
-User={{ proxy_user.name }}
-Group={{ proxy_group.name }}
+User={{ sing_box_user.name }}
+Group={{ sing_box_group.name }}
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE CAP_SYS_PTRACE CAP_DAC_READ_SEARCH
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE CAP_SYS_PTRACE CAP_DAC_READ_SEARCH
 ExecStartPre=/usr/bin/sing-box -C {{ sing_box_etc_dir }} check

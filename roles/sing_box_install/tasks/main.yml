@@ -1,14 +1,14 @@
 ---
 - name: ensure apt_keyrings_dest directory exists
   ansible.builtin.file:
-    path: "{{ apt_keyrings_dest | ansible.builtin.dirname }}"
+    path: "{{ sing_box_install_apt_keyrings_dest | ansible.builtin.dirname }}"
     state: directory
     mode: "0755"
 
 - name: get apt key from apt_key_url
   ansible.builtin.get_url:
-    url: "{{ apt_key_url }}"
-    dest: "{{ apt_keyrings_dest }}"
+    url: "{{ sing_box_install_apt_key_url }}"
+    dest: "{{ sing_box_install_apt_keyrings_dest }}"
     mode: "0644"
 
 - name: add apt repo in DEB822 format
@@ -18,33 +18,33 @@
     deb_architectures:
       x86_64: amd64
   ansible.builtin.deb822_repository:
-    name: "{{ apt_repo }}"
+    name: "{{ sing_box_install_apt_repo }}"
     state: present
     enabled: true
     types: deb
-    uris: "{{ apt_repo_uris }}"
-    suites: "{{ apt_repo_suites }}"
-    components: "{{ apt_repo_components }}"
+    uris: "{{ sing_box_install_apt_repo_uris }}"
+    suites: "{{ sing_box_install_apt_repo_suites }}"
+    components: "{{ sing_box_install_apt_repo_components }}"
     architectures: "{{ deb_architectures[ansible_architecture] }}"
-    signed_by: "{{ apt_keyrings_dest }}"
+    signed_by: "{{ sing_box_install_apt_keyrings_dest }}"
 
 - name: add apt package pinning
   ansible.builtin.copy:
-    dest: "/etc/apt/preferences.d/99{{ apt_repo }}"
+    dest: "/etc/apt/preferences.d/99{{ sing_box_install_apt_repo }}"
     content: |
       Package: *
-      Pin: origin {{ apt_repo_uris | ansible.builtin.urlsplit('hostname') }}
+      Pin: origin {{ sing_box_install_apt_repo_uris | ansible.builtin.urlsplit('hostname') }}
       Pin-Priority: 900
     mode: "0644"
 
 - name: install sing-box package
   ansible.builtin.apt:
-    name: "{{ apt_repo_packages }}"
+    name: "{{ sing_box_install_apt_repo_packages }}"
     update_cache: true
     state: present
 
-- name: ensure proxy_user exists
-  ansible.builtin.import_tasks: proxy_user.yml
+- name: ensure sing_box_user exists
+  ansible.builtin.import_tasks: sing_box_user.yml
 
 - name: template systemd service
   ansible.builtin.import_tasks: systemd.yml

@@ -44,7 +44,7 @@
     label: "{{ item.key }}"
 
 - name: validate subscription urls (optional)
-  when: sing_box_validate_subscription_urls | default(false) | ansible.builtin.bool
+  when: sing_box_config_validate_subscription_urls | default(false) | ansible.builtin.bool
   block:
     - name: validate subscription urls (optional)
       ansible.builtin.uri:

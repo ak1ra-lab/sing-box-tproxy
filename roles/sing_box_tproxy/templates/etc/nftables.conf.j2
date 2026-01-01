@@ -27,8 +27,8 @@ define ROUTE_DEFAULT_MARK = {{ sing_box_route_default_mark }}
 
 # https://wiki.debian.org/SystemGroups#Groups_with_an_associated_user
 # proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
-define PROXY_UID = {{ proxy_user.uid }}
-define PROXY_GID = {{ proxy_group.gid }}
+define PROXY_UID = {{ sing_box_user.uid }}
+define PROXY_GID = {{ sing_box_group.gid }}
 
 table inet sing_box_tproxy {
 	# IETF/IANA IPv4 Special-Purpose Address Registry

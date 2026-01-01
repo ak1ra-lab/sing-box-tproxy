@@ -7,8 +7,8 @@
 - name: ensure sing-box working directory ownership
   ansible.builtin.file:
     path: "{{ directory }}"
-    owner: "{{ proxy_user.name }}"
-    group: "{{ proxy_group.name }}"
+    owner: "{{ sing_box_user.name }}"
+    group: "{{ sing_box_group.name }}"
     recurse: true
   loop:
     - "{{ sing_box_etc_dir }}"

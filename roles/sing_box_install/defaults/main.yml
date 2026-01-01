@@ -1,12 +1,12 @@
 ---
-apt_key_url: https://sing-box.app/gpg.key
-apt_keyrings_dest: /etc/apt/keyrings/sagernet.asc
+sing_box_install_apt_key_url: https://sing-box.app/gpg.key
+sing_box_install_apt_keyrings_dest: /etc/apt/keyrings/sagernet.asc
 
-apt_repo: sagernet
-apt_repo_uris: https://deb.sagernet.org/
-apt_repo_suites: "*"
-apt_repo_components: "*"
+sing_box_install_apt_repo: sagernet
+sing_box_install_apt_repo_uris: https://deb.sagernet.org/
+sing_box_install_apt_repo_suites: "*"
+sing_box_install_apt_repo_components: "*"
 
 # [sing-box, sing-box-beta]
-apt_repo_packages:
+sing_box_install_apt_repo_packages:
   - sing-box
