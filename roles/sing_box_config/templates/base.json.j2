@@ -6,9 +6,7 @@
 
 {%- set config = {
     "log": {
-        "disabled": false,
-        "level": "warn",
-        "timestamp": true
+        "level": sing_box_log_level
     },
     "dns": dns_lib.get_dns_config() | from_json,
     "inbounds": inbounds_lib.get_inbounds_config() | from_json,
