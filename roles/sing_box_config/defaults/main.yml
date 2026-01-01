@@ -9,20 +9,51 @@ sing_box_config_pip_extra_args:
 # 可选: 启用订阅 URL 可访问性检查
 sing_box_config_validate_subscription_urls: false
 
-# sing_box_config_subscriptions 的内容将会原样写入 {{ sing_box_state_dir }}/config/subscriptions.json, 而 {{ sing_box_state_dir }}/config/subscriptions.json 会作为 sing-box-config 程序的输入文件
+# sing_box_config_subscriptions 的内容将会原样写入 "{{ sing_box_config_dir }}/subscriptions.json"
+# 而 "{{ sing_box_config_dir }}/subscriptions.json" 会作为 sing-box-config 程序的输入文件
 sing_box_config_subscriptions: {}
-#   provider_example_1:
-#     type: SIP002
+#   # Example 1: Remote subscription with SIP002 format (Shadowsocks)
+#   provider_remote_sip002:
+#     type: remote
+#     format: sip002
 #     enabled: true
 #     url: "https://sub.example.com/api/v1/client/subscribe?token=YOUR_TOKEN_HERE"
 #     exclude:
 #       - "过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"
-#   provider_example_2:
-#     type: SIP002
-#     enabled: false
-#     url: "https://sub.example.net/api/v1/client/subscribe?token=YOUR_TOKEN_HERE"
-#     exclude:
-#       - "过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"
+#
+#   # Example 2: Remote subscription with sing-box native format (default format)
+#   provider_remote_singbox:
+#     type: remote
+#     format: sing-box
+#     enabled: true
+#     url: "https://sub.example.net/sing-box-config"
+#
+#   # Example 3: Local file subscription (sing-box format)
+#   provider_local_file:
+#     type: local
+#     format: sing-box
+#     path: "/etc/sing-box/local-proxies.json"
+#
+#   # Example 4: Inline subscription (sing-box format)
+#   provider_inline_singbox:
+#     type: inline
+#     format: sing-box
+#     outbounds:
+#       - type: shadowsocks
+#         tag: "ss-inline-1"
+#         server: "1.2.3.4"
+#         server_port: 8388
+#         method: "aes-256-gcm"
+#         password: "password"
+#
+#   # Example 5: Inline subscription (SIP002 format)
+#   provider_inline_sip002:
+#     type: inline
+#     format: sip002
+#     content: |
+        # c3M6Ly9ZMmhoWTJoaE1qQXRhV1YwWmkxd2IyeDVNVE13TlRwd1lYTnpkMjl5WkFAMS4yLjMuNDo4
+        # Mzg4I0V4YW1wbGUxCnNzOi8vWTJoaFkyaGhNakF0YVdWMFppMXdiMng1TVRNd05UcHdZWE56ZDI5
+        # eVpBQDEuMi4zLjQ6ODQ4OCNFeGFtcGxlMgo=
 
 # 用于从外部传入不同的 template 覆盖 templates/base.json.j2
 sing_box_config_base_template: base.json.j2
