@@ -1,4 +1,30 @@
 ---
+- name: create sing_box_local_config_dir
+  become: false
+  ansible.builtin.file:
+    path: "{{ sing_box_local_config_dir }}"
+    state: directory
+    mode: "0700"
+  delegate_to: localhost
+
+- name: template sing-box-config config/base.json on local
+  become: false
+  ansible.builtin.template:
+    src: "{{ sing_box_config_base_template }}"
+    dest: "{{ sing_box_config_local_base_dest }}"
+    mode: "0600"
+  delegate_to: localhost
+  run_once: true
+
+- name: write sing-box-config config/subscriptions.json to local
+  become: false
+  ansible.builtin.copy:
+    content: "{{ sing_box_config_subscriptions | ansible.builtin.to_nice_json(indent=4, ensure_ascii=false, sort_keys=false) }}"
+    dest: "{{ sing_box_config_local_subscriptions_dest }}"
+    mode: "0600"
+  delegate_to: localhost
+  run_once: true
+
 - name: template sing-box-config config/base.json on remote
   ansible.builtin.template:
     src: "{{ sing_box_config_base_template }}"

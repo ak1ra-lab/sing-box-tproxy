@@ -37,4 +37,6 @@
     basename: "{{ sing_box_config_base_template | ansible.builtin.basename | ansible.builtin.splitext | first }}"
     sing_box_config_base_dest: "{{ [sing_box_config_dir, basename] | ansible.builtin.path_join }}"
     sing_box_config_subscriptions_dest: "{{ [sing_box_config_dir, 'subscriptions.json'] | ansible.builtin.path_join }}"
+    sing_box_config_local_base_dest: "{{ [sing_box_local_config_dir, basename] | ansible.builtin.path_join }}"
+    sing_box_config_local_subscriptions_dest: "{{ [sing_box_local_config_dir, 'subscriptions.json'] | ansible.builtin.path_join }}"
   ansible.builtin.import_tasks: state.yml

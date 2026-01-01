@@ -2,7 +2,7 @@
 - name: delete dist/ before uv build
   become: false
   ansible.builtin.file:
-    path: "{{ [sing_box_config_uv_build_dir, 'dist'] | ansible.builtin.path_join }}"
+    path: "{{ [sing_box_git_repo_root, 'dist'] | ansible.builtin.path_join }}"
     state: absent
   delegate_to: localhost
   run_once: true
@@ -11,7 +11,7 @@
   become: false
   ansible.builtin.command:
     argv: [uv, build, --wheel]
-    chdir: "{{ sing_box_config_uv_build_dir }}"
+    chdir: "{{ sing_box_git_repo_root }}"
   delegate_to: localhost
   run_once: true
 
@@ -19,7 +19,7 @@
 # For a 'true list' pass wantlist=True to the lookup.
 - name: set_fact on dist_wheel
   ansible.builtin.set_fact:
-    dist_wheel: "{{ lookup('ansible.builtin.fileglob', sing_box_config_uv_build_dir ~ '/dist/*.whl', wantlist=True) | last }}"
+    dist_wheel: "{{ lookup('ansible.builtin.fileglob', sing_box_git_repo_root ~ '/dist/*.whl', wantlist=True) | last }}"
 
 - name: debug_var on dist_wheel
   ansible.builtin.debug:
@@ -27,7 +27,7 @@
 
 - name: install dist_wheel on remote venv
   vars:
-    relpath: "{{ dist_wheel | ansible.builtin.relpath(sing_box_config_uv_build_dir) }}"
+    relpath: "{{ dist_wheel | ansible.builtin.relpath(sing_box_git_repo_root) }}"
     dist_wheel_dest: "{{ [sing_box_state_dir, dist_wheel | ansible.builtin.basename] | ansible.builtin.path_join }}"
   block:
     - name: copy dist_wheel to remote

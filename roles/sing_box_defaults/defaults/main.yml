@@ -54,10 +54,15 @@ sing_box_state_dir: /var/lib/sing-box
 sing_box_venv_dir: "{{ sing_box_state_dir }}/.venv"
 sing_box_config_dir: "{{ sing_box_state_dir }}/config"
 
+# git repo root dir, also same as uv build dir
+sing_box_git_repo_root: "{{ playbook_dir | ansible.builtin.dirname }}"
+sing_box_local_config_dir: "{{ sing_box_git_repo_root }}/config"
+
 # roles/sing_box_server 将 client_outbounds.json.j2 渲染到 sing_box_outbounds_src
-# roles/sing_box_config 尝试从 sing_box_outbounds_src 复制到 sing_box_outbounds_dest
-sing_box_outbounds_src: "{{ playbook_dir }}/outbounds"
-sing_box_outbounds_dest: "{{ sing_box_state_dir }}"
+# roles/sing_box_config 尝试从 sing_box_outbounds_src 目录整体复制到 sing_box_outbounds_dest
+# 即目录结构为 /var/lib/sing-box/config/outbounds/{{ inventory_hostname }}.json
+sing_box_outbounds_src: "{{ sing_box_local_config_dir }}/outbounds"
+sing_box_outbounds_dest: "{{ sing_box_config_dir }}"
 
 # https://github.com/MetaCubeX/meta-rules-dat/tree/sing/geo/
 # https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/

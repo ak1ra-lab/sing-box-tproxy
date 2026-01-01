@@ -51,9 +51,9 @@ sing_box_config_subscriptions: {}
 #     type: inline
 #     format: sip002
 #     content: |
-        # c3M6Ly9ZMmhoWTJoaE1qQXRhV1YwWmkxd2IyeDVNVE13TlRwd1lYTnpkMjl5WkFAMS4yLjMuNDo4
-        # Mzg4I0V4YW1wbGUxCnNzOi8vWTJoaFkyaGhNakF0YVdWMFppMXdiMng1TVRNd05UcHdZWE56ZDI5
-        # eVpBQDEuMi4zLjQ6ODQ4OCNFeGFtcGxlMgo=
+#       c3M6Ly9ZMmhoWTJoaE1qQXRhV1YwWmkxd2IyeDVNVE13TlRwd1lYTnpkMjl5WkFAMS4yLjMuNDo4
+#       Mzg4I0V4YW1wbGUxCnNzOi8vWTJoaFkyaGhNakF0YVdWMFppMXdiMng1TVRNd05UcHdZWE56ZDI5
+#       eVpBQDEuMi4zLjQ6ODQ4OCNFeGFtcGxlMgo=
 
 # 用于从外部传入不同的 template 覆盖 templates/base.json.j2
 sing_box_config_base_template: base.json.j2
@@ -79,6 +79,3 @@ sing_box_config_updater_service_state: started
 
 # ansible.builtin.systemd_service active state
 sing_box_config_updater_service_active_state: ['started', 'restarted']
-
-# uv build directory
-sing_box_config_uv_build_dir: "{{ playbook_dir | ansible.builtin.dirname }}"
