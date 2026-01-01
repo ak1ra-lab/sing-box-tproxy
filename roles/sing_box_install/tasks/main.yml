@@ -5,6 +5,11 @@
     state: directory
     mode: "0755"
 
+# $ curl -sL https://sing-box.app/gpg.key | gpg
+# pub   rsa4096 2024-03-12 [SC]
+#       2C317FBD5D886B4E89BAE8DA6D9152172A2B2F0C
+# uid           Project S <contact@sagernet.org>
+# sub   rsa4096 2024-03-12 [E]
 - name: get apt key from apt_key_url
   ansible.builtin.get_url:
     url: "{{ sing_box_install_apt_key_url }}"
