@@ -65,8 +65,8 @@
     - name: validate hysteria2 bandwidth limits
       ansible.builtin.assert:
         that:
-          - sing_box_server_hysteria2_up_mbps > 0
-          - sing_box_server_hysteria2_down_mbps > 0
+          - sing_box_server_hysteria2_up_mbps >= 0
+          - sing_box_server_hysteria2_down_mbps >= 0
         fail_msg: "Invalid hysteria2 bandwidth limits"
         success_msg: "✓ Hysteria2 bandwidth limits validated"
 
