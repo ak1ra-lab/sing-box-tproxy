@@ -36,8 +36,10 @@
   ansible.builtin.assert:
     that:
       - item.value.type is defined
-      - item.value.type in ['local', 'sip002']
-    fail_msg: "subscription '{{ item.key }}' must have 'type' and 'url' defined, and type must in ['local', 'sip002']"
+      - item.value.type in sub_types
+      - item.value.format is defined
+      - item.value.format in sub_formats
+    fail_msg: "subscription '{{ item.key }}' must have 'type' and 'format' defined, and type must in {{ sub_types }}, format must in {{ sub_formats }}"
     quiet: true
   loop: "{{ sing_box_config_subscriptions | ansible.builtin.dict2items }}"
   loop_control:

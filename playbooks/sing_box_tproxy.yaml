@@ -38,6 +38,9 @@
   pre_tasks:
     - name: run pre-flight validation checks
       ansible.builtin.import_tasks: tasks/pre_flight_checks.yml
+      vars:
+        sub_types: ['inline', 'local', 'remote']
+        sub_formats: ['sing-box', 'sip002']
 
   tasks:
     - name: install sing-box package
