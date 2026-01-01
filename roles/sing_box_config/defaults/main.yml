@@ -48,3 +48,6 @@ sing_box_config_updater_service_state: started
 
 # ansible.builtin.systemd_service active state
 sing_box_config_updater_service_active_state: ['started', 'restarted']
+
+# uv build directory
+sing_box_config_uv_build_dir: "{{ playbook_dir | ansible.builtin.dirname }}"
