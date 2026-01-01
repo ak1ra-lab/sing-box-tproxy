@@ -7,44 +7,8 @@
     {"tag": "REJECT", "type": "block"}
 ]) -%}
 
-{# Proxy Groups Definitions #}
-{# This list defines the groups that will be created #}
-{%- set _proxy_groups = [
-    {"tag": "PROXY", "type": "selector", "outbounds": []},
-    {"tag": "FINAL", "type": "selector", "outbounds": ["PROXY", "DIRECT"]},
-    {"tag": "APPLE", "type": "selector", "outbounds": ["PROXY", "DIRECT"]},
-    {"tag": "STEAM", "type": "selector", "outbounds": ["PROXY", "DIRECT"]},
-    {"tag": "AI", "type": "selector", "outbounds": ["PROXY", "DIRECT"]},
-    {"tag": "entertainment", "type": "selector", "outbounds": ["PROXY", "DIRECT"]},
-    {"tag": "TELEGRAM", "type": "selector", "outbounds": ["PROXY", "DIRECT"]},
-    {"tag": "DOWNLOADER", "type": "selector", "outbounds": ["DIRECT", "PROXY"]},
-    {"tag": "SSH", "type": "selector", "outbounds": ["DIRECT", "PROXY"]}
-] -%}
-
-{# Auto Groups (URL Test) #}
-{%- set _auto_groups = [
-    {"tag": "🇸🇬 狮城节点 - AUTO", "filter": "新加坡|坡|狮城|SG|Singapore"},
-    {"tag": "🇭🇰 香港节点 - AUTO", "filter": "港|HK|Hong Kong"},
-    {"tag": "🇯🇵 日本节点 - AUTO", "filter": "日本|川日|东京|大阪|泉日|埼玉|沪日|深日|[^-]日|JP|Japan"},
-    {"tag": "🇹🇼 台湾节点 - AUTO", "filter": "台|新北|彰化|TW|Taiwan"},
-    {"tag": "🇺🇸 美国节点 - AUTO", "filter": "美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States"},
-    {"tag": "🏰 欧洲节点 - AUTO", "filter": "(Belgium|比利时)|(Finland|Helsinki|芬兰|赫尔辛基)|\\bDE[U]?\\b|Germany|法兰克福|德(国|意志)|中德|^德$|\\bD[N]?K\\b|Denmark|丹麦|\\bES[P]?\\b|Spain|西班牙|\\bFR[A]?\\b|France|Paris|法国|巴黎|\\bIS[L]?\\b|Iceland|冰岛|\\bNL[D]?\\b|Netherlands|荷兰|阿姆斯特丹|\\bUK\\b|\\bGB[R]?\\b|England|United.*?Kingdom|London|英国|[^-]英|伦敦|(Ireland|Dublin|爱尔兰|都柏林)|(Italy|Milan|意大利|米兰)|(Switzerland|Zurich|瑞士|苏黎世)|(希腊|Greece)|(挪威|Norway)"},
-    {"tag": "🇰🇷 韩国节点 - AUTO", "filter": "KR|Korea|KOR|首尔|韩|韓"}
-] -%}
-
-{# Selector Groups (Manual) #}
-{%- set _selector_groups = [
-    {"tag": "🇸🇬 狮城节点", "filter": "新加坡|坡|狮城|SG|Singapore"},
-    {"tag": "🇭🇰 香港节点", "filter": "港|HK|Hong Kong"},
-    {"tag": "🇯🇵 日本节点", "filter": "日本|川日|东京|大阪|泉日|埼玉|沪日|深日|[^-]日|JP|Japan"},
-    {"tag": "🇹🇼 台湾节点", "filter": "台|新北|彰化|TW|Taiwan"},
-    {"tag": "🇺🇸 美国节点", "filter": "美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States"},
-    {"tag": "🏰 欧洲节点", "filter": "(Belgium|比利时)|(Finland|Helsinki|芬兰|赫尔辛基)|\\bDE[U]?\\b|Germany|法兰克福|德(国|意志)|中德|^德$|\\bD[N]?K\\b|Denmark|丹麦|\\bES[P]?\\b|Spain|西班牙|\\bFR[A]?\\b|France|Paris|法国|巴黎|\\bIS[L]?\\b|Iceland|冰岛|\\bNL[D]?\\b|Netherlands|荷兰|阿姆斯特丹|\\bUK\\b|\\bGB[R]?\\b|England|United.*?Kingdom|London|英国|[^-]英|伦敦|(Ireland|Dublin|爱尔兰|都柏林)|(Italy|Milan|意大利|米兰)|(Switzerland|Zurich|瑞士|苏黎世)|(希腊|Greece)|(挪威|Norway)"},
-    {"tag": "🇰🇷 韩国节点", "filter": "KR|Korea|KOR|首尔|韩|韓"}
-] -%}
-
 {# Add Auto Groups to Config #}
-{%- for group in _auto_groups -%}
+{%- for group in sing_box_auto_groups -%}
     {%- set _ = outbounds_config.append({
         "tag": group.tag,
         "type": "urltest",
@@ -54,7 +18,7 @@
 {%- endfor -%}
 
 {# Add Selector Groups to Config #}
-{%- for group in _selector_groups -%}
+{%- for group in sing_box_selector_groups -%}
     {%- set _ = outbounds_config.append({
         "tag": group.tag,
         "type": "selector",
@@ -64,13 +28,13 @@
 {%- endfor -%}
 
 {# Add Proxy Groups to Config and populate their outbounds #}
-{%- for group in _proxy_groups -%}
+{%- for group in sing_box_proxy_groups -%}
     {# Add auto and selector groups to the main proxy groups #}
     {%- set _group_outbounds = group.outbounds -%}
-    {%- for auto_group in _auto_groups -%}
+    {%- for auto_group in sing_box_auto_groups -%}
         {%- set _ = _group_outbounds.append(auto_group.tag) -%}
     {%- endfor -%}
-    {%- for selector_group in _selector_groups -%}
+    {%- for selector_group in sing_box_selector_groups -%}
         {%- set _ = _group_outbounds.append(selector_group.tag) -%}
     {%- endfor -%}
 

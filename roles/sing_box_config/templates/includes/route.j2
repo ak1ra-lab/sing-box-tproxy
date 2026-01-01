@@ -21,15 +21,8 @@
     }) -%}
 {%- endif -%}
 
-{%- set _remote_rule_sets = [
-    "geoip/private.srs", "geosite/private.srs", "geosite/google.srs", "geosite/geolocation-cn.srs",
-    "geosite/win-update.srs", "geosite/apple.srs", "geosite/github.srs", "geoip/telegram.srs",
-    "geosite/telegram.srs", "geosite/bing.srs", "geosite/category-ai-!cn.srs",
-    "geosite/category-entertainment.srs", "geosite/category-entertainment@!cn.srs",
-    "geosite/steam.srs", "geosite/debian.srs", "geosite/gfw.srs", "geoip/cn.srs"
-] -%}
-
-{%- for path in _remote_rule_sets -%}
+{%- for item in sing_box_remote_rule_sets -%}
+    {%- set path = item.path -%}
     {%- set _ext = path.split('.') | last -%}
     {%- set _tag = path | replace('/', '-') | replace('.' ~ _ext, '') -%}
     {%- set _format = 'binary' if _ext == 'srs' else 'source' -%}
@@ -37,20 +30,16 @@
         "tag": _tag,
         "type": "remote",
         "format": _format,
-        "url": sing_box_github_proxy ~ "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/" ~ path,
+        "url": sing_box_github_proxy ~ sing_box_remote_rule_set_url_prefix ~ path,
         "update_interval": "30d"
     }) -%}
 {%- endfor -%}
 
 {# Rules #}
-{%- set _ = route_rules.extend([
-    {"action": "hijack-dns", "port": 53},
-    {"action": "hijack-dns", "protocol": "dns"},
-    {"action": "route", "port": 22, "outbound": "SSH"},
-    {"action": "route", "clash_mode": "direct", "outbound": "DIRECT"},
-    {"action": "route", "clash_mode": "global", "outbound": "PROXY"}
-]) -%}
+{# Basic Rules #}
+{%- set _ = route_rules.extend(sing_box_basic_rules) -%}
 
+{# Custom Rules #}
 {%- if sing_box_config_custom_direct_rules | length > 0 -%}
     {%- set _ = route_rules.append({"action": "route", "rule_set": ["custom-direct"], "outbound": "DIRECT"}) -%}
 {%- endif -%}
@@ -59,16 +48,8 @@
     {%- set _ = route_rules.append({"action": "route", "rule_set": ["custom-internal"], "outbound": "DIRECT"}) -%}
 {%- endif -%}
 
-{%- set _ = route_rules.extend([
-    {"action": "route", "rule_set": ["geoip-private", "geosite-private"], "outbound": "DIRECT"},
-    {"action": "route", "rule_set": ["geosite-steam"], "outbound": "STEAM"},
-    {"action": "route", "rule_set": ["geosite-apple"], "outbound": "APPLE"},
-    {"action": "route", "rule_set": ["geosite-category-ai-!cn"], "outbound": "AI"},
-    {"action": "route", "rule_set": ["geosite-category-entertainment", "geosite-category-entertainment@!cn"], "outbound": "entertainment"},
-    {"action": "route", "rule_set": ["geosite-telegram", "geoip-telegram"], "outbound": "TELEGRAM"},
-    {"action": "route", "rule_set": ["geosite-google", "geosite-github", "geosite-debian", "geosite-gfw"], "outbound": "PROXY"},
-    {"action": "route", "rule_set": ["geoip-cn", "geosite-geolocation-cn", "geosite-win-update"], "outbound": "DIRECT"}
-]) -%}
+{# Filtering Rules #}
+{%- set _ = route_rules.extend(sing_box_filtering_rules) -%}
 
 {%- set route_config = {
     "rules": route_rules,
