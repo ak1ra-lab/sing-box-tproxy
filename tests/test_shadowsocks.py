@@ -1,27 +1,26 @@
-from sing_box_config.parser.shadowsocks import ShadowsocksParser
+from sing_box_config.parser.shadowsocks import ShadowsocksURIParser
 
 
 def test_decode_invalid_scheme():
     uri = "http://YWVzLTEyOC1nY206OTI2NDAzNTEtOTViMS00NjJjLTkzNzgtYTRjZDAzOWY0Yzlh@server01.example.com:2333/?plugin=simple-obfs%3Bobfs%3Dhttp%3Bobfs-host%3Dexample.com#example-server01"
-    assert ShadowsocksParser().parse(uri) is None
+    assert ShadowsocksURIParser().parse(uri) is None
 
 
 def test_decode_invalid_userinfo():
     uri = "ss://invaliduserinfo@server01.example.com:2333/?plugin=simple-obfs%3Bobfs%3Dhttp%3Bobfs-host%3Dexample.com#example-server01"
-    assert ShadowsocksParser().parse(uri) is None
+    assert ShadowsocksURIParser().parse(uri) is None
 
 
 def test_decode_unsupported_plugin():
     uri = "ss://YWVzLTEyOC1nY206OTI2NDAzNTEtOTViMS00NjJjLTkzNzgtYTRjZDAzOWY0Yzlh@server01.example.com:2333/?plugin=unsupported-plugin%3Bobfs%3Dhttp%3Bobfs-host%3Dexample.com#example-server01"
-    assert ShadowsocksParser().parse(uri) is None
+    assert ShadowsocksURIParser().parse(uri) is None
 
 
 def test_decode_without_plugin():
     uri = "ss://YWVzLTEyOC1nY206OTI2NDAzNTEtOTViMS00NjJjLTkzNzgtYTRjZDAzOWY0Yzlh@server01.example.com:2333/#example-server01"
-    tag_prefix = "test-"
     expected_config = {
         "type": "shadowsocks",
-        "tag": "test-example-server01",
+        "tag": "example-server01",
         "server": "server01.example.com",
         "server_port": 2333,
         "method": "aes-128-gcm",
@@ -29,15 +28,14 @@ def test_decode_without_plugin():
         "plugin": "",
         "plugin_opts": "",
     }
-    assert ShadowsocksParser().parse(uri, tag_prefix) == expected_config
+    assert ShadowsocksURIParser().parse(uri) == expected_config
 
 
 def test_decode_valid_sip002_uri():
     uri = "ss://YWVzLTEyOC1nY206OTI2NDAzNTEtOTViMS00NjJjLTkzNzgtYTRjZDAzOWY0Yzlh@server01.example.com:2333/?plugin=simple-obfs%3Bobfs%3Dhttp%3Bobfs-host%3Dexample.com#example-server01"
-    tag_prefix = "test-"
     expected_config = {
         "type": "shadowsocks",
-        "tag": "test-example-server01",
+        "tag": "example-server01",
         "server": "server01.example.com",
         "server_port": 2333,
         "method": "aes-128-gcm",
@@ -45,4 +43,4 @@ def test_decode_valid_sip002_uri():
         "plugin": "obfs-local",
         "plugin_opts": "obfs=http;obfs-host=example.com",
     }
-    assert ShadowsocksParser().parse(uri, tag_prefix) == expected_config
+    assert ShadowsocksURIParser().parse(uri) == expected_config

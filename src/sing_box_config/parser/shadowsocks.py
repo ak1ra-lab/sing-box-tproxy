@@ -7,7 +7,7 @@ from typing import Any, Optional
 
 from chaos_utils.text_utils import b64decode
 
-from sing_box_config.parser.base import BaseParser
+from sing_box_config.parser.base import SubscriptionParser, URIParser
 
 logger = logging.getLogger(__name__)
 
@@ -16,14 +16,13 @@ logger = logging.getLogger(__name__)
 supported_plugins = ["obfs-local", "v2ray-plugin"]
 
 
-class ShadowsocksParser(BaseParser):
-    def parse(self, uri: str, tag_prefix: str = "") -> Optional[dict[str, Any]]:
+class ShadowsocksURIParser(URIParser):
+    def parse(self, uri: str) -> Optional[dict[str, Any]]:
         """
         Decodes a Shadowsocks SIP002 URI into a sing-box shadowsocks outbound configuration.
 
         Args:
             uri: The Shadowsocks SIP002 URI string.
-            tag_prefix: Prefix to add to the proxy tag.
 
         Returns:
             A dictionary representing the sing-box shadowsocks outbound configuration.
@@ -56,7 +55,7 @@ class ShadowsocksParser(BaseParser):
 
         outbound_config = {
             "type": "shadowsocks",
-            "tag": tag_prefix + urllib.parse.unquote(parsed_uri.fragment),
+            "tag": urllib.parse.unquote(parsed_uri.fragment),
             "server": hostname,
             "server_port": port,
             "method": method,
@@ -88,3 +87,25 @@ class ShadowsocksParser(BaseParser):
                 outbound_config["plugin_opts"] = plugin_parts[1]
 
         return outbound_config
+
+
+class SIP002SubscriptionParser(SubscriptionParser):
+    def parse(self, content: str) -> list[dict[str, Any]]:
+        proxies = []
+        try:
+            decoded = b64decode(content)
+        except Exception as err:
+            logger.warning("Failed to decode subscription: %s", err)
+            return []
+
+        proxies_lines = decoded.splitlines()
+        parser = ShadowsocksURIParser()
+
+        for line in proxies_lines:
+            if not line.strip():
+                continue
+            proxy = parser.parse(line)
+            if proxy:
+                proxies.append(proxy)
+
+        return proxies

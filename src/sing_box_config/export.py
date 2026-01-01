@@ -6,13 +6,11 @@ from typing import Any
 
 import httpx
 import tenacity
-from chaos_utils.text_utils import b64decode, read_json, save_json
+from chaos_utils.text_utils import save_json
 
-from sing_box_config.parser.shadowsocks import ShadowsocksParser
+from sing_box_config.parser import SUPPORTED_FORMATS, get_parser
 
 logger = logging.getLogger(__name__)
-
-SUPPORTED_TYPES = ["local", "sip002"]
 
 
 @tenacity.retry(
@@ -57,44 +55,78 @@ def get_proxies_from_subscriptions(
     if not subscription.get("enabled", True):
         return proxies
 
-    if subscription["type"].lower() == "local":
-        proxies = read_json(Path(subscription["path"]))
+    sub_type = subscription.get("type", "").lower()
+    # Default format is sing-box if not specified
+    sub_format = subscription.get("format", "sing-box").lower()
+
+    content = ""
+
+    if sub_type not in ["inline", "local", "remote"]:
+        logger.warning("Unsupported subscription type: %s", sub_type)
         return proxies
 
-    if subscription["type"].lower() not in SUPPORTED_TYPES:
-        logger.warning(
-            "Unsupported subscription type: %s (supported: %s)",
-            subscription["type"],
-            ", ".join(SUPPORTED_TYPES),
-        )
-        return proxies
+    if sub_type == "inline":
+        if sub_format == "sing-box" and "outbounds" in subscription:
+            proxies = subscription["outbounds"]
+        elif "content" in subscription:
+            content = subscription["content"]
+        else:
+            logger.warning(
+                "Inline subscription %s missing 'outbounds' or 'content'", name
+            )
+            return []
 
-    try:
-        resp = fetch_url_with_retries(subscription["url"], follow_redirects=True)
-    except httpx.HTTPError as err:
-        logger.error("Failed to fetch subscription %s: %s", name, err)
-        return proxies
-
-    logger.info("resp.text = %s", resp.text[:100])
-
-    exclude_patterns = subscription.pop("exclude", [])
-    if subscription["type"].lower() == "sip002":
+    elif sub_type == "local":
+        path = Path(subscription["path"])
+        if not path.exists():
+            logger.error("Local subscription file not found: %s", path)
+            return []
         try:
-            proxies_lines = b64decode(resp.text).splitlines()
-        except UnicodeDecodeError as err:
-            logger.warning("Failed to decode subscription %s: %s", name, err)
-            proxies_lines = []
-        logger.debug("url = %s, proxies_lines = %s", subscription["url"], proxies_lines)
+            content = path.read_text(encoding="utf-8")
+        except Exception as e:
+            logger.error("Failed to read local subscription %s: %s", name, e)
+            return []
 
-        parser = ShadowsocksParser()
-        for line in proxies_lines:
-            proxy = parser.parse(line, name + " - ")
-            if not proxy:
-                continue
+    elif sub_type == "remote":
+        url = subscription.get("url")
+        if not url:
+            logger.error("Remote subscription %s missing 'url'", name)
+            return []
+        try:
+            resp = fetch_url_with_retries(url, follow_redirects=True)
+            content = resp.text
+            logger.info("resp.text = %s", resp.text[:100])
+        except httpx.HTTPError as err:
+            logger.error("Failed to fetch subscription %s: %s", name, err)
+            return []
+
+    if not proxies and content:
+        parser = get_parser(sub_format)
+        if parser:
+            proxies = parser.parse(content)
+            # Prefix tags for non-native formats or if requested?
+            # Replicating old behavior: non sing-box sub_format gets prefixed.
+            if sub_format != "sing-box":
+                for proxy in proxies:
+                    proxy["tag"] = f"{name} - {proxy['tag']}"
+        else:
+            logger.warning(
+                "Unsupported subscription format: %s (supported: %s)",
+                sub_format,
+                ", ".join(SUPPORTED_FORMATS.keys()),
+            )
+            return []
+
+    # Filter proxies
+    exclude_patterns = subscription.get("exclude", [])
+    if exclude_patterns:
+        filtered_proxies = []
+        for proxy in proxies:
             if any(re.search(p, proxy["tag"], re.IGNORECASE) for p in exclude_patterns):
                 logger.debug("Excluding proxy: %s", proxy["tag"])
                 continue
-            proxies.append(proxy)
+            filtered_proxies.append(proxy)
+        proxies = filtered_proxies
 
     return proxies
 
@@ -193,8 +225,7 @@ def save_config_from_subscriptions(
     outbounds += proxies
     base_config["outbounds"] = outbounds
 
-    if not output_path.parent.exists():
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     save_json(output_path, base_config)
     logger.info("Configuration saved to %s", output_path)
