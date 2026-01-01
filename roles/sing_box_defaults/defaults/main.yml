@@ -53,3 +53,8 @@ sing_box_log_dir: /var/log/sing-box
 sing_box_state_dir: /var/lib/sing-box
 sing_box_venv_dir: "{{ sing_box_state_dir }}/.venv"
 sing_box_config_dir: "{{ sing_box_state_dir }}/config"
+
+# roles/sing_box_server 将 client_outbounds.json.j2 渲染到 sing_box_outbounds_src
+# roles/sing_box_config 尝试从 sing_box_outbounds_src 复制到 sing_box_outbounds_dest
+sing_box_outbounds_src: "{{ playbook_dir }}/outbounds"
+sing_box_outbounds_dest: "{{ sing_box_state_dir }}"
