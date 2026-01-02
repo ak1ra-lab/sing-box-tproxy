@@ -115,7 +115,7 @@ sing_box_filtering_rules:
     outbound: AI
   - action: route
     rule_set: [geosite-category-entertainment, "geosite-category-entertainment@!cn"]
-    outbound: entertainment
+    outbound: Entertainment
   - action: route
     rule_set: [geosite-telegram, geoip-telegram]
     outbound: TELEGRAM
@@ -133,25 +133,25 @@ sing_box_proxy_groups:
   - tag: FINAL
     type: selector
     outbounds: [PROXY, DIRECT]
+  - tag: AI
+    type: selector
+    outbounds: [PROXY, DIRECT]
+  - tag: Entertainment
+    type: selector
+    outbounds: [PROXY, DIRECT]
   - tag: APPLE
     type: selector
     outbounds: [PROXY, DIRECT]
   - tag: STEAM
     type: selector
     outbounds: [PROXY, DIRECT]
-  - tag: AI
-    type: selector
-    outbounds: [PROXY, DIRECT]
-  - tag: entertainment
-    type: selector
-    outbounds: [PROXY, DIRECT]
   - tag: TELEGRAM
     type: selector
     outbounds: [PROXY, DIRECT]
-  - tag: DOWNLOADER
+  - tag: SSH
     type: selector
     outbounds: [DIRECT, PROXY]
-  - tag: SSH
+  - tag: DOWNLOADER
     type: selector
     outbounds: [DIRECT, PROXY]
 
