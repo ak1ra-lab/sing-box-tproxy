@@ -175,4 +175,4 @@
     }
 } -%}
 
-{{ config | ansible.builtin.to_nice_json(indent=4, ensure_ascii=false, sort_keys=false) }}
+{{ config | ansible.builtin.to_json(indent=4, ensure_ascii=false, sort_keys=false) }}

@@ -8,15 +8,6 @@
   delegate_to: localhost
   run_once: true
 
-- name: write sing-box-config config/subscriptions.json to local
-  become: false
-  ansible.builtin.copy:
-    content: "{{ sing_box_config_subscriptions | ansible.builtin.to_nice_json(indent=4, ensure_ascii=false, sort_keys=false) }}"
-    dest: "{{ sing_box_config_local_subscriptions_dest }}"
-    mode: "0600"
-  delegate_to: localhost
-  run_once: true
-
 - name: template sing-box-config config/base.json on remote
   ansible.builtin.template:
     src: "{{ sing_box_config_base_template }}"
@@ -25,9 +16,18 @@
     group: "{{ sing_box_group.name }}"
     mode: "0600"
 
-- name: write sing-box-config config/subscriptions.json to remote
-  ansible.builtin.copy:
-    content: "{{ sing_box_config_subscriptions | ansible.builtin.to_nice_json(indent=4, ensure_ascii=false, sort_keys=false) }}"
+- name: template sing-box-config config/subscriptions.json to local
+  become: false
+  ansible.builtin.template:
+    src: subscriptions.json.j2
+    dest: "{{ sing_box_config_local_subscriptions_dest }}"
+    mode: "0600"
+  delegate_to: localhost
+  run_once: true
+
+- name: template sing-box-config config/subscriptions.json to remote
+  ansible.builtin.template:
+    src: subscriptions.json.j2
     dest: "{{ sing_box_config_subscriptions_dest }}"
     owner: "{{ sing_box_user.name }}"
     group: "{{ sing_box_group.name }}"
