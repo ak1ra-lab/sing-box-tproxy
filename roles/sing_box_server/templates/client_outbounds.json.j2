@@ -69,7 +69,7 @@
                     }
                 }) -%}
             {%- endif -%}
-            {%- if sing_box_server_hysteria2_up_mbps > 0 or sing_box_server_hysteria2_down_mbps > 0 -%}
+            {%- if sing_box_server_hysteria2_up_mbps > 0 and sing_box_server_hysteria2_down_mbps > 0 -%}
                 {%- set _ = hy2_config.update({
                     "up_mbps": sing_box_server_hysteria2_up_mbps,
                     "down_mbps": sing_box_server_hysteria2_down_mbps
