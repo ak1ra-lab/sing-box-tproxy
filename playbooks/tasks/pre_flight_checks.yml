@@ -29,7 +29,7 @@
       Required variable sing_box_config_subscriptions is not defined or invalid.
       Please define it in group_vars or host_vars.
       Ensure vault is unlocked and group_vars contains sing_box_config_subscriptions.
-      Run with: ansible-playbook site.yaml --ask-vault-pass
+      Run with: ansible-playbook playbooks/sing_box_tproxy.yaml --ask-vault-pass
     quiet: true
 
 - name: validate each subscription entry
