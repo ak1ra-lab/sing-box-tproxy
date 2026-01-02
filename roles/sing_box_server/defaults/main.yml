@@ -53,10 +53,8 @@ sing_box_server_vless_port: 8444
 sing_box_server_tuic_port: 8846
 
 # Bandwidth limits (Hysteria2/Tuic)
-sing_box_server_hysteria2_up_mbps: 500
-sing_box_server_hysteria2_down_mbps: 500
-sing_box_server_tuic_up_mbps: 500
-sing_box_server_tuic_down_mbps: 500
+sing_box_server_hysteria2_up_mbps: 1000
+sing_box_server_hysteria2_down_mbps: 1000
 
 # =============================================================================
 # Authentication (auto-generated if empty)
