@@ -99,12 +99,6 @@ sing_box_basic_rules:
   - action: route
     port: 22
     outbound: SSH
-  - action: route
-    clash_mode: direct
-    outbound: DIRECT
-  - action: route
-    clash_mode: global
-    outbound: PROXY
 
 sing_box_filtering_rules:
   - action: route
