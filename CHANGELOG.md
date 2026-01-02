@@ -2,6 +2,76 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2026-01-02
+
+### 🚀 Features
+
+- impl IPv6 support in netplan and nftables.conf.j2
+- add local subscription type
+- *(roles/sing_box_server)* add ansible role for multi-protocol sing-box server deployment
+- impl templates/clash_nodelist.yaml.j2 in roles/sing_box_server
+
+### 🐛 Bug Fixes
+
+- add netplan.io to the list of installed packages
+- remove redundant DNS server entries in base.json.j2
+- fix uv build task in roles/sing_box_config
+- update validation of hysteria2 bandwidth limits
+- fix sub_types and sub_formats in tasks/pre_flight_checks.yml
+- use template instead of copy content on sing_box_config_subscriptions
+- update Hysteria2 bandwidth condition to require both upload and download limits
+
+### 🚜 Refactor
+
+- rename variable for clarity and improve proxy removal logic
+- replace decode_sip002_to_singbox with ShadowsocksParser for improved parsing logic
+- *(roles/sing_box_config)* refactor sing-box config templates into modular macros
+- refactoring and relocate ansible vars
+- restructure subscription parsing logic
+- migrate sing_box_remote_rule_sets to roles/sing_box_defaults
+- refactoring and relocate ansible vars
+
+### 📚 Documentation
+
+- update docs/architecture.md, use mermaid instead of ASCII flow chart
+- replace all ordered list to unordered list in docs/architecture.md
+- refactor docs/architecture.md
+- fixup docs/architecture.md
+- clarify local traffic loopback mechanism in TPROXY transparent proxy (#2)
+- enhance docs/architecture.md with detailed flow diagrams
+- refine flow diagrams labels in docs/architecture.md
+- update README.md
+
+### ⚙️ Miscellaneous Tasks
+
+- fix `mkdocs build` on .github/workflows/docs.yaml
+- reorder nftables rules in nftables.conf.j2
+- update markdown extensions to include custom mermaid fences
+- add "geosite-private" to the DNS rule set for routing
+- update DNS configuration to use predefined hosts and improve resolver settings
+- remove sing-box-tproxy-toggle.sh
+- add entertainment rule_set in base.json.j2
+- update chaos-utils to v0.3.1
+- update ansible role metadata
+- remove system dirs from ansible.cfg
+- update .gitignore
+- relocate playbooks/sing_box_tproxy.yaml and tasks
+- add sing_box_log_level
+- use import_role instead of roles in playbooks/sing_box_server.yaml
+- add sing_box_outbounds_{src,dest} in roles/sing_box_defaults
+- use sing_box_outbounds_src when generate client outbounds
+- try to copy client outbounds from sing_box_outbounds_src
+- refactoring sing_box_config_subscriptions comment
+- template config/base.json on localhost
+- add sing-box gpg.key fingerprint
+- remove clash_mode route.rules
+- remove invalid sing_box_server_tuic_up_mbps
+- reformat jinja2 template in roles/sing_box_server
+- remove sing_box_server_hostname in host_vars.yml.j2
+- update sing_box_proxy_groups orders
+- fixup playbooks
+- bump version v0.7.0
+
 ## [0.6.0] - 2025-12-22
 
 ### 🚀 Features
