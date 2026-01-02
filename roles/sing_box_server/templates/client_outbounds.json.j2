@@ -4,113 +4,120 @@
 
 {#- Loop through all users and all enabled protocols -#}
 {%- for user in _selected_user_names -%}
-
-  {#- Shadowsocks outbound -#}
-  {%- if sing_box_server_enable_shadowsocks -%}
-    {%- set ss_user = sing_box_server_shadowsocks_users | selectattr('name', 'equalto', user) | first | default(none) -%}
-    {%- if ss_user -%}
-      {%- set _ = outbounds.append({
-        "type": "shadowsocks",
-        "tag": region_prefix ~ server_short ~ "-" ~ user ~ "-ss",
-        "server": sing_box_server_hostname,
-        "server_port": sing_box_server_shadowsocks_port,
-        "method": sing_box_server_shadowsocks_method,
-        "password": sing_box_server_shadowsocks_password ~ ":" ~ ss_user.password,
-        "multiplex": {
-          "enabled": true,
-          "protocol": "smux",
-          "max_connections": 4,
-          "min_streams": 4,
-          "padding": true
-        },
-        "udp_over_tcp": {
-          "enabled": true,
-          "version": 2
-        }
-      }) -%}
+    {#- Shadowsocks outbound -#}
+    {%- if sing_box_server_enable_shadowsocks -%}
+        {%- set ss_user = sing_box_server_shadowsocks_users | selectattr('name', 'equalto', user) | first | default(none) -%}
+        {%- if ss_user -%}
+            {%- set _ = outbounds.append({
+                "type": "shadowsocks",
+                "tag": region_prefix ~ server_short ~ "-" ~ user ~ "-ss",
+                "server": sing_box_server_hostname,
+                "server_port": sing_box_server_shadowsocks_port,
+                "method": sing_box_server_shadowsocks_method,
+                "password": sing_box_server_shadowsocks_password ~ ":" ~ ss_user.password,
+                "multiplex": {
+                    "enabled": true,
+                    "protocol": "smux",
+                    "max_connections": 4,
+                    "min_streams": 4,
+                    "padding": true
+                },
+                "udp_over_tcp": {
+                    "enabled": true,
+                    "version": 2
+                }
+            }) -%}
+        {%- endif -%}
     {%- endif -%}
-  {%- endif -%}
 
-  {#- Trojan outbound -#}
-  {%- if sing_box_server_enable_trojan -%}
-    {%- set trojan_user = sing_box_server_trojan_users | selectattr('name', 'equalto', user) | first | default(none) -%}
-    {%- if trojan_user -%}
-      {%- set _ = outbounds.append({
-        "type": "trojan",
-        "tag": region_prefix ~ server_short ~ "-" ~ user ~ "-trojan",
-        "server": sing_box_server_hostname,
-        "server_port": sing_box_server_trojan_port,
-        "password": trojan_user.password,
-        "tls": {"enabled": true}
-      }) -%}
+    {#- Trojan outbound -#}
+    {%- if sing_box_server_enable_trojan -%}
+        {%- set trojan_user = sing_box_server_trojan_users | selectattr('name', 'equalto', user) | first | default(none) -%}
+        {%- if trojan_user -%}
+            {%- set _ = outbounds.append({
+                "type": "trojan",
+                "tag": region_prefix ~ server_short ~ "-" ~ user ~ "-trojan",
+                "server": sing_box_server_hostname,
+                "server_port": sing_box_server_trojan_port,
+                "password": trojan_user.password,
+                "tls": {
+                    "enabled": true
+                }
+            }) -%}
+        {%- endif -%}
     {%- endif -%}
-  {%- endif -%}
 
-  {#- Hysteria2 outbound -#}
-  {%- if sing_box_server_enable_hysteria2 -%}
-    {%- set hysteria2_user = sing_box_server_hysteria2_users | selectattr('name', 'equalto', user) | first | default(none) -%}
-    {%- if hysteria2_user -%}
-      {%- set hy2_config = {
-        "type": "hysteria2",
-        "tag": region_prefix ~ server_short ~ "-" ~ user ~ "-hy2",
-        "server": sing_box_server_hostname,
-        "server_port": sing_box_server_hysteria2_port,
-        "password": hysteria2_user.password,
-        "tls": {"enabled": true}
-      } -%}
-      {%- if sing_box_server_hysteria2_obfs_enabled -%}
-        {%- set _ = hy2_config.update({
-          "obfs": {
-            "type": "salamander",
-            "password": sing_box_server_hysteria2_obfs_password
-          }
-        }) -%}
-      {%- endif -%}
-      {%- if sing_box_server_hysteria2_up_mbps > 0 or sing_box_server_hysteria2_down_mbps > 0 -%}
-        {%- set _ = hy2_config.update({
-          "up_mbps": sing_box_server_hysteria2_up_mbps,
-          "down_mbps": sing_box_server_hysteria2_down_mbps
-        }) -%}
-      {%- endif -%}
-      {%- set _ = outbounds.append(hy2_config) -%}
+    {#- Hysteria2 outbound -#}
+    {%- if sing_box_server_enable_hysteria2 -%}
+        {%- set hysteria2_user = sing_box_server_hysteria2_users | selectattr('name', 'equalto', user) | first | default(none) -%}
+        {%- if hysteria2_user -%}
+            {%- set hy2_config = {
+                "type": "hysteria2",
+                "tag": region_prefix ~ server_short ~ "-" ~ user ~ "-hy2",
+                "server": sing_box_server_hostname,
+                "server_port": sing_box_server_hysteria2_port,
+                "password": hysteria2_user.password,
+                "tls": {
+                    "enabled": true
+                }
+            } -%}
+            {%- if sing_box_server_hysteria2_obfs_enabled -%}
+                {%- set _ = hy2_config.update({
+                    "obfs": {
+                        "type": "salamander",
+                        "password": sing_box_server_hysteria2_obfs_password
+                    }
+                }) -%}
+            {%- endif -%}
+            {%- if sing_box_server_hysteria2_up_mbps > 0 or sing_box_server_hysteria2_down_mbps > 0 -%}
+                {%- set _ = hy2_config.update({
+                    "up_mbps": sing_box_server_hysteria2_up_mbps,
+                    "down_mbps": sing_box_server_hysteria2_down_mbps
+                }) -%}
+            {%- endif -%}
+            {%- set _ = outbounds.append(hy2_config) -%}
+        {%- endif -%}
     {%- endif -%}
-  {%- endif -%}
 
-  {#- VLESS outbound -#}
-  {%- if sing_box_server_enable_vless -%}
-    {%- set vless_user = sing_box_server_vless_users | selectattr('name', 'equalto', user) | first | default(none) -%}
-    {%- if vless_user -%}
-      {%- set vless_config = {
-        "type": "vless",
-        "tag": region_prefix ~ server_short ~ "-" ~ user ~ "-vless",
-        "server": sing_box_server_hostname,
-        "server_port": sing_box_server_vless_port,
-        "uuid": vless_user.uuid,
-        "tls": {"enabled": true}
-      } -%}
-      {%- if sing_box_server_vless_flow -%}
-        {%- set _ = vless_config.update({"flow": sing_box_server_vless_flow}) -%}
-      {%- endif -%}
-      {%- set _ = outbounds.append(vless_config) -%}
+    {#- VLESS outbound -#}
+    {%- if sing_box_server_enable_vless -%}
+        {%- set vless_user = sing_box_server_vless_users | selectattr('name', 'equalto', user) | first | default(none) -%}
+        {%- if vless_user -%}
+            {%- set vless_config = {
+                "type": "vless",
+                "tag": region_prefix ~ server_short ~ "-" ~ user ~ "-vless",
+                "server": sing_box_server_hostname,
+                "server_port": sing_box_server_vless_port,
+                "uuid": vless_user.uuid,
+                "tls": {
+                    "enabled": true
+                }
+            } -%}
+            {%- if sing_box_server_vless_flow -%}
+                {%- set _ = vless_config.update({"flow": sing_box_server_vless_flow}) -%}
+            {%- endif -%}
+            {%- set _ = outbounds.append(vless_config) -%}
+        {%- endif -%}
     {%- endif -%}
-  {%- endif -%}
 
-  {#- Tuic outbound -#}
-  {%- if sing_box_server_enable_tuic -%}
-    {%- set tuic_user = sing_box_server_tuic_users | selectattr('name', 'equalto', user) | first | default(none) -%}
-    {%- if tuic_user -%}
-      {%- set _ = outbounds.append({
-        "type": "tuic",
-        "tag": region_prefix ~ server_short ~ "-" ~ user ~ "-tuic",
-        "server": sing_box_server_hostname,
-        "server_port": sing_box_server_tuic_port,
-        "uuid": tuic_user.uuid,
-        "password": tuic_user.password,
-        "congestion_control": sing_box_server_tuic_congestion_control,
-        "tls": {"enabled": true}
-      }) -%}
+    {#- Tuic outbound -#}
+    {%- if sing_box_server_enable_tuic -%}
+        {%- set tuic_user = sing_box_server_tuic_users | selectattr('name', 'equalto', user) | first | default(none) -%}
+        {%- if tuic_user -%}
+            {%- set _ = outbounds.append({
+                "type": "tuic",
+                "tag": region_prefix ~ server_short ~ "-" ~ user ~ "-tuic",
+                "server": sing_box_server_hostname,
+                "server_port": sing_box_server_tuic_port,
+                "uuid": tuic_user.uuid,
+                "password": tuic_user.password,
+                "congestion_control": sing_box_server_tuic_congestion_control,
+                "tls": {
+                    "enabled": true
+                }
+            }) -%}
+        {%- endif -%}
     {%- endif -%}
-  {%- endif -%}
 
 {%- endfor -%}
 

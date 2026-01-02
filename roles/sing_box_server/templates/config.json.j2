@@ -4,175 +4,175 @@
 
 {#- Shadowsocks Inbound -#}
 {%- if sing_box_server_enable_shadowsocks -%}
-  {%- set ss_inbound = {
-    "type": "shadowsocks",
-    "tag": "ss-in",
-    "listen": sing_box_server_listen,
-    "listen_port": sing_box_server_shadowsocks_port,
-    "method": sing_box_server_shadowsocks_method,
-    "password": sing_box_server_shadowsocks_password,
-    "multiplex": {
-      "enabled": true,
-      "padding": true
-    }
-  } -%}
-  {%- if sing_box_server_shadowsocks_users | length > 0 -%}
-    {%- set ss_users = [] -%}
-    {%- for user in sing_box_server_shadowsocks_users -%}
-      {%- set _ = ss_users.append({
-        "name": user.name,
-        "password": user.password
-      }) -%}
-    {%- endfor -%}
-    {%- set _ = ss_inbound.update({"users": ss_users}) -%}
-  {%- endif -%}
-  {%- set _ = inbounds.append(ss_inbound) -%}
+    {%- set ss_inbound = {
+        "type": "shadowsocks",
+        "tag": "ss-in",
+        "listen": sing_box_server_listen,
+        "listen_port": sing_box_server_shadowsocks_port,
+        "method": sing_box_server_shadowsocks_method,
+        "password": sing_box_server_shadowsocks_password,
+        "multiplex": {
+            "enabled": true,
+            "padding": true
+        }
+    } -%}
+    {%- if sing_box_server_shadowsocks_users | length > 0 -%}
+        {%- set ss_users = [] -%}
+        {%- for user in sing_box_server_shadowsocks_users -%}
+            {%- set _ = ss_users.append({
+                "name": user.name,
+                "password": user.password
+            }) -%}
+        {%- endfor -%}
+        {%- set _ = ss_inbound.update({"users": ss_users}) -%}
+    {%- endif -%}
+    {%- set _ = inbounds.append(ss_inbound) -%}
 {%- endif -%}
 
 {#- Trojan Inbound -#}
 {%- if sing_box_server_enable_trojan -%}
-  {%- set trojan_users = [] -%}
-  {%- for user in sing_box_server_trojan_users -%}
-    {%- set _ = trojan_users.append({
-      "name": user.name,
-      "password": user.password
-    }) -%}
-  {%- endfor -%}
-  {%- set trojan_inbound = {
-    "type": "trojan",
-    "tag": "trojan-in",
-    "listen": sing_box_server_listen,
-    "listen_port": sing_box_server_trojan_port,
-    "users": trojan_users,
-    "tls": tls_lib.get_tls_config() | from_json
-  } -%}
-  {%- if sing_box_server_trojan_multiplex_enabled -%}
-    {%- set _ = trojan_inbound.update({
-      "multiplex": {
-        "enabled": true
-      }
-    }) -%}
-  {%- endif -%}
-  {%- set _ = inbounds.append(trojan_inbound) -%}
+    {%- set trojan_users = [] -%}
+    {%- for user in sing_box_server_trojan_users -%}
+        {%- set _ = trojan_users.append({
+            "name": user.name,
+            "password": user.password
+        }) -%}
+    {%- endfor -%}
+    {%- set trojan_inbound = {
+        "type": "trojan",
+        "tag": "trojan-in",
+        "listen": sing_box_server_listen,
+        "listen_port": sing_box_server_trojan_port,
+        "users": trojan_users,
+        "tls": tls_lib.get_tls_config() | from_json
+    } -%}
+    {%- if sing_box_server_trojan_multiplex_enabled -%}
+        {%- set _ = trojan_inbound.update({
+            "multiplex": {
+                "enabled": true
+            }
+        }) -%}
+    {%- endif -%}
+    {%- set _ = inbounds.append(trojan_inbound) -%}
 {%- endif -%}
 
 {#- Hysteria2 Inbound -#}
 {%- if sing_box_server_enable_hysteria2 -%}
-  {%- set hy2_users = [] -%}
-  {%- for user in sing_box_server_hysteria2_users -%}
-    {%- set _ = hy2_users.append({
-      "name": user.name,
-      "password": user.password
-    }) -%}
-  {%- endfor -%}
-  {%- set hy2_inbound = {
-    "type": "hysteria2",
-    "tag": "hysteria2-in",
-    "listen": sing_box_server_listen,
-    "listen_port": sing_box_server_hysteria2_port,
-    "users": hy2_users,
-    "tls": tls_lib.get_tls_config() | from_json
-  } -%}
-  {%- if sing_box_server_hysteria2_up_mbps > 0 or sing_box_server_hysteria2_down_mbps > 0 -%}
-    {%- set _ = hy2_inbound.update({
-      "up_mbps": sing_box_server_hysteria2_up_mbps,
-      "down_mbps": sing_box_server_hysteria2_down_mbps
-    }) -%}
-  {%- endif -%}
-  {%- if sing_box_server_hysteria2_obfs_enabled -%}
-    {%- set _ = hy2_inbound.update({
-      "obfs": {
-        "type": "salamander",
-        "password": sing_box_server_hysteria2_obfs_password
-      }
-    }) -%}
-  {%- endif -%}
-  {%- if sing_box_server_hysteria2_masquerade_enabled -%}
-    {%- set _ = hy2_inbound.update({
-      "masquerade": {
-        "type": _sing_box_server_hysteria2_masquerade_type,
-        "url": sing_box_server_hysteria2_masquerade_url
-      }
-    }) -%}
-  {%- endif -%}
-  {%- set _ = inbounds.append(hy2_inbound) -%}
+    {%- set hy2_users = [] -%}
+    {%- for user in sing_box_server_hysteria2_users -%}
+        {%- set _ = hy2_users.append({
+            "name": user.name,
+            "password": user.password
+        }) -%}
+    {%- endfor -%}
+    {%- set hy2_inbound = {
+        "type": "hysteria2",
+        "tag": "hysteria2-in",
+        "listen": sing_box_server_listen,
+        "listen_port": sing_box_server_hysteria2_port,
+        "users": hy2_users,
+        "tls": tls_lib.get_tls_config() | from_json
+    } -%}
+    {%- if sing_box_server_hysteria2_up_mbps > 0 or sing_box_server_hysteria2_down_mbps > 0 -%}
+        {%- set _ = hy2_inbound.update({
+            "up_mbps": sing_box_server_hysteria2_up_mbps,
+            "down_mbps": sing_box_server_hysteria2_down_mbps
+        }) -%}
+    {%- endif -%}
+    {%- if sing_box_server_hysteria2_obfs_enabled -%}
+        {%- set _ = hy2_inbound.update({
+            "obfs": {
+                "type": "salamander",
+                "password": sing_box_server_hysteria2_obfs_password
+            }
+        }) -%}
+    {%- endif -%}
+    {%- if sing_box_server_hysteria2_masquerade_enabled -%}
+        {%- set _ = hy2_inbound.update({
+            "masquerade": {
+                "type": _sing_box_server_hysteria2_masquerade_type,
+                "url": sing_box_server_hysteria2_masquerade_url
+            }
+        }) -%}
+    {%- endif -%}
+    {%- set _ = inbounds.append(hy2_inbound) -%}
 {%- endif -%}
 
 {#- VLESS Inbound -#}
 {%- if sing_box_server_enable_vless -%}
-  {%- set vless_users = [] -%}
-  {%- for user in sing_box_server_vless_users -%}
-    {%- set user_config = {
-      "name": user.name,
-      "uuid": user.uuid
+    {%- set vless_users = [] -%}
+    {%- for user in sing_box_server_vless_users -%}
+        {%- set user_config = {
+            "name": user.name,
+            "uuid": user.uuid
+        } -%}
+        {%- if sing_box_server_vless_flow -%}
+            {%- set _ = user_config.update({"flow": sing_box_server_vless_flow}) -%}
+        {%- endif -%}
+        {%- set _ = vless_users.append(user_config) -%}
+    {%- endfor -%}
+    {%- set vless_inbound = {
+        "type": "vless",
+        "tag": "vless-in",
+        "listen": sing_box_server_listen,
+        "listen_port": sing_box_server_vless_port,
+        "users": vless_users,
+        "tls": tls_lib.get_tls_config() | from_json
     } -%}
-    {%- if sing_box_server_vless_flow -%}
-      {%- set _ = user_config.update({"flow": sing_box_server_vless_flow}) -%}
-    {%- endif -%}
-    {%- set _ = vless_users.append(user_config) -%}
-  {%- endfor -%}
-  {%- set vless_inbound = {
-    "type": "vless",
-    "tag": "vless-in",
-    "listen": sing_box_server_listen,
-    "listen_port": sing_box_server_vless_port,
-    "users": vless_users,
-    "tls": tls_lib.get_tls_config() | from_json
-  } -%}
-  {%- set _ = inbounds.append(vless_inbound) -%}
+    {%- set _ = inbounds.append(vless_inbound) -%}
 {%- endif -%}
 
 {#- Tuic Inbound -#}
 {%- if sing_box_server_enable_tuic -%}
-  {%- set tuic_users = [] -%}
-  {%- for user in sing_box_server_tuic_users -%}
-    {%- set _ = tuic_users.append({
-      "name": user.name,
-      "uuid": user.uuid,
-      "password": user.password
-    }) -%}
-  {%- endfor -%}
-  {%- set tuic_inbound = {
-    "type": "tuic",
-    "tag": "tuic-in",
-    "listen": sing_box_server_listen,
-    "listen_port": sing_box_server_tuic_port,
-    "users": tuic_users,
-    "congestion_control": sing_box_server_tuic_congestion_control,
-    "tls": tls_lib.get_tls_config() | from_json
-  } -%}
-  {%- set _ = inbounds.append(tuic_inbound) -%}
+    {%- set tuic_users = [] -%}
+    {%- for user in sing_box_server_tuic_users -%}
+        {%- set _ = tuic_users.append({
+            "name": user.name,
+            "uuid": user.uuid,
+            "password": user.password
+        }) -%}
+    {%- endfor -%}
+    {%- set tuic_inbound = {
+        "type": "tuic",
+        "tag": "tuic-in",
+        "listen": sing_box_server_listen,
+        "listen_port": sing_box_server_tuic_port,
+        "users": tuic_users,
+        "congestion_control": sing_box_server_tuic_congestion_control,
+        "tls": tls_lib.get_tls_config() | from_json
+    } -%}
+    {%- set _ = inbounds.append(tuic_inbound) -%}
 {%- endif -%}
 
 {#- DNS Servers -#}
 {%- set dns_servers = [] -%}
 {%- for server in _sing_box_server_dns_servers -%}
-  {%- set _ = dns_servers.append({
-    "tag": server.tag,
-    "type": server.type,
-    "server": server.server
-  }) -%}
+    {%- set _ = dns_servers.append({
+        "tag": server.tag,
+        "type": server.type,
+        "server": server.server
+    }) -%}
 {%- endfor -%}
 
 {#- Final Config -#}
 {%- set config = {
-  "log": {
-    "level": sing_box_log_level
-  },
-  "dns": {
-    "servers": dns_servers
-  },
-  "inbounds": inbounds,
-  "outbounds": [
-    {
-      "type": _sing_box_server_default_outbound,
-      "tag": _sing_box_server_default_outbound
+    "log": {
+        "level": sing_box_log_level
+    },
+    "dns": {
+        "servers": dns_servers
+    },
+    "inbounds": inbounds,
+    "outbounds": [
+        {
+            "type": _sing_box_server_default_outbound,
+            "tag": _sing_box_server_default_outbound
+        }
+    ],
+    "route": {
+        "rules": [],
+        "final": _sing_box_server_default_outbound
     }
-  ],
-  "route": {
-    "rules": [],
-    "final": _sing_box_server_default_outbound
-  }
 } -%}
 
 {{ config | ansible.builtin.to_nice_json(indent=4, ensure_ascii=false, sort_keys=false) }}
