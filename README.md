@@ -22,7 +22,7 @@
 - 目标主机: Debian/Ubuntu Linux
 - Ansible core >= 2.18
 
-### 基本部署
+### sing-box 透明代理网关部署
 
 1. 克隆仓库
 
@@ -43,18 +43,19 @@
          ansible_user: debian
    ```
 
-3. 添加订阅
+3. 准备 host_vars (或 group_vars) 并在其中添加订阅信息
 
    ```shell
-   ansible-vault create host_vars/gateway.yml
+   vim playbooks/host_vars/gateway/all.yml
    ```
 
    内容示例:
 
    ```yaml
    sing_box_config_subscriptions:
-     provider:
-       type: SIP002
+     my_provider:
+       type: remote
+       format: sip002
        enabled: true
        url: "https://example.com/api/subscribe?token=xxx"
    ```
@@ -62,7 +63,7 @@
 4. 执行部署
 
    ```shell
-   ansible-playbook site.yaml --ask-vault-pass
+   ansible-playbook playbooks/sing_box_tproxy.yaml -v
    ```
 
 5. 验证服务
@@ -80,12 +81,59 @@
 | `local`   | 工作站   | ✅ 本机  | ❌      | 127.0.0.1   |
 | `gateway` | 网关     | ✅ 全网  | ✅      | 0.0.0.0     |
 
-配置方式: 在 `site.yaml` 或 `host_vars/` 目录下设置 `sing_box_mode` 变量.
+配置方式: 在 `playbooks/sing_box_tproxy.yaml` 或 `playbooks/host_vars/` 目录下设置 `sing_box_mode` 变量.
 
 > 注意:
 >
 > - Ansible Playbook 中的 vars 优先级高于 `host_vars/`.
 > - gateway 模式下 TPROXY 必须监听 0.0.0.0 以处理来自局域网设备的流量.
+
+## sing-box 服务端部署
+
+本项目也提供了快速部署 sing-box 服务端的功能 (Shadowsocks, Trojan, Hysteria2 等).
+
+1. 配置 inventory
+
+   ```yaml
+   all:
+     hosts:
+       vps:
+         ansible_host: 1.2.3.4
+         ansible_user: root
+   ```
+
+2. 为 vps 准备 host_vars (或 group_vars), 提供部署服务端的所需 vars
+
+   ```shell
+   vim playbooks/host_vars/vps/all.yml
+   ```
+
+   ```yaml
+   sing_box_server_hostname: "vps.example.com"
+
+   sing_box_server_region: us
+   sing_box_server_user_count: 1
+
+   # Enable protocols
+   sing_box_server_enable_shadowsocks: true
+   sing_box_server_enable_trojan: true
+   sing_box_server_enable_hysteria2: true
+   sing_box_server_enable_vless: false
+   sing_box_server_enable_tuic: false
+
+   # TLS with ACME DNS-01
+   sing_box_server_tls_mode: acme
+   sing_box_server_acme_email: "acme@example.com"
+   sing_box_server_acme_use_dns01: true
+   sing_box_server_acme_dns01_provider: cloudflare
+   sing_box_server_acme_dns01_cloudflare_api_token: "<replace-with-your-cloudflare-token>"
+   ```
+
+3. 执行部署, 该 Playbook 会自动生成客户端配置并打印在输出中.
+
+   ```shell
+   ansible-playbook playbooks/sing_box_server.yaml -v
+   ```
 
 ## 文档
 
@@ -99,13 +147,16 @@
 ```
 sing-box-tproxy/
 ├── src/sing_box_config/     # Python 配置生成工具
+├── playbooks/               # playbooks 目录
+│   ├── sing_box_tproxy.yaml # sing-box 透明代理 playbook
+│   └── sing_box_server.yaml # sing-box 服务端部署 playbook
 ├── roles/                   # Ansible 角色
 │   ├── sing_box_install/    # 安装 sing-box
-│   ├── sing_box_config/     # 配置管理
-│   └── sing_box_tproxy/     # 透明代理 (nftables/策略路由)
+│   ├── sing_box_config/     # 安装 Python 配置生成工具
+│   ├── sing_box_tproxy/     # 透明代理 (nftables/策略路由)
+│   └── sing_box_server/     # 创建 sing-box 服务端配置文件
 ├── docs/                    # 文档
 │   └── architecture.md      # 架构设计文档
-├── site.yaml                # Playbook 入口
 └── README.md                # 本文件
 ```
 
