@@ -9,8 +9,8 @@ sing_box_config_pip_extra_args:
 # 可选: 启用订阅 URL 可访问性检查
 sing_box_config_validate_subscription_urls: false
 
-# sing_box_config_subscriptions 的内容将会原样写入 "{{ sing_box_config_dir }}/subscriptions.json"
-# 而 "{{ sing_box_config_dir }}/subscriptions.json" 会作为 sing-box-config 程序的输入文件
+# sing_box_config_subscriptions 的内容将会原样写入 "{{ sing_box_state_config_dir }}/subscriptions.json"
+# 而 "{{ sing_box_state_config_dir }}/subscriptions.json" 会作为 sing-box-config 程序的输入文件
 sing_box_config_subscriptions: {}
 #   # Example 1: Remote subscription with SIP002 format (Shadowsocks)
 #   provider_remote_sip002:

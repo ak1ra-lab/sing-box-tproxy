@@ -1,4 +1,49 @@
 ---
+- name: ensure sing_box_group exists
+  ansible.builtin.group:
+    name: "{{ sing_box_group.name }}"
+    gid: "{{ sing_box_group.gid | int }}"
+    state: present
+
+- name: ensure sing_box_user exists
+  ansible.builtin.user:
+    name: "{{ sing_box_user.name }}"
+    uid: "{{ sing_box_user.uid | int }}"
+    home: "{{ sing_box_user.home }}"
+    shell: "{{ sing_box_user.shell }}"
+    group: "{{ sing_box_group.name }}"
+    state: present
+
+- name: create drop-in directory on remote
+  ansible.builtin.file:
+    path: "{{ directory }}"
+    owner: "{{ sing_box_user.name }}"
+    group: "{{ sing_box_group.name }}"
+    mode: "0700"
+    state: directory
+  loop:
+    - "{{ sing_box_etc_dir }}"
+    - "{{ sing_box_log_dir }}"
+    - "{{ sing_box_state_dir }}"
+    - "{{ sing_box_state_config_dir }}"
+    - "{{ sing_box_state_acme_dir }}"
+  loop_control:
+    loop_var: directory
+
+- name: create drop-in directory on local
+  become: false
+  ansible.builtin.file:
+    path: "{{ directory }}"
+    mode: "0700"
+    state: directory
+  loop:
+    - "{{ sing_box_local_config_dir }}"
+    - "{{ sing_box_local_config_outbounds }}"
+  loop_control:
+    loop_var: directory
+  delegate_to: localhost
+  run_once: true
+
 - name: ensure apt_keyrings_dest directory exists
   ansible.builtin.file:
     path: "{{ sing_box_install_apt_keyrings_dest | ansible.builtin.dirname }}"
@@ -47,9 +92,6 @@
     name: "{{ sing_box_install_apt_repo_packages }}"
     update_cache: true
     state: present
-
-- name: ensure sing_box_user exists
-  ansible.builtin.import_tasks: sing_box_user.yml
 
 - name: template systemd service
   ansible.builtin.import_tasks: systemd.yml

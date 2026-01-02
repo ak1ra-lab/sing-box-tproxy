@@ -138,10 +138,6 @@ sing_box_server_tuic_congestion_control: bbr
 # Internal Variables (do not modify)
 # =============================================================================
 
-sing_box_server_config_dir: /etc/sing-box
-sing_box_server_config_file: "{{ sing_box_server_config_dir }}/config.json"
-sing_box_server_acme_data_directory: /var/lib/sing-box/acme
-
 _sing_box_server_tls_alpn: [h3, h2, http/1.1]
 _sing_box_server_tls_min_version: "1.2"
 _sing_box_server_tls_max_version: "1.3"

@@ -51,18 +51,22 @@ sing_box_log_level: info
 sing_box_etc_dir: /etc/sing-box
 sing_box_log_dir: /var/log/sing-box
 sing_box_state_dir: /var/lib/sing-box
-sing_box_venv_dir: "{{ sing_box_state_dir }}/.venv"
-sing_box_config_dir: "{{ sing_box_state_dir }}/config"
+
+sing_box_etc_config_file: "{{ sing_box_etc_dir }}/config.json"
+
+sing_box_state_venv_dir: "{{ sing_box_state_dir }}/.venv"
+sing_box_state_config_dir: "{{ sing_box_state_dir }}/config"
+sing_box_state_acme_dir: "{{ sing_box_state_dir }}/acme"
 
 # git repo root dir, also same as uv build dir
-sing_box_git_repo_root: "{{ playbook_dir | ansible.builtin.dirname }}"
-sing_box_local_config_dir: "{{ sing_box_git_repo_root }}/config"
+# playbook, host_vars, group_vars 现在放置在 playbooks/ 目录下, 这样按 playbook_dir 取相对路径才不会出错
+sing_box_local_repo_root: "{{ playbook_dir | ansible.builtin.dirname }}"
+sing_box_local_config_dir: "{{ sing_box_local_repo_root }}/config"
 
-# roles/sing_box_server 将 client_outbounds.json.j2 渲染到 sing_box_outbounds_src
-# roles/sing_box_config 尝试从 sing_box_outbounds_src 目录整体复制到 sing_box_outbounds_dest
+# roles/sing_box_server 将 client_outbounds.json.j2 渲染到 sing_box_local_config_outbounds
+# roles/sing_box_config 尝试从 sing_box_local_config_outbounds 目录整体复制到 sing_box_state_config_dir
 # 即目录结构为 /var/lib/sing-box/config/outbounds/{{ inventory_hostname }}.json
-sing_box_outbounds_src: "{{ sing_box_local_config_dir }}/outbounds"
-sing_box_outbounds_dest: "{{ sing_box_config_dir }}"
+sing_box_local_config_outbounds: "{{ sing_box_local_config_dir }}/outbounds"
 
 # https://github.com/MetaCubeX/meta-rules-dat/tree/sing/geo/
 # https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/

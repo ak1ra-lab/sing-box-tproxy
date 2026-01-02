@@ -7,28 +7,23 @@
 - name: generate credentials if not provided
   ansible.builtin.import_tasks: generate_credentials.yml
 
-- name: ensure sing-box configuration directory exists
-  ansible.builtin.file:
-    path: "{{ sing_box_server_config_dir }}"
-    state: directory
-    owner: "{{ sing_box_user.name }}"
-    group: "{{ sing_box_group.name }}"
-    mode: "0755"
-
-- name: ensure ACME data directory exists
-  ansible.builtin.file:
-    path: "{{ sing_box_server_acme_data_directory }}"
-    state: directory
-    owner: "{{ sing_box_user.name }}"
-    group: "{{ sing_box_group.name }}"
-    mode: "0755"
-  when: sing_box_server_tls_mode == 'acme'
+- name: template sing-box server configuration on local
+  become: false
+  ansible.builtin.template:
+    src: config.json.j2
+    dest: "{{ sing_box_local_config_dir }}/config-{{ inventory_hostname }}.json"
+    mode: "0600"
+    validate: sing-box check -c %s
+  delegate_to: localhost
+  run_once: true
 
 - name: template sing-box server configuration
   ansible.builtin.template:
     src: config.json.j2
-    dest: "{{ sing_box_server_config_file }}"
+    dest: "{{ sing_box_etc_config_file }}"
     owner: "{{ sing_box_user.name }}"
     group: "{{ sing_box_group.name }}"
-    mode: "0644"
+    mode: "0600"
     validate: sing-box check -c %s
+  notify:
+    - systemctl restart sing-box

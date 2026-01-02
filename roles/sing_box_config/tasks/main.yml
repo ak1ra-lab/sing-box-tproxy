@@ -24,7 +24,7 @@
   ansible.builtin.pip:
     name: sing-box-config
     state: latest
-    virtualenv: "{{ sing_box_venv_dir }}"
+    virtualenv: "{{ sing_box_state_venv_dir }}"
     virtualenv_command: python3 -m venv
     extra_args: "{{ sing_box_config_pip_extra_args[sing_box_config_install_source] }}"
   notify:
@@ -35,8 +35,8 @@
     # sing_box_config_base_template 用于从外部传入不同的 template 覆盖 templates/base.json.j2
     # sing_box_config_base_template: "{{ playbook_dir }}/config/base.json.j2"
     basename: "{{ sing_box_config_base_template | ansible.builtin.basename | ansible.builtin.splitext | first }}"
-    sing_box_config_base_dest: "{{ [sing_box_config_dir, basename] | ansible.builtin.path_join }}"
-    sing_box_config_subscriptions_dest: "{{ [sing_box_config_dir, 'subscriptions.json'] | ansible.builtin.path_join }}"
+    sing_box_config_base_dest: "{{ [sing_box_state_config_dir, basename] | ansible.builtin.path_join }}"
+    sing_box_config_subscriptions_dest: "{{ [sing_box_state_config_dir, 'subscriptions.json'] | ansible.builtin.path_join }}"
     sing_box_config_local_base_dest: "{{ [sing_box_local_config_dir, basename] | ansible.builtin.path_join }}"
     sing_box_config_local_subscriptions_dest: "{{ [sing_box_local_config_dir, 'subscriptions.json'] | ansible.builtin.path_join }}"
   ansible.builtin.import_tasks: state.yml

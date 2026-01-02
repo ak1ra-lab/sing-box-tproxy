@@ -6,4 +6,4 @@ Type=oneshot
 User={{ sing_box_user.name }}
 Group={{ sing_box_group.name }}
 WorkingDirectory={{ sing_box_state_dir }}
-ExecStart={{ sing_box_venv_dir }}/bin/sing-box-config --base {{ sing_box_config_base_dest }} --subscriptions {{ sing_box_config_subscriptions_dest }} --output {{ sing_box_etc_dir }}/config.json
+ExecStart={{ sing_box_state_venv_dir }}/bin/sing-box-config --base {{ sing_box_config_base_dest }} --subscriptions {{ sing_box_config_subscriptions_dest }} --output {{ sing_box_etc_config_file }}

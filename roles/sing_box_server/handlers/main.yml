@@ -1,0 +1,5 @@
+---
+- name: systemctl restart sing-box
+  ansible.builtin.systemd_service:
+    name: sing-box.service
+    state: restarted

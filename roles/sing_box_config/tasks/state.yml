@@ -1,12 +1,4 @@
 ---
-- name: create sing_box_local_config_dir
-  become: false
-  ansible.builtin.file:
-    path: "{{ sing_box_local_config_dir }}"
-    state: directory
-    mode: "0700"
-  delegate_to: localhost
-
 - name: template sing-box-config config/base.json on local
   become: false
   ansible.builtin.template:
@@ -41,10 +33,10 @@
     group: "{{ sing_box_group.name }}"
     mode: "0600"
 
-- name: try to copy client outbounds from sing_box_outbounds_src
+- name: try to copy client outbounds from sing_box_local_config_outbounds
   ansible.builtin.copy:
-    src: "{{ sing_box_outbounds_src }}"
-    dest: "{{ sing_box_outbounds_dest }}"
+    src: "{{ sing_box_local_config_outbounds }}"
+    dest: "{{ sing_box_state_config_dir }}"
     owner: "{{ sing_box_user.name }}"
     group: "{{ sing_box_group.name }}"
     mode: "0600"
