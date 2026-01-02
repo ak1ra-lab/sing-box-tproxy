@@ -1,0 +1,113 @@
+{%- set proxies = [] -%}
+{%- set server_short = sing_box_server_hostname.split('.')[0] -%}
+{%- set region_prefix = sing_box_server_region ~ '-' if sing_box_server_region else '' -%}
+
+{#- Loop through all users and all enabled protocols -#}
+{%- for user in _selected_user_names -%}
+    {#- Shadowsocks outbound -#}
+    {%- if sing_box_server_enable_shadowsocks -%}
+        {%- set ss_user = sing_box_server_shadowsocks_users | selectattr('name', 'equalto', user) | first | default(none) -%}
+        {%- if ss_user -%}
+            {%- set _ = proxies.append({
+                "name": region_prefix ~ server_short ~ "-" ~ user ~ "-ss",
+                "type": "ss",
+                "server": sing_box_server_hostname,
+                "port": sing_box_server_shadowsocks_port,
+                "cipher": sing_box_server_shadowsocks_method,
+                "password": sing_box_server_shadowsocks_password ~ ":" ~ ss_user.password,
+                "udp": true
+            }) -%}
+        {%- endif -%}
+    {%- endif -%}
+
+    {#- Trojan outbound -#}
+    {%- if sing_box_server_enable_trojan -%}
+        {%- set trojan_user = sing_box_server_trojan_users | selectattr('name', 'equalto', user) | first | default(none) -%}
+        {%- if trojan_user -%}
+            {%- set _ = proxies.append({
+                "name": region_prefix ~ server_short ~ "-" ~ user ~ "-trojan",
+                "type": "trojan",
+                "server": sing_box_server_hostname,
+                "port": sing_box_server_trojan_port,
+                "password": trojan_user.password,
+                "udp": true,
+                "sni": sing_box_server_hostname,
+                "skip-cert-verify": false
+            }) -%}
+        {%- endif -%}
+    {%- endif -%}
+
+    {#- Hysteria2 outbound -#}
+    {%- if sing_box_server_enable_hysteria2 -%}
+        {%- set hysteria2_user = sing_box_server_hysteria2_users | selectattr('name', 'equalto', user) | first | default(none) -%}
+        {%- if hysteria2_user -%}
+            {%- set hy2_config = {
+                "name": region_prefix ~ server_short ~ "-" ~ user ~ "-hy2",
+                "type": "hysteria2",
+                "server": sing_box_server_hostname,
+                "port": sing_box_server_hysteria2_port,
+                "password": hysteria2_user.password,
+                "sni": sing_box_server_hostname,
+                "skip-cert-verify": false
+            } -%}
+            {%- if sing_box_server_hysteria2_obfs_enabled -%}
+                {%- set _ = hy2_config.update({
+                    "obfs": "salamander",
+                    "obfs-password": sing_box_server_hysteria2_obfs_password
+                }) -%}
+            {%- endif -%}
+            {%- if sing_box_server_hysteria2_up_mbps > 0 and sing_box_server_hysteria2_down_mbps > 0 -%}
+                {%- set _ = hy2_config.update({
+                    "up": sing_box_server_hysteria2_up_mbps ~ " Mbps",
+                    "down": sing_box_server_hysteria2_down_mbps ~ " Mbps"
+                }) -%}
+            {%- endif -%}
+            {%- set _ = proxies.append(hy2_config) -%}
+        {%- endif -%}
+    {%- endif -%}
+
+    {#- VLESS outbound -#}
+    {%- if sing_box_server_enable_vless -%}
+        {%- set vless_user = sing_box_server_vless_users | selectattr('name', 'equalto', user) | first | default(none) -%}
+        {%- if vless_user -%}
+            {%- set vless_config = {
+                "name": region_prefix ~ server_short ~ "-" ~ user ~ "-vless",
+                "type": "vless",
+                "server": sing_box_server_hostname,
+                "port": sing_box_server_vless_port,
+                "uuid": vless_user.uuid,
+                "tls": true,
+                "udp": true,
+                "servername": sing_box_server_hostname,
+                "skip-cert-verify": false
+            } -%}
+            {%- if sing_box_server_vless_flow -%}
+                {%- set _ = vless_config.update({"flow": sing_box_server_vless_flow}) -%}
+            {%- endif -%}
+            {%- set _ = proxies.append(vless_config) -%}
+        {%- endif -%}
+    {%- endif -%}
+
+    {#- Tuic outbound -#}
+    {%- if sing_box_server_enable_tuic -%}
+        {%- set tuic_user = sing_box_server_tuic_users | selectattr('name', 'equalto', user) | first | default(none) -%}
+        {%- if tuic_user -%}
+            {%- set _ = proxies.append({
+                "name": region_prefix ~ server_short ~ "-" ~ user ~ "-tuic",
+                "type": "tuic",
+                "server": sing_box_server_hostname,
+                "port": sing_box_server_tuic_port,
+                "uuid": tuic_user.uuid,
+                "password": tuic_user.password,
+                "congestion-controller": sing_box_server_tuic_congestion_control,
+                "udp": true,
+                "sni": sing_box_server_hostname,
+                "skip-cert-verify": false,
+                "alpn": ["h3"]
+            }) -%}
+        {%- endif -%}
+    {%- endif -%}
+
+{%- endfor -%}
+
+{{ {'proxies': proxies} | ansible.builtin.to_yaml(indent=2, explicit_start=true, sort_keys=false) }}
