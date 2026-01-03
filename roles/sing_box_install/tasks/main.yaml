@@ -94,4 +94,4 @@
     state: present
 
 - name: template systemd service
-  ansible.builtin.import_tasks: systemd.yml
+  ansible.builtin.import_tasks: systemd.yaml

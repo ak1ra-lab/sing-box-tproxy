@@ -13,7 +13,7 @@
   when:
     - ansible_kernel is version('4.9.0', '>=')
     - (sing_box_tproxy_tcp_bbr_enabled | ansible.builtin.bool)
-  ansible.builtin.import_tasks: tcp_bbr.yml
+  ansible.builtin.import_tasks: tcp_bbr.yaml
 
 - name: ensure ip_forward state
   ansible.posix.sysctl:
@@ -59,4 +59,4 @@
 
 # nftables 才是一切的关键, 为 packet 打 fwmark
 - name: ensure /etc/nftables.conf
-  ansible.builtin.import_tasks: nftables.yml
+  ansible.builtin.import_tasks: nftables.yaml

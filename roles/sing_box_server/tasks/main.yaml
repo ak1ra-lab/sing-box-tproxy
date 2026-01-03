@@ -2,10 +2,10 @@
 # Main tasks for sing_box_server role
 
 - name: validate configuration parameters
-  ansible.builtin.import_tasks: validate.yml
+  ansible.builtin.import_tasks: validate.yaml
 
 - name: generate credentials if not provided
-  ansible.builtin.import_tasks: generate_credentials.yml
+  ansible.builtin.import_tasks: generate_credentials.yaml
 
 - name: template sing-box server configuration on local
   become: false

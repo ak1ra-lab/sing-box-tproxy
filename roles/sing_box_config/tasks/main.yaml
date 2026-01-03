@@ -17,7 +17,7 @@
 
 - name: install sing-box-config from dist_wheel
   when: sing_box_config_install_source == 'local'
-  ansible.builtin.import_tasks: dist_wheel.yml
+  ansible.builtin.import_tasks: dist_wheel.yaml
 
 - name: install sing-box-config from PyPI
   when: sing_box_config_install_source in ['pypi', 'testpypi']
@@ -39,4 +39,4 @@
     sing_box_config_subscriptions_dest: "{{ [sing_box_state_config_dir, 'subscriptions.json'] | ansible.builtin.path_join }}"
     sing_box_config_local_base_dest: "{{ [sing_box_local_config_dir, basename] | ansible.builtin.path_join }}"
     sing_box_config_local_subscriptions_dest: "{{ [sing_box_local_config_dir, 'subscriptions.json'] | ansible.builtin.path_join }}"
-  ansible.builtin.import_tasks: state.yml
+  ansible.builtin.import_tasks: state.yaml
