@@ -38,7 +38,7 @@
     state: directory
   loop:
     - "{{ sing_box_local_config_dir }}"
-    - "{{ sing_box_local_config_outbounds }}"
+    - "{{ sing_box_local_client_outbounds }}"
   loop_control:
     loop_var: directory
   delegate_to: localhost

@@ -44,5 +44,5 @@
         "outbounds": _group_outbounds
     }) -%}
 {%- endfor -%}
-{{ outbounds_config | to_json }}
+{{ outbounds_config | ansible.builtin.to_json }}
 {%- endmacro -%}

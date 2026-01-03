@@ -24,5 +24,5 @@
     } -%}
     {%- set _ = inbounds_config.append(_tproxy_inbound) -%}
 {%- endif -%}
-{{ inbounds_config | to_json }}
+{{ inbounds_config | ansible.builtin.to_json }}
 {%- endmacro -%}

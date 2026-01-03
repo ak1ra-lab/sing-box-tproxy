@@ -33,9 +33,9 @@
     group: "{{ sing_box_group.name }}"
     mode: "0600"
 
-- name: try to copy client outbounds from sing_box_local_config_outbounds
+- name: try to copy client outbounds from sing_box_local_client_outbounds
   ansible.builtin.copy:
-    src: "{{ sing_box_local_config_outbounds }}"
+    src: "{{ sing_box_local_client_outbounds }}"
     dest: "{{ sing_box_state_config_dir }}"
     owner: "{{ sing_box_user.name }}"
     group: "{{ sing_box_group.name }}"

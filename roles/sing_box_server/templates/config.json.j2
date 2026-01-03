@@ -44,7 +44,7 @@
         "listen": sing_box_server_listen,
         "listen_port": sing_box_server_trojan_port,
         "users": trojan_users,
-        "tls": tls_lib.get_tls_config() | from_json
+        "tls": tls_lib.get_tls_config() | ansible.builtin.from_json
     } -%}
     {%- if sing_box_server_trojan_multiplex_enabled -%}
         {%- set _ = trojan_inbound.update({
@@ -71,7 +71,7 @@
         "listen": sing_box_server_listen,
         "listen_port": sing_box_server_hysteria2_port,
         "users": hy2_users,
-        "tls": tls_lib.get_tls_config() | from_json
+        "tls": tls_lib.get_tls_config() | ansible.builtin.from_json
     } -%}
     {%- if sing_box_server_hysteria2_up_mbps > 0 and sing_box_server_hysteria2_down_mbps > 0 -%}
         {%- set _ = hy2_inbound.update({
@@ -117,7 +117,7 @@
         "listen": sing_box_server_listen,
         "listen_port": sing_box_server_vless_port,
         "users": vless_users,
-        "tls": tls_lib.get_tls_config() | from_json
+        "tls": tls_lib.get_tls_config() | ansible.builtin.from_json
     } -%}
     {%- set _ = inbounds.append(vless_inbound) -%}
 {%- endif -%}
@@ -139,7 +139,7 @@
         "listen_port": sing_box_server_tuic_port,
         "users": tuic_users,
         "congestion_control": sing_box_server_tuic_congestion_control,
-        "tls": tls_lib.get_tls_config() | from_json
+        "tls": tls_lib.get_tls_config() | ansible.builtin.from_json
     } -%}
     {%- set _ = inbounds.append(tuic_inbound) -%}
 {%- endif -%}

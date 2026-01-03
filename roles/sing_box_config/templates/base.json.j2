@@ -8,11 +8,11 @@
     "log": {
         "level": sing_box_log_level
     },
-    "dns": dns_lib.get_dns_config() | from_json,
-    "inbounds": inbounds_lib.get_inbounds_config() | from_json,
-    "outbounds": outbounds_lib.get_outbounds_config() | from_json,
-    "route": route_lib.get_route_config() | from_json,
-    "experimental": experimental_lib.get_experimental_config() | from_json
+    "dns": dns_lib.get_dns_config() | ansible.builtin.from_json,
+    "inbounds": inbounds_lib.get_inbounds_config() | ansible.builtin.from_json,
+    "outbounds": outbounds_lib.get_outbounds_config() | ansible.builtin.from_json,
+    "route": route_lib.get_route_config() | ansible.builtin.from_json,
+    "experimental": experimental_lib.get_experimental_config() | ansible.builtin.from_json
 } -%}
 
 {{ config | ansible.builtin.to_json(indent=4, ensure_ascii=false, sort_keys=false) }}

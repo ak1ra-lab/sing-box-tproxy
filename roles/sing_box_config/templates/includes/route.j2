@@ -58,5 +58,5 @@
     "auto_detect_interface": true,
     "default_domain_resolver": "dns_direct"
 } -%}
-{{ route_config | to_json }}
+{{ route_config | ansible.builtin.to_json }}
 {%- endmacro -%}

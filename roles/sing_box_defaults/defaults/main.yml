@@ -11,6 +11,9 @@ _sing_box_enable_nftables: "{{ sing_box_mode in ['local', 'gateway'] }}"
 _sing_box_enable_ip_forward: "{{ sing_box_mode == 'gateway' }}"
 _sing_box_enable_netplan_routing: "{{ sing_box_mode in ['local', 'gateway'] }}"
 
+# 是否启用 IPv6
+_sing_box_enable_ipv6: "{{ ansible_default_ipv6 is defined and ansible_default_ipv6.interface is defined }}"
+
 # https://wiki.debian.org/SystemGroups#Groups_with_an_associated_user
 # proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
 sing_box_user:
@@ -25,9 +28,6 @@ sing_box_group:
 # github proxy for ruleset.url
 # sing_box_github_proxy: "https://gh.ak1ra.xyz/"
 sing_box_github_proxy: ""
-
-# 是否启用 IPv6
-_sing_box_enable_ipv6: "{{ ansible_default_ipv6 is defined and ansible_default_ipv6.interface is defined }}"
 
 # 对应 sing-box 中 type = mixed 的 inbounds
 sing_box_mixed_port: 7890
@@ -63,10 +63,10 @@ sing_box_state_acme_dir: "{{ sing_box_state_dir }}/acme"
 sing_box_local_repo_root: "{{ playbook_dir | ansible.builtin.dirname }}"
 sing_box_local_config_dir: "{{ sing_box_local_repo_root }}/config"
 
-# roles/sing_box_server 将 client_outbounds.json.j2 渲染到 sing_box_local_config_outbounds
-# roles/sing_box_config 尝试从 sing_box_local_config_outbounds 目录整体复制到 sing_box_state_config_dir
+# roles/sing_box_server 将 client_outbounds.json.j2 渲染到 sing_box_local_client_outbounds
+# roles/sing_box_config 尝试从 sing_box_local_client_outbounds 目录整体复制到 sing_box_state_config_dir
 # 即目录结构为 /var/lib/sing-box/config/outbounds/{{ inventory_hostname }}.json
-sing_box_local_config_outbounds: "{{ sing_box_local_config_dir }}/outbounds"
+sing_box_local_client_outbounds: "{{ sing_box_local_config_dir }}/client_outbounds"
 
 # https://github.com/MetaCubeX/meta-rules-dat/tree/sing/geo/
 # https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/
@@ -74,13 +74,14 @@ sing_box_remote_rule_set_url_prefix: "https://raw.githubusercontent.com/MetaCube
 
 sing_box_remote_rule_sets:
   - path: geoip/private.srs
+  - path: geoip/telegram.srs
+  - path: geoip/cn.srs
   - path: geosite/private.srs
   - path: geosite/google.srs
   - path: geosite/geolocation-cn.srs
   - path: geosite/win-update.srs
   - path: geosite/apple.srs
   - path: geosite/github.srs
-  - path: geoip/telegram.srs
   - path: geosite/telegram.srs
   - path: geosite/bing.srs
   - path: geosite/category-ai-!cn.srs
@@ -89,7 +90,6 @@ sing_box_remote_rule_sets:
   - path: geosite/steam.srs
   - path: geosite/debian.srs
   - path: geosite/gfw.srs
-  - path: geoip/cn.srs
 
 sing_box_basic_rules:
   - action: hijack-dns
@@ -105,17 +105,17 @@ sing_box_filtering_rules:
     rule_set: [geoip-private, geosite-private]
     outbound: DIRECT
   - action: route
-    rule_set: [geosite-steam]
-    outbound: STEAM
-  - action: route
-    rule_set: [geosite-apple]
-    outbound: APPLE
-  - action: route
     rule_set: [geosite-category-ai-!cn]
     outbound: AI
   - action: route
     rule_set: [geosite-category-entertainment, "geosite-category-entertainment@!cn"]
     outbound: Entertainment
+  - action: route
+    rule_set: [geosite-apple]
+    outbound: APPLE
+  - action: route
+    rule_set: [geosite-steam]
+    outbound: STEAM
   - action: route
     rule_set: [geosite-telegram, geoip-telegram]
     outbound: TELEGRAM

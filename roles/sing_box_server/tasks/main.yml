@@ -11,7 +11,7 @@
   become: false
   ansible.builtin.template:
     src: config.json.j2
-    dest: "{{ sing_box_local_config_dir }}/config-{{ inventory_hostname }}.json"
+    dest: "{{ sing_box_local_client_outbounds }}/{{ inventory_hostname }}.config.json"
     mode: "0600"
     validate: sing-box check -c %s
   delegate_to: localhost

@@ -75,5 +75,5 @@
         {%- set _ = tls_config.update({"acme": acme_config}) -%}
     {%- endif -%}
 
-    {{ tls_config | to_json }}
+    {{ tls_config | ansible.builtin.to_json }}
 {%- endmacro -%}

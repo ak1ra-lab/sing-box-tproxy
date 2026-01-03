@@ -13,5 +13,5 @@
         "default_mode": "rule"
     }
 } -%}
-{{ experimental_config | to_json }}
+{{ experimental_config | ansible.builtin.to_json }}
 {%- endmacro -%}
