@@ -2,321 +2,130 @@
 
 All notable changes to this project will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 ## [0.7.0] - 2026-01-02
 
-### 🚀 Features
+### Added
 
-- impl IPv6 support in netplan and nftables.conf.j2
-- add local subscription type
-- *(roles/sing_box_server)* add ansible role for multi-protocol sing-box server deployment
-- impl templates/clash_nodelist.yaml.j2 in roles/sing_box_server
+- New `sing_box_server` role for multi-protocol server deployment.
+- IPv6 support in netplan and nftables configuration.
+- Local subscription type support.
+- Modular configuration templates using Jinja2 macros in `roles/sing_box_config`.
+- Detailed architecture documentation with Mermaid diagrams.
 
-### 🐛 Bug Fixes
+### Changed
 
-- add netplan.io to the list of installed packages
-- remove redundant DNS server entries in base.json.j2
-- fix uv build task in roles/sing_box_config
-- update validation of hysteria2 bandwidth limits
-- fix sub_types and sub_formats in tasks/pre_flight_checks.yml
-- use template instead of copy content on sing_box_config_subscriptions
-- update Hysteria2 bandwidth condition to require both upload and download limits
-
-### 🚜 Refactor
-
-- rename variable for clarity and improve proxy removal logic
-- replace decode_sip002_to_singbox with ShadowsocksParser for improved parsing logic
-- *(roles/sing_box_config)* refactor sing-box config templates into modular macros
-- refactoring and relocate ansible vars
-- restructure subscription parsing logic
-- migrate sing_box_remote_rule_sets to roles/sing_box_defaults
-- refactoring and relocate ansible vars
-
-### 📚 Documentation
-
-- update docs/architecture.md, use mermaid instead of ASCII flow chart
-- replace all ordered list to unordered list in docs/architecture.md
-- refactor docs/architecture.md
-- fixup docs/architecture.md
-- clarify local traffic loopback mechanism in TPROXY transparent proxy (#2)
-- enhance docs/architecture.md with detailed flow diagrams
-- refine flow diagrams labels in docs/architecture.md
-- update README.md
-
-### ⚙️ Miscellaneous Tasks
-
-- fix `mkdocs build` on .github/workflows/docs.yaml
-- reorder nftables rules in nftables.conf.j2
-- update markdown extensions to include custom mermaid fences
-- add "geosite-private" to the DNS rule set for routing
-- update DNS configuration to use predefined hosts and improve resolver settings
-- remove sing-box-tproxy-toggle.sh
-- add entertainment rule_set in base.json.j2
-- update chaos-utils to v0.3.1
-- update ansible role metadata
-- remove system dirs from ansible.cfg
-- update .gitignore
-- relocate playbooks/sing_box_tproxy.yaml and tasks
-- add sing_box_log_level
-- use import_role instead of roles in playbooks/sing_box_server.yaml
-- add sing_box_outbounds_{src,dest} in roles/sing_box_defaults
-- use sing_box_outbounds_src when generate client outbounds
-- try to copy client outbounds from sing_box_outbounds_src
-- refactoring sing_box_config_subscriptions comment
-- template config/base.json on localhost
-- add sing-box gpg.key fingerprint
-- remove clash_mode route.rules
-- remove invalid sing_box_server_tuic_up_mbps
-- reformat jinja2 template in roles/sing_box_server
-- remove sing_box_server_hostname in host_vars.yml.j2
-- update sing_box_proxy_groups orders
-- fixup playbooks
-- bump version v0.7.0
+- Refactored `sing_box_config` templates to use reusable includes (`dns.j2`, `inbounds.j2`, etc.).
+- Restructured Ansible playbooks into `playbooks/` directory.
+- Replaced `decode_sip002_to_singbox` with object-oriented `ShadowsocksParser`.
+- Removed `sing-box-tproxy-toggle.sh` script.
+- Updated `nftables.conf.j2` rules ordering and logic.
 
 ## [0.6.0] - 2025-12-22
 
-### 🚀 Features
+### Added
 
-- introduce sing_box_defaults role with mode-based deployment
-- *(sing_box_tproxy)* add mode-aware tproxy and toggle script
-- add pre-flight validation checks
-- *(playbook)* integrate mode-based deployment and validation
-- add nftables.service with ExecStartPre and reorganize task files
+- Mode-based deployment support in `sing_box_defaults`.
+- `sing-box-tproxy-toggle.sh` script for switching TProxy modes (later removed in 0.7.0).
+- Pre-flight validation checks in `tasks/pre_flight_checks.yml`.
+- `nftables.service` management with `ExecStartPre` checks.
+- Architecture documentation (`docs/architecture.md`).
 
-### 🚜 Refactor
+### Changed
 
-- *(sing_box_install)* modularize tasks and relocate systemd templates
-- *(sing_box_config)* consolidate templates and improve configuration
-- *(export.py)* improve code quality with type hints and docs
-- use import_tasks instead of include_tasks
-
-### 📚 Documentation
-
-- update README with deployment modes
-- add docs/architecture.md
-- add mkdocs.yml and mkdocs-material deps
-
-### ⚙️ Miscellaneous Tasks
-
-- use tenacity retries on httpx.get, also rename cmd.py to main.py
-- uv sync -U, pre-commit autoupdate and fixup README.md
-- add .editorconfig, .yamlfmt.yaml and update .gitignore
-- add clash_api options in main.yml and base.json.j2
-- uv sync -U and pre-commit autoupdate
-- add task to delete dist/ directory before uv build
-- improve comments on defaults and playbook
-- add GitHub Actions workflow for documentation deployment
-- apply yamlfmt
-- bump version
+- Modularized `sing_box_install` tasks.
+- Renamed `cmd.py` to `main.py` in `src/sing_box_config`.
+- Improved `export.py` with type hints and better error handling.
 
 ## [0.5.0] - 2025-11-01
 
-### 🚀 Features
+### Changed
 
-- migrate pdm to uv and many more
-
-### 🚜 Refactor
-
-- impl roles/sing_box_defaults/defaults/main.yml
-
-### ⚙️ Miscellaneous Tasks
-
-- impl sing_box_config_updater_service_state on roles/sing_box_config
-- rename playbook.yaml to site.yaml
-- update pdm.lock
-- update setup_logger
-- add enabled option on subscriptions
-- add status shields.io badges
-- remove download_detour on config/base.json.j2
-- update dns_fakeip on config/base.json.j2
-- rename pdm_wheel.yml to dist_wheel.yml
+- Migrated project dependency management from PDM to uv.
+- Renamed `playbook.yaml` to `site.yaml`.
+- Refactored `sing_box_defaults` role structure.
+- Updated `sing_box_config` role to build wheel using `uv`.
 
 ## [0.4.0] - 2025-08-04
 
-### 🚀 Features
+### Added
 
-- impl tcp_bbr_enabled on roles/sing_box_tproxy
-- impl remove_invalid_outbounds on src/sing_box_config
+- TCP BBR support in `roles/sing_box_tproxy`.
+- `remove_invalid_outbounds` logic in configuration export.
 
-### 🚜 Refactor
+### Changed
 
-- handle config/{base,subscriptions}.json as jinja2 template
-- simplify roles/sing_box_config
-- simplify roles/sing_box_tproxy
-
-### 📚 Documentation
-
-- update README.md
-
-### ⚙️ Miscellaneous Tasks
-
-- add sing_box_config_updater_timer_enabled on playbook.yaml
-- impl tasks/pdm_wheel.yml on roles/sing_box_config
-- impl sing_box_config_install_source on roles/sing_box_config
-- bump version
+- Converted `base.json` and `subscriptions.json` to Jinja2 templates (`.j2`).
+- Simplified `roles/sing_box_config` and `roles/sing_box_tproxy`.
+- Refactored configuration role to support local package building.
 
 ## [0.3.0] - 2025-08-04
 
-### 🚀 Features
+### Added
 
-- impl fetch_url_with_retries on httpx.get()
-
-### 🐛 Bug Fixes
-
-- add ExecStartPre= on sing-box-reload.service
-
-### ⚙️ Miscellaneous Tasks
-
-- bump version
+- Retry logic for HTTP requests in `fetch_url_with_retries`.
+- `ExecStartPre` validation in `sing-box-reload.service`.
 
 ## [0.2.1] - 2025-08-04
 
-### 🐛 Bug Fixes
+### Fixed
 
-- fix hard coded netplan default INTERFACE
-
-### ⚙️ Miscellaneous Tasks
-
-- typo fix on ansible.cfg
-- fixup and improvement
-- fixup nftables.conf.j2
-- bump version
+- Hardcoded network interface in Netplan configuration.
+- `nftables.conf.j2` syntax and logic issues.
 
 ## [0.2.0] - 2025-08-04
 
-### 🚀 Features
+### Added
 
-- *(ansible)* use proxy user to exec sing-box-config-updater.timer
-- *(ansible)* ensure sing-box package present instead of latest
-- *(ansible)* set apt_repo_packages to sing-box instead of sing-box-beta
-- *(ansible)* set apt_repo_packages default to sing-box-beta on playbook.yaml
-- *(ansible)* mark proxy user traffic and reorder nft rules
+- `git-cliff` configuration.
+- Proxy user execution for `sing-box-config-updater`.
+- Marking of proxy user traffic in nftables.
 
-### 📚 Documentation
+### Changed
 
-- add git-cliff generated CHANGELOG.md
-
-### ⚙️ Miscellaneous Tasks
-
-- *(config)* remove route.default_mark on config/base.json
-- add git-cliff config cliff.toml
+- Changed default apt repository package to `sing-box-beta`.
+- Ensured `sing-box` package is present (not just latest).
 
 ## [0.1.6] - 2025-04-28
 
-### 🚀 Features
+### Changed
 
-- *(src)* disable logfile logging
-
-### ⚙️ Miscellaneous Tasks
-
-- pdm update
-- add pre-commit as dev dependencies
-- add .pre-commit-config.yaml
-- remove verbose output on nox lint session
+- Disabled logfile logging in `src/sing_box_config`.
+- Added `pre-commit` configuration.
 
 ## [0.1.5] - 2025-04-27
 
-### 📚 Documentation
+### Fixed
 
-- update README.md
-
-### ⚙️ Miscellaneous Tasks
-
-- include Ansible roles and config example in Python .whl
-- fix pdm.build.includes
+- Python package build includes to contain Ansible roles and examples.
 
 ## [0.1.3] - 2025-04-27
 
-### 📚 Documentation
+### Removed
 
-- remove English README.md
-
-### ⚙️ Miscellaneous Tasks
-
-- update .gitignore to ignore .pdm-python
+- Chinese README (`README.zh-CN.md`).
 
 ## [0.1.2] - 2025-04-27
 
-### 🚀 Features
+### Changed
 
-- *(ansible)* install sing-box-config from PyPI
-- *(ansible)* ensure sing-box.service restarted
-- *(src)* relocate code to src/sing_box_config
-- *(ansible)* relocate ansible roles
-- *(ansible)* use fullpath in sing-box-config-updater.service
-
-### ⚙️ Miscellaneous Tasks
-
-- build package distributions on tests.yaml
-- update .github/workflows/pypi-publish.yaml
+- Renamed Python package to `sing_box_config`.
+- Renamed Ansible roles to use `sing_box_` prefix.
+- Added `sing-box-reload.path` systemd unit.
 
 ## [0.1.1] - 2025-04-25
 
-### 📚 Documentation
+### Changed
 
-- add project.urls in pyproject.toml
-- replace urls in README.md
-
-### ⚙️ Miscellaneous Tasks
-
-- revert disable shallow clone
+- Updated project URLs and documentation.
 
 ## [0.1.0] - 2025-04-25
 
-### 🚀 Features
+### Added
 
-- *(src)* pdm init
-- *(src)* chore: init commit on src/singbox_tproxy
-- *(src)* add add subscriptions.exclude support
-- *(src)* add verbose on save_config_from_subscriptions
-- *(src)* python package rename
-- *(src)* add default value on cli --help
-- *(src)* fix cmd output.parent dir not exists
-- *(ansible)* add ansible.cfg
-- *(ansible)* implement roles/singbox_install
-- *(ansible)* implement roles/singbox_tproxy
-- *(ansible)* implement roles/singbox_config
-- *(ansible)* add ansible playbook.yaml
-- *(ansible)* use root user to exec sing-box-config-updater.timer
-- *(ansible)* add sing-box-reload.path to watch /etc/sing-box/config.json changes on roles/singbox_tproxy
-- *(ansible)* implement more handler on roles/singbox_tproxy
-- *(src)* use logger.warning instead of raise ValueError
-- *(ansible)* ensure template notify more accurate
-- *(ansible)* dont change systemd service unit ownership
-- *(src)* pass argparse.Namespace on cmd.py
-- *(ansible)* reuse roles/singbox_install
-- *(src)* add error handling on resp.text decode
-- *(src)* implement logging.setup_logger
-- *(ansible)* ensure run_once on pdm build task
-- *(src)* set default value for tag_prefix in decode_sip002_to_singbox function
-
-### 📚 Documentation
-
-- update README.md
-- add README.zh-CN.md
-- translate README.zh-CN.md into English
-- replace full-width punctuations with half-width on README.zh-CN.md
-- update README.zh-CN.md
-- update README.md
-
-### 🧪 Testing
-
-- add unit tests for decode_sip002_to_singbox function
-
-### ⚙️ Miscellaneous Tasks
-
-- init commit
-- add noxfile.py and ruff.toml
-- *(config)* add config/base.json
-- *(config)* add example config/subscriptions.json
-- *(config)* fix dns_resolver detour to an empty direct
-- add .github/workflows
-- *(config)* replace route.rule_set github-proxy on config/base.json
-- *(config)* append urltest proxy group
-- add .github/prompts/*.md to .gitignore
-- disable shallow clone
-
-### 💼 Other
-
-- fix project.name to sing-box-config
-
-<!-- generated by git-cliff -->
+- Initial release.
+- Basic Ansible roles: `singbox_install`, `singbox_tproxy`, `singbox_config`.
+- Python package `singbox_config` for configuration management.
+- Basic TProxy and configuration update logic.
