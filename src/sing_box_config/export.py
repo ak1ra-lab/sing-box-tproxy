@@ -227,5 +227,5 @@ def save_config_from_subscriptions(
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    save_json(output_path, base_config)
+    save_json(output_path, base_config, sort_keys=False)
     logger.info("Configuration saved to %s", output_path)
