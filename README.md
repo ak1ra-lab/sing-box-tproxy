@@ -1,8 +1,8 @@
 # sing-box-tproxy
 
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/ak1ra-lab/sing-box-tproxy/.github%2Fworkflows%2Fpublish-to-pypi.yaml)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/sing-box-config)
-![PyPI - Version](https://img.shields.io/pypi/v/sing-box-config)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/ak1ra-lab/sing-box-tproxy/.github%2Fworkflows%2Fpublish-to-pypi.yaml)](https://github.com/ak1ra-lab/sing-box-tproxy/actions/workflows/publish-to-pypi.yaml)
+[![PyPI - Version](https://img.shields.io/pypi/v/sing-box-config)](https://pypi.org/project/sing-box-config/)
+[![PyPI - Version](https://img.shields.io/pypi/v/sing-box-config?label=test-pypi&pypiBaseUrl=https%3A%2F%2Ftest.pypi.org)](https://test.pypi.org/project/sing-box-config/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ak1ra-lab/sing-box-tproxy)
 
 使用 Ansible 自动部署 [SagerNet/sing-box](https://github.com/SagerNet/sing-box) TPROXY 透明代理.
