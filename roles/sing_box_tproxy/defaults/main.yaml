@@ -3,3 +3,7 @@
 
 # sing-box 作为 tproxy gateway 时有必要开启 TCP BBR 吗? 以往都是在 vps 侧设置
 sing_box_tproxy_tcp_bbr_enabled: true
+
+# 是否开启 nftables flow offloading (flowtable)
+# 能够大幅提升转发性能 (Hardware/Software Offload), 仅对绕过代理的流量 (直连流量) 有效
+sing_box_tproxy_nftables_flow_offload: true

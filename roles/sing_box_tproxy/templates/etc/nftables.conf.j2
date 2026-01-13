@@ -93,6 +93,13 @@ table inet sing_box_tproxy {
 	}
 
 {% endif %}
+{% if sing_box_tproxy_nftables_flow_offload %}
+	flowtable bypass_ft {
+		hook ingress priority 0
+		devices = { {{ sing_box_tproxy_nftables_flow_offload_interfaces | join(', ') }} }
+	}
+
+{% endif %}
 	chain prerouting_tproxy {
 		type filter hook prerouting priority mangle; policy accept;
 
@@ -127,6 +134,23 @@ table inet sing_box_tproxy {
 		meta l4proto { tcp, udp } counter tproxy to :$TPROXY_PORT meta mark set $PROXY_MARK comment "Redirect the remaining packets to the TPROXY_PORT"
 	}
 
+{% if sing_box_tproxy_nftables_flow_offload %}
+	chain forward_flowtable {
+		type filter hook forward priority 0; policy accept;
+		counter
+
+		# Flow Offloading - Only accelerate reserved IPs and custom bypassed IPs
+		ip daddr @reserved_ip4 ct state new flow offload @bypass_ft comment "flowtable offload for reserved IPs"
+		ip daddr @custom_bypassed_ip4 ct state new flow offload @bypass_ft comment "flowtable offload for custom bypassed IPs"
+
+{% if _sing_box_enable_ipv6 %}
+		ip daddr @reserved_ip6 ct state new flow offload @bypass_ft comment "flowtable offload for reserved IPs"
+		ip daddr @custom_bypassed_ip6 ct state new flow offload @bypass_ft comment "flowtable offload for custom bypassed IPs"
+
+{% endif %}
+	}
+
+{% endif %}
 	chain output_tproxy {
 		type route hook output priority mangle; policy accept;
 

@@ -23,6 +23,17 @@
 - name: flush handlers to ensure daemon-reload completes
   ansible.builtin.meta: flush_handlers
 
+- name: collect flow offload capable interfaces
+  ansible.builtin.set_fact:
+    sing_box_tproxy_nftables_flow_offload_interfaces: >-
+      {{
+          ansible_facts.interfaces
+          | select('ansible.builtin.match', '^(eth|en[psx]|br)')
+          | sort
+          | unique
+          | list
+      }}
+
 - name: template nftables.conf on remote
   ansible.builtin.template:
     src: etc/nftables.conf.j2
