@@ -1,4 +1,6 @@
 ---
+name: docs
+
 on:
   push:
     branches:

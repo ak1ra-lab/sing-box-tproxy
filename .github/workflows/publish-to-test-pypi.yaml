@@ -1,14 +1,14 @@
 ---
+name: publish-to-test-pypi
+
 on:
   push:
     branches:
       - dev
-    paths-ignore:
-      - "docs/**"
-      - "**.md"
-      - "**.toml"
-      - "**.yaml"
-      - "**.yml"
+    paths:
+      - "src/**"
+      - "tests/**"
+      - ".github/workflows/publish-to-test-pypi.yaml"
   workflow_dispatch: ~
 
 jobs:
