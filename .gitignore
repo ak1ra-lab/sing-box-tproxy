@@ -332,9 +332,19 @@ __marimo__/
 .github/copilot-instructions.md
 
 # Ansible
-inventory/*
-**/host_vars/*
-**/group_vars/*
+inventory/*.yaml
+playbooks/host_vars/**/*.yaml
+playbooks/group_vars/**/*.yaml
+
+# 示例 Ansible inventory
+!inventory/hosts.example.yaml
+
+# 与具体服务器无关的 公共配置项 可定义在 group_vars 中
+!playbooks/group_vars/sing-box-tproxy-example/main.yaml
+!playbooks/group_vars/sing-box-server-example/main.yaml
+
+# 而服务器特有的 私有配置项 如 region 和 hostname 则需要定义在 host_vars 中
+!playbooks/host_vars/sing-box-server-example-node01/main.yaml
 
 # General configuration file and examples folder
 examples/*

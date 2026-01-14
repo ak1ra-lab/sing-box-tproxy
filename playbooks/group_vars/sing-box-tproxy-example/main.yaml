@@ -1,0 +1,80 @@
+---
+# # roles/sing_box_defaults
+# sing-box 安装模式: [mixed, local, gateway]
+#   mixed: 仅安装并启用 mixed port, 不配置透明代理, 需要额外配置 system proxy
+#   local: 本地透明代理, 不代理内网中其它主机的流量
+#   gateway: 用作透明代理网关, 这也是目前的默认行为
+sing_box_mode: gateway
+
+# github proxy for ruleset.url
+sing_box_github_proxy: ""
+
+# # roles/sing_box_install
+# [sing-box, sing-box-beta]
+sing_box_install_apt_repo_packages:
+  - sing-box
+
+# config/base.dns_internal.json.j2
+sing_box_config_dns_internal: []
+sing_box_config_custom_internal_rules:
+  - domain_suffix: []
+sing_box_config_custom_direct_rules:
+  - domain_suffix: [example.com]
+
+# 对应 /etc/sing-box/config.json 中 experimental 配置项
+sing_box_config_clash_api_secret: "<clash-api-secret>"
+sing_box_config_clash_api_external_controller: "0.0.0.0:9090"
+
+# 覆盖 sing-box-config-updater 的 systemd timer 与 systemd service 状态
+# 用于应对当前大多数"服务商"开始订阅链接强制"阅后即焚"
+# choices: [reloaded, restarted, started, stopped]
+sing_box_config_updater_timer_enabled: true
+sing_box_config_updater_timer_interval: 1d
+sing_box_config_updater_timer_state: started
+sing_box_config_updater_service_state: started
+
+# sing_box_config_subscriptions 的内容将会原样写入 "{{ sing_box_state_config_dir }}/subscriptions.json"
+# 而 "{{ sing_box_state_config_dir }}/subscriptions.json" 会作为 sing-box-config 程序的输入文件
+sing_box_config_subscriptions: {}
+#   # Example 1: Remote subscription with SIP002 format (Shadowsocks)
+#   provider_remote_sip002:
+#     type: remote
+#     format: sip002
+#     enabled: true
+#     url: "https://sub.example.com/api/v1/client/subscribe?token=YOUR_TOKEN_HERE"
+#     exclude:
+#       - "过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"
+#
+#   # Example 2: Remote subscription with sing-box native format (default format)
+#   provider_remote_singbox:
+#     type: remote
+#     format: sing-box
+#     enabled: true
+#     url: "https://sub.example.net/sing-box-config"
+#
+#   # Example 3: Local file subscription (sing-box format)
+#   provider_local_file:
+#     type: local
+#     format: sing-box
+#     path: "/etc/sing-box/local-proxies.json"
+#
+#   # Example 4: Inline subscription (sing-box format)
+#   provider_inline_singbox:
+#     type: inline
+#     format: sing-box
+#     outbounds:
+#       - type: shadowsocks
+#         tag: "ss-inline-1"
+#         server: "1.2.3.4"
+#         server_port: 8388
+#         method: "aes-256-gcm"
+#         password: "password"
+#
+#   # Example 5: Inline subscription (SIP002 format)
+#   provider_inline_sip002:
+#     type: inline
+#     format: sip002
+#     content: |
+#       c3M6Ly9ZMmhoWTJoaE1qQXRhV1YwWmkxd2IyeDVNVE13TlRwd1lYTnpkMjl5WkFAMS4yLjMuNDo4
+#       Mzg4I0V4YW1wbGUxCnNzOi8vWTJoaFkyaGhNakF0YVdWMFppMXdiMng1TVRNd05UcHdZWE56ZDI5
+#       eVpBQDEuMi4zLjQ6ODQ4OCNFeGFtcGxlMgo=

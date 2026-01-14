@@ -1,0 +1,22 @@
+---
+# 示例 Ansible inventory
+# 这个文件中定义了 2 个 Ansible group, 实际使用时会去掉 "-example" 后缀
+
+# sing-box-tproxy-example group 用于 sing-box 客户端部署, 一般是内网 IP 地址
+# 部署好后可用作整个局域网的 旁路网关 (sidecar gateway)
+sing-box-tproxy-example:
+  hosts:
+    sing-box-tproxy-example-node01:
+      ansible_host: 10.114.51.4
+      ansible_port: 22
+      ansible_user: root
+      # ansible_ssh_private_key_file: ~/.ssh/id_ed25519_your_private_key
+
+# sing-box-server-example group 用于 sing-box 服务端部署, 一般是公网 IP 地址
+sing-box-server-example:
+  hosts:
+    sing-box-server-example-node01:
+      ansible_host: 203.0.113.114
+      ansible_port: 22
+      ansible_user: root
+      # ansible_ssh_private_key_file: ~/.ssh/id_ed25519_your_private_key

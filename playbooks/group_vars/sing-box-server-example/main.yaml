@@ -1,0 +1,20 @@
+---
+sing_box_server_user_count: 1
+
+# Enable protocols
+sing_box_server_enable_shadowsocks: true
+sing_box_server_enable_trojan: true
+sing_box_server_enable_hysteria2: true
+sing_box_server_enable_vless: false
+sing_box_server_enable_tuic: false
+
+# TLS with ACME DNS-01
+sing_box_server_tls_mode: acme
+sing_box_server_acme_email: "admin@example.com"
+sing_box_server_acme_use_dns01: true
+sing_box_server_acme_dns01_provider: cloudflare
+sing_box_server_acme_dns01_cloudflare_api_token: "<replace-with-your-cloudflare-token>"
+
+# Bandwidth limits (Hysteria2/Tuic)
+sing_box_server_hysteria2_up_mbps: 1000
+sing_box_server_hysteria2_down_mbps: 1000
