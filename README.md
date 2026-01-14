@@ -9,24 +9,9 @@
 
 ## 特性
 
-- 🚀 三种部署模式: mixed (代理) / local (本机透明代理) / gateway (网关)
-- 🔄 自动订阅更新与节点管理
-- ⚙️ systemd 服务与配置热重载
-- 🛡️ nftables + fwmark 策略路由
-- 📦 Python 配置生成工具 ([PyPI](https://pypi.org/project/sing-box-config/))
-
-## 部署模式
-
-| 模式      | 场景     | 透明代理 | IP 转发 | TPROXY 监听 |
-| --------- | -------- | -------- | ------- | ----------- |
-| `mixed`   | 手动代理 | ❌       | ❌      | N/A         |
-| `local`   | 工作站   | ✅ 本机  | ❌      | 127.0.0.1   |
-| `gateway` | 网关     | ✅ 全网  | ✅      | 0.0.0.0     |
-
-注意:
-
-- ansible playbook 中的 vars 优先级高于 `host_vars`
-- gateway 模式下 TPROXY 必须监听 0.0.0.0 以处理来自局域网设备的流量.
+- 🚀 支持三种 sing-box 客户端部署模式
+- 🔄 支持节点订阅与更新
+- 🔨 支持 sing-box 服务端部署
 
 ## 快速开始
 
@@ -35,129 +20,98 @@
 - 目标主机: Debian/Ubuntu Linux
 - Ansible core >= 2.18
 
-### sing-box 透明代理网关部署
+### sing-box-tproxy 旁路网关部署 (sidecar gateway)
 
-1. 克隆仓库, Python 项目使用 uv 构建, 主机中需安装 uv
+在安装了 Ansible 的主机上 git clone 本仓库,
 
-   ```shell
-   git clone https://github.com/ak1ra-lab/sing-box-tproxy.git
-   cd sing-box-tproxy/
-   ```
+```shell
+git clone https://github.com/ak1ra-lab/sing-box-tproxy.git
+cd sing-box-tproxy/
+```
 
-2. 配置 inventory
+参考示例 Ansible inventory 编辑适用于自己环境的 inventory,
 
-   ```shell
-   vim inventory/hosts.yaml
-   ```
+```shell
+# 复制示例 Ansible inventory
+cp inventory/hosts.example.yaml inventory/hosts.yaml
 
-   内容示例:
+# 对示例 Ansible inventory 做必要变更
+vim inventory/hosts.yaml
+```
 
-   ```yaml
-   sing-box-tproxy:
-     hosts:
-       pve-sing-box-tproxy-254:
-   ```
+为 sing-box-tproxy 创建 group_vars,
+与具体服务器无关的 公共配置项 可定义在 group_vars 中, 如节点订阅信息 (`sing_box_config_subscriptions: {}`),
+而服务器特有的 私有配置项 则需要定义在 host_vars 中, sing-box-tproxy 场景中可能不需要 host_vars,
 
-3. 准备 group_vars 并在其中添加订阅信息
+```shell
+# 复制示例 group_vars
+cp -r playbooks/group_vars/sing-box-tproxy-example playbooks/group_vars/sing-box-tproxy
 
-   ```shell
-   vim playbooks/group_vars/sing-box-tproxy/main.yaml
-   ```
+# 对示例 group_vars 做必要变更
+vim playbooks/group_vars/sing-box-tproxy/main.yaml
+```
 
-   内容示例:
+执行 playbook 部署 sing-box-tproxy 透明代理,
 
-   ```yaml
-   sing_box_config_subscriptions:
-     provider01:
-       type: remote
-       format: sip002
-       enabled: true
-       url: "https://example.com/api/subscribe?token=xxx"
-   ```
+```shell
+ansible-playbook playbooks/sing_box_tproxy.yaml -v
+```
 
-4. 执行部署
+登录 sing-box-tproxy node 验证服务状态,
+重点关注 sing-box 各 systemd service 状态, nftables ruleset, ip rule 与 ip route 等,
 
-   ```shell
-   ansible-playbook playbooks/sing_box_tproxy.yaml -v
-   ```
+```shell
+ssh sing-box-tproxy-node01
 
-5. 验证服务
+systemctl status sing-box*
+nft list ruleset
+ip rule
+ip route show table 224
+```
 
-   ```shell
-   ssh pve-sing-box-tproxy-254
-
-   systemctl status sing-box*
-   nft list ruleset
-   ip rule
-   ip route show table 224
-   ```
-
-## sing-box 服务端部署
+## sing-box-server 服务端部署
 
 本项目也提供了快速部署 sing-box 服务端的功能 (Shadowsocks, Trojan, Hysteria2 等).
 
-1. 配置 inventory
+参考示例 Ansible inventory 编辑适用于自己环境的 inventory, 与上面步骤一致不再赘述;
 
-   ```yaml
-   sing-box-server:
-     hosts:
-       vps-node01:
-   ```
+为 sing-box-server 创建 group_vars, 与具体服务器无关的 公共配置项 可定义在 group_vars 中, 而服务器特有的 私有配置项 如 region 和 hostname 则需要定义在 host_vars 中,
 
-2. 在 group_vars 准备公共配置项, 在 host_vars 中准备服务器特有的配置项
+```shell
+# 复制示例 group_vars
+cp -r playbooks/group_vars/sing-box-server-example playbooks/group_vars/sing-box-server
+# 对示例 group_vars 做必要变更
+vim playbooks/group_vars/sing-box-server/main.yaml
 
-   ```shell
-   vim playbooks/group_vars/sing-box-server/main.yaml
-   vim playbooks/host_vars/vps-node01/main.yaml
-   ```
+# 复制示例 host_vars
+cp -r playbooks/host_vars/sing-box-server-example-node01 playbooks/host_vars/sing-box-server-node01
+# 对示例 host_vars 做必要变更
+vim playbooks/host_vars/sing-box-server-node01/main.yaml
+```
 
-   如下面与服务器无关的 ansible vars 可定义在 group_vars 中,
+执行 playbook, playbooks/sing_box_server.yaml 会在 config/client_outbounds 目录下生成客户端配置文件,
 
-   ```yaml
-   sing_box_server_user_count: 1
+```shell
+ansible-playbook playbooks/sing_box_server.yaml -v
+```
 
-   # Enable protocols
-   sing_box_server_enable_shadowsocks: true
-   sing_box_server_enable_trojan: true
-   sing_box_server_enable_hysteria2: true
-   sing_box_server_enable_vless: false
-   sing_box_server_enable_tuic: false
+playbooks/sing_box_tproxy.yaml 在执行时会尝试将 config/client_outbounds 目录复制到 sing-box-tproxy 主机的 /var/lib/sing-box 目录下,
+因此可以把当前刚部署好的 sing-box-server 的 静态客户端配置 添加到 `sing_box_config_subscriptions` 中,
 
-   # TLS with ACME DNS-01
-   sing_box_server_tls_mode: acme
-   sing_box_server_acme_email: "acme@example.com"
-   sing_box_server_acme_use_dns01: true
-   sing_box_server_acme_dns01_provider: cloudflare
-   sing_box_server_acme_dns01_cloudflare_api_token: "<replace-with-your-cloudflare-token>"
-   ```
+```shell
+vim playbooks/group_vars/sing-box-tproxy/main.yaml
+```
 
-   而服务器特有的 vars 如 region 和 hostname 则可定义在 host_vars 中,
+如下, 路径相对于 sing-box 的 WorkingDirectory 即 /var/lib/sing-box,
 
-   ```yaml
-   sing_box_server_region: us
-   sing_box_server_hostname: "vps-node01.example.com"
-   ```
-
-3. 执行部署, playbook 会在 config/client_outbounds 目录下生成客户端配置文件,
-
-   ```shell
-   ansible-playbook playbooks/sing_box_server.yaml -v
-   ```
-
-   后续可以把当前服务器的配置添加到 `sing_box_config_subscriptions` 中, 如,
-
-   ```shell
-   vim playbooks/group_vars/sing-box-tproxy/main.yaml
-   ```
-
-   ```yaml
-   sing_box_config_subscriptions:
-     vps-node01:
-       type: local
-       format: sing-box
-       enabled: true
-       path: "config/client_outbounds/vps-node01.outbounds.json"
-   ```
+```yaml
+sing_box_config_subscriptions:
+  sing-box-server-node01:
+    type: local
+    format: sing-box
+    enabled: true
+    path: "config/client_outbounds/sing-box-server-node01.outbounds.json"
+```
 
 ## 文档
 
