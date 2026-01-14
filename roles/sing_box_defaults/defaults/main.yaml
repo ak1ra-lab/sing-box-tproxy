@@ -4,6 +4,7 @@
 # local: 本地透明代理, 不代理内网中其它主机的流量
 # gateway: 用作透明代理网关, 这也是目前的默认行为
 sing_box_mode: gateway
+sing_box_mode_available: ["mixed", "local", "gateway"]
 
 # 基于模式自动计算的特性开关 (内部使用, 不要手动修改)
 _sing_box_enable_tproxy: "{{ sing_box_mode in ['local', 'gateway'] }}"
@@ -108,7 +109,8 @@ sing_box_filtering_rules:
     rule_set: [geosite-category-ai-!cn]
     outbound: AI
   - action: route
-    rule_set: [geosite-category-entertainment, "geosite-category-entertainment@!cn"]
+    rule_set:
+      [geosite-category-entertainment, "geosite-category-entertainment@!cn"]
     outbound: Entertainment
   - action: route
     rule_set: [geosite-apple]

@@ -4,11 +4,13 @@
   become: true
 
   pre_tasks:
-    - name: run pre-flight validation checks
-      ansible.builtin.import_tasks: tasks/pre_flight_checks.yaml
-      vars:
-        sub_types: ['inline', 'local', 'remote']
-        sub_formats: ['sing-box', 'sip002']
+    - name: validate sing_box_mode
+      ansible.builtin.assert:
+        that:
+          - sing_box_mode in sing_box_mode_available
+        fail_msg: |
+          sing_box_mode must be one of: {{ sing_box_mode_available }} (got: {{ sing_box_mode }})
+        quiet: true
 
   tasks:
     - name: install sing-box package

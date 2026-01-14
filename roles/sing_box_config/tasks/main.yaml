@@ -30,6 +30,12 @@
   notify:
     - ensure sing-box working directory ownership
 
+- name: validate sing_box_config_subscriptions
+  ansible.builtin.import_tasks: validation.yaml
+  vars:
+    sub_types: ["inline", "local", "remote"]
+    sub_formats: ["sing-box", "sip002"]
+
 - name: ensure sing-box-config configuration and service state
   vars:
     # sing_box_config_base_template 用于从外部传入不同的 template 覆盖 templates/base.json.j2

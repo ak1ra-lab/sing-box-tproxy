@@ -1,25 +1,5 @@
 ---
-# Pre-flight validation checks for sing-box-tproxy deployment
-# This file contains all prerequisite validations that must pass before deployment
-
-- name: validate sing_box_mode
-  ansible.builtin.assert:
-    that:
-      - sing_box_mode in ['mixed', 'local', 'gateway']
-    fail_msg: "sing_box_mode must be one of: mixed, local, gateway (got: {{ sing_box_mode }})"
-    quiet: true
-
-- name: validate port numbers
-  ansible.builtin.assert:
-    that:
-      - sing_box_tproxy_port | int > 0
-      - sing_box_tproxy_port | int < 65536
-      - sing_box_mixed_port | int > 0
-      - sing_box_mixed_port | int < 65536
-    fail_msg: "Port numbers must be between 1 and 65535"
-    quiet: true
-
-- name: validate required variables
+- name: validate sing_box_config_subscriptions
   ansible.builtin.assert:
     that:
       - sing_box_config_subscriptions is defined
@@ -28,25 +8,25 @@
     fail_msg: |
       Required variable sing_box_config_subscriptions is not defined or invalid.
       Please define it in group_vars or host_vars.
-      Ensure vault is unlocked and group_vars contains sing_box_config_subscriptions.
-      Run with: ansible-playbook playbooks/sing_box_tproxy.yaml --ask-vault-pass
     quiet: true
 
-- name: validate each subscription entry
+- name: validate each subscription entry in sing_box_config_subscriptions
   ansible.builtin.assert:
     that:
       - item.value.type is defined
       - item.value.type in sub_types
       - item.value.format is defined
       - item.value.format in sub_formats
-    fail_msg: "subscription '{{ item.key }}' must have 'type' and 'format' defined, and type must in {{ sub_types }}, format must in {{ sub_formats }}"
+    fail_msg: |
+      subscription '{{ item.key }}' must have 'type' and 'format' defined,
+      and type must in {{ sub_types }}, format must in {{ sub_formats }}
     quiet: true
   loop: "{{ sing_box_config_subscriptions | ansible.builtin.dict2items }}"
   loop_control:
     label: "{{ item.key }}"
 
 - name: validate subscription urls (optional)
-  when: sing_box_config_validate_subscription_urls | default(false) | ansible.builtin.bool
+  when: sing_box_config_validate_subscription_urls | ansible.builtin.bool
   block:
     - name: validate subscription urls (optional)
       ansible.builtin.uri:
