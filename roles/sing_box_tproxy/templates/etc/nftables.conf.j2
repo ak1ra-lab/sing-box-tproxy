@@ -122,7 +122,7 @@ table inet sing_box_tproxy {
 		meta l4proto tcp socket transparent 1 meta mark set $PROXY_MARK accept comment "绕过已建立透明代理连接"
 
 		# 其他流量透明代理
-		meta l4proto { tcp, udp } tproxy to :$TPROXY_PORT meta mark set $PROXY_MARK comment "其他流量透明代理"
+		meta l4proto { tcp, udp } counter tproxy to :$TPROXY_PORT meta mark set $PROXY_MARK comment "其他流量透明代理"
 	}
 
 	chain output_tproxy {
@@ -167,6 +167,6 @@ table inet sing_box_tproxy {
 
 {% endif %}
 		# 为其他流量设置 PROXY_MARK 标记
-		meta l4proto { tcp, udp } meta mark set $PROXY_MARK comment "为其他流量设置 PROXY_MARK 标记"
+		meta l4proto { tcp, udp } counter meta mark set $PROXY_MARK comment "为其他流量设置 PROXY_MARK 标记"
 	}
 }
