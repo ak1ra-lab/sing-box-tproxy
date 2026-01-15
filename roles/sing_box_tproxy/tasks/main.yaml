@@ -16,18 +16,8 @@
   ansible.builtin.import_tasks: tcp_bbr.yaml
 
 - name: ensure ip_forward state
-  ansible.posix.sysctl:
-    name: "{{ item.name }}"
-    value: "{{ item.value }}"
-    state: "{{ 'present' if _sing_box_enable_ip_forward else 'absent' }}"
-    ignoreerrors: true
-  loop:
-    - name: net.ipv4.ip_forward
-      value: 1
-    - name: net.ipv4.conf.all.proxy_arp
-      value: 1
-    - name: net.ipv6.conf.all.forwarding
-      value: 1
+  ansible.builtin.import_tasks: ip_forward.yaml
+
 
 - name: create drop-in directory
   ansible.builtin.file:

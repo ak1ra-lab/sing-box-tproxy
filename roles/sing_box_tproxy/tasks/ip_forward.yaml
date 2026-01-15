@@ -1,0 +1,16 @@
+---
+- name: ensure ip_forward state
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: "{{ 'present' if _sing_box_enable_ip_forward else 'absent' }}"
+    sysctl_file: /etc/sysctl.d/90-sing-box-tproxy-ip_forward.conf
+    reload: true
+    ignoreerrors: true
+  loop:
+    - name: net.ipv4.ip_forward
+      value: 1
+    - name: net.ipv4.conf.all.proxy_arp
+      value: 1
+    - name: net.ipv6.conf.all.forwarding
+      value: 1
