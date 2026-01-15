@@ -9,7 +9,7 @@ sing_box_config_validate_subscription_urls: false
 sing_box_config_base_template: base.json.j2
 
 # 安装来源: [local, pypi, testpypi]
-sing_box_config_install_source: local
+sing_box_config_install_source: pypi
 sing_box_config_pip_extra_args:
   pypi: ""
   testpypi: "--index-url=https://test.pypi.org/simple/"
