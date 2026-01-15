@@ -9,7 +9,9 @@
   ansible.posix.sysctl:
     name: "{{ item.name }}"
     value: "{{ item.value }}"
-    state: present
+    sysctl_file: /etc/sysctl.d/90-sing-box-tproxy-tcp_bbr.conf
+    reload: true
+    ignoreerrors: true
   loop:
     - name: net.core.default_qdisc
       value: fq
