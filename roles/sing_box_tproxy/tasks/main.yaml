@@ -18,6 +18,8 @@
 - name: ensure ip_forward state
   ansible.builtin.import_tasks: ip_forward.yaml
 
+- name: set Netfilter conntrack sysfs variables
+  ansible.builtin.import_tasks: nf_conntrack.yaml
 
 - name: create drop-in directory
   ansible.builtin.file:

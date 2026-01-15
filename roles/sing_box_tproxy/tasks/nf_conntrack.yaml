@@ -1,0 +1,23 @@
+---
+# https://docs.kernel.org/networking/nf_conntrack-sysctl.html
+- name: set Netfilter conntrack sysfs variables
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: "{{ 'present' if sing_box_tproxy_sysctl_nf_conntrack else 'absent' }}"
+    sysctl_file: /etc/sysctl.d/90-sing-box-tproxy-nf_conntrack.conf
+    reload: true
+    ignoreerrors: true
+  loop:
+    # nf_conntrack_buckets - INTEGER
+    # Size of hash table.
+    - name: net.netfilter.nf_conntrack_buckets
+      value: "{{ sing_box_tproxy_sysctl_nf_conntrack_buckets }}"
+    # nf_conntrack_max - INTEGER
+    # Maximum number of allowed connection tracking entries.
+    - name: net.netfilter.nf_conntrack_max
+      value: "{{ sing_box_tproxy_sysctl_nf_conntrack_max }}"
+    # nf_conntrack_tcp_timeout_established - INTEGER (seconds)
+    # Default is 5 days. Reduced to optimize for sidecar gateway usage.
+    - name: net.netfilter.nf_conntrack_tcp_timeout_established
+      value: "{{ sing_box_tproxy_sysctl_nf_conntrack_tcp_timeout_established }}"

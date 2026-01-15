@@ -7,3 +7,20 @@ sing_box_tproxy_tcp_bbr_enabled: true
 # 是否开启 nftables flow offloading (flowtable)
 # 能够大幅提升转发性能 (Hardware/Software Offload), 仅对绕过代理的流量 (直连流量) 有效
 sing_box_tproxy_nftables_flow_offload: true
+
+# 是否设置 /proc/sys/net/netfilter/nf_conntrack_*
+sing_box_tproxy_sysctl_nf_conntrack: true
+
+# nf_conntrack_buckets
+# Size of hash table. If not specified, default is total memory / 16384.
+# Limits: 1024 <= buckets <= 262144 (auto-tuning limits, manual can be higher)
+sing_box_tproxy_sysctl_nf_conntrack_buckets: 65536
+
+# nf_conntrack_max
+# Maximum number of allowed connection tracking entries.
+# Recommended: buckets * 4
+sing_box_tproxy_sysctl_nf_conntrack_max: 262144
+
+# nf_conntrack_tcp_timeout_established
+# Default: 432000 (5 days). Reduced to 86400 (1 day) to clear stale connections faster.
+sing_box_tproxy_sysctl_nf_conntrack_tcp_timeout_established: 86400
