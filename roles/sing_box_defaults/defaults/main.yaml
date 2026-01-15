@@ -47,7 +47,7 @@ sing_box_route_default_mark: 225
 
 # sing-box config.json log.level
 # Log level. One of: trace debug info warn error fatal panic
-sing_box_log_level: info
+sing_box_log_level: warn
 
 sing_box_etc_dir: /etc/sing-box
 sing_box_log_dir: /var/log/sing-box
