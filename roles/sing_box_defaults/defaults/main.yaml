@@ -106,11 +106,13 @@ sing_box_filtering_rules:
     rule_set: [geoip-private, geosite-private]
     outbound: DIRECT
   - action: route
+    rule_set: [geoip-cn, geosite-geolocation-cn, geosite-win-update]
+    outbound: DIRECT
+  - action: route
     rule_set: [geosite-category-ai-!cn]
     outbound: AI
   - action: route
-    rule_set:
-      [geosite-category-entertainment, "geosite-category-entertainment@!cn"]
+    rule_set: [geosite-category-entertainment, "geosite-category-entertainment@!cn"]
     outbound: Entertainment
   - action: route
     rule_set: [geosite-apple]
@@ -124,9 +126,6 @@ sing_box_filtering_rules:
   - action: route
     rule_set: [geosite-google, geosite-github, geosite-debian, geosite-gfw]
     outbound: PROXY
-  - action: route
-    rule_set: [geoip-cn, geosite-geolocation-cn, geosite-win-update]
-    outbound: DIRECT
 
 sing_box_proxy_groups:
   - tag: PROXY
