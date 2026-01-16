@@ -24,6 +24,10 @@ sing_box_config_custom_direct_rules: []
 # 对应 /etc/sing-box/config.json 中 experimental 配置项
 sing_box_config_clash_api_secret: ""
 sing_box_config_clash_api_external_controller: "0.0.0.0:9090"
+sing_box_config_clash_api_external_ui: yacd
+# 是否在启动 sing-box.service 之前先移除 clash_api.external_ui 目录
+# 这样可触发 sing-box 重新下载 clash_api.external_ui
+sing_box_config_clash_api_external_ui_reinstall: false
 
 # 覆盖 sing-box-config-updater 的 systemd timer 与 systemd service 状态
 # 用于应对当前大多数"服务商"开始订阅链接强制"阅后即焚"

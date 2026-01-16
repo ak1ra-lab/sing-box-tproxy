@@ -64,6 +64,14 @@
     state: "{{ sing_box_config_updater_timer_state }}"
     enabled: "{{ sing_box_config_updater_timer_enabled }}"
 
+- name: force clash_api.external_ui (yacd) reinstall
+  when: (sing_box_config_clash_api_external_ui_reinstall | ansible.builtin.bool)
+  ansible.builtin.file:
+    path: "{{ [sing_box_state_dir, sing_box_config_clash_api_external_ui] | ansible.builtin.path_join }}"
+    state: absent
+  notify:
+    - systemctl restart sing-box
+
 # 是否手动执行 sing-box-config 生成/更新 /etc/sing-box/config.json
 # 这一步配置文件一旦有变更会被 sing-box-reload.path 监听到从而触发 reload, 所以不需要添加 notify restart
 - name: update /etc/sing-box/config.json if requested
