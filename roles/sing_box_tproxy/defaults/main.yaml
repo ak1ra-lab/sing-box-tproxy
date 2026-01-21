@@ -24,3 +24,8 @@ sing_box_tproxy_sysctl_nf_conntrack_max: 262144
 # nf_conntrack_tcp_timeout_established
 # Default: 432000 (5 days). Reduced to 86400 (1 day) to clear stale connections faster.
 sing_box_tproxy_sysctl_nf_conntrack_tcp_timeout_established: 86400
+
+# Custom bypassed addresses (IPv4/IPv6)
+# List of CIDR strings
+sing_box_tproxy_nftables_custom_bypassed_ip4: []
+sing_box_tproxy_nftables_custom_bypassed_ip6: []
