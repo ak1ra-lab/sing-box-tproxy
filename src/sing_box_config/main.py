@@ -40,6 +40,18 @@ def main() -> None:
         metavar="config.json",
         help="sing-box output config, default: %(default)s",
     )
+    parser.add_argument(
+        "--proxies-path",
+        type=Path,
+        default="config/proxies.json",
+        metavar="proxies.json",
+        help="Path to store/load fetched proxies, default: %(default)s",
+    )
+    parser.add_argument(
+        "--use-cache",
+        action="store_true",
+        help="Use cached proxies from proxies-path if available",
+    )
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -47,4 +59,11 @@ def main() -> None:
     base_config = read_json(Path(args.base))
     subscriptions_config = read_json(Path(args.subscriptions))
     output_path = Path(args.output)
-    save_config_from_subscriptions(base_config, subscriptions_config, output_path)
+    proxies_path = Path(args.proxies_path)
+    save_config_from_subscriptions(
+        base_config=base_config,
+        subscriptions_config=subscriptions_config,
+        output_path=output_path,
+        proxies_path=proxies_path,
+        use_cache=args.use_cache,
+    )

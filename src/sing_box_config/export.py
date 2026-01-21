@@ -6,7 +6,7 @@ from typing import Any
 
 import httpx
 import tenacity
-from chaos_utils.text_utils import save_json
+from chaos_utils.text_utils import read_json, save_json
 
 from sing_box_config.parser import SUPPORTED_FORMATS, get_parser
 
@@ -200,6 +200,8 @@ def save_config_from_subscriptions(
     base_config: dict[str, Any],
     subscriptions_config: dict[str, Any],
     output_path: Path,
+    proxies_path: Path,
+    use_cache: bool = False,
 ) -> None:
     """
     Generate final sing-box configuration by merging base config with subscription proxies.
@@ -208,10 +210,34 @@ def save_config_from_subscriptions(
         base_config: Base configuration dict
         subscriptions_config: Subscriptions configuration dict
         output_path: Path to save the generated config
+        proxies_path: Path to load/save proxies cache
+        use_cache: Whether to use cached proxies if available
     """
     proxies = []
-    for name, subscription in subscriptions_config.items():
-        proxies += get_proxies_from_subscriptions(name, subscription)
+
+    if use_cache and proxies_path and proxies_path.exists():
+        try:
+            proxies = read_json(proxies_path)
+            if not isinstance(proxies, list):
+                logger.warning(
+                    "Cached proxies file content is not a list, ignoring cache"
+                )
+                proxies = []
+            else:
+                logger.info(
+                    "Loaded %d proxies from cache: %s", len(proxies), proxies_path
+                )
+        except Exception as e:
+            logger.warning("Failed to load proxies from cache: %s", e)
+
+    if not proxies:
+        for name, subscription in subscriptions_config.items():
+            proxies += get_proxies_from_subscriptions(name, subscription)
+
+        if proxies_path:
+            proxies_path.parent.mkdir(parents=True, exist_ok=True)
+            save_json(proxies_path, proxies)
+            logger.info("Saved %d proxies to cache: %s", len(proxies), proxies_path)
 
     if not proxies:
         logger.warning("No proxies found from subscriptions")
