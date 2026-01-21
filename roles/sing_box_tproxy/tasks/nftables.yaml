@@ -34,11 +34,25 @@
           | list
       }}
 
+- name: ensure /etc/nftables.d directory exists
+  ansible.builtin.file:
+    path: /etc/nftables.d
+    state: directory
+    mode: "0755"
+
+- name: template sing_box_tproxy.nft on remote
+  ansible.builtin.template:
+    src: etc/nftables.d/sing_box_tproxy.nft.j2
+    dest: /etc/nftables.d/sing_box_tproxy.nft
+    mode: "0644"
+  notify:
+    - systemctl restart nftables.service
+
 - name: template nftables.conf on remote
   ansible.builtin.template:
     src: etc/nftables.conf.j2
     dest: /etc/nftables.conf
-    mode: "0755"
+    mode: "0644"
   notify:
     - systemctl restart nftables.service
 
