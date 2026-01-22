@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-01-22
+
+### Added
+
+- Migrate `sing_box_dns_rules` into sing_box_defaults
+- Ansible variables `custom_bypassed_ip4` and `custom_bypassed_ip6` for custom bypass rules.
+- Nftables flowtable offload support for reserved private IPs.
+- Support for including external nftables configuration files.
+- Configuration validation tasks for `sing_box_config` and `sing_box_tproxy` roles.
+- Proxy caching mechanism in `sing_box_config` to optimize config generation.
+- `nf_conntrack` kernel module loading task.
+- Option to force reinstall Clash API external UI.
+- Example configuration files for Ansible inventory, group_vars, and host_vars.
+- Named GitHub Actions workflows.
+
+### Changed
+
+- Reorganized `sing_box_remote_rule_sets` and `sing_box_dns_rules`
+- Renamed all Ansible YAML files from `.yml` to `.yaml`.
+- Changed default `sing_box_log_level` to `warn`.
+- Switched default `sing_box_config_install_source` to `pypi`.
+- Updated `tcp_bbr` task to support custom sysctl configuration file.
+- Updated client outbound path handling to use Ansible FQDN.
+- Added packet counters to nftables rules.
+- Standardized `nftables.conf` comments to English.
+- Refactored `sing_box_tproxy` playbook and moved helper tasks.
+
+### Fixed
+
+- Improved priority of `DIRECT` route rules.
+- Restricted `dns_fakeip` DNS rules to `A` and `AAAA` record types.
+- Fixed conflict between `udp_over_tcp` and multiplexing in Shadowsocks outbounds.
+- Fixed JSON serialization to preserve order in `sing-box` configuration.
+
 ## [0.7.0] - 2026-01-02
 
 ### Added
