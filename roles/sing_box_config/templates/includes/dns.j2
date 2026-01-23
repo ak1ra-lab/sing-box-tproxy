@@ -72,35 +72,9 @@
     }) -%}
 {%- endif -%}
 
-{%- set _ = dns_rules.extend([
-    {
-        "action": "route",
-        "rule_set": [
-            "geosite-private",
-            "geosite-geolocation-cn"
-        ],
-        "server": "dns_direct"
-    },
-    {
-        "action": "route",
-        "query_type": ["A", "AAAA"],
-        "rule_set": [
-            "geosite-google",
-            "geosite-win-update",
-            "geosite-apple",
-            "geosite-github",
-            "geosite-telegram",
-            "geosite-bing",
-            "geosite-category-ai-!cn",
-            "geosite-category-entertainment",
-            "geosite-category-entertainment@!cn",
-            "geosite-steam",
-            "geosite-debian",
-            "geosite-gfw"
-        ],
-        "server": "dns_fakeip"
-    }
-]) -%}
+{%- if sing_box_dns_rules | length > 0 -%}
+    {%- set _ = dns_rules.extend(sing_box_dns_rules) -%}
+{%- endif -%}
 
 {%- set dns_config = {
     "servers": dns_servers,

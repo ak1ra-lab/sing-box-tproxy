@@ -74,23 +74,34 @@ sing_box_local_client_outbounds: "{{ sing_box_local_config_dir }}/client_outboun
 sing_box_remote_rule_set_url_prefix: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/"
 
 sing_box_remote_rule_sets:
+  - path: geoip/cn.srs
   - path: geoip/private.srs
   - path: geoip/telegram.srs
-  - path: geoip/cn.srs
-  - path: geosite/private.srs
-  - path: geosite/google.srs
-  - path: geosite/geolocation-cn.srs
-  - path: geosite/win-update.srs
-  - path: geosite/apple.srs
-  - path: geosite/github.srs
-  - path: geosite/telegram.srs
-  - path: geosite/bing.srs
   - path: geosite/category-ai-!cn.srs
   - path: geosite/category-entertainment.srs
-  - path: geosite/category-entertainment@!cn.srs
-  - path: geosite/steam.srs
-  - path: geosite/debian.srs
+  - path: geosite/cn.srs
   - path: geosite/gfw.srs
+  - path: geosite/github.srs
+  - path: geosite/google.srs
+  - path: geosite/private.srs
+  - path: geosite/telegram.srs
+
+sing_box_dns_rules:
+  - action: route
+    rule_set:
+      - geosite-cn
+      - geosite-private
+    server: dns_direct
+  - action: route
+    query_type: [A, AAAA]
+    rule_set:
+      - geosite-category-ai-!cn
+      - geosite-category-entertainment
+      - geosite-gfw
+      - geosite-github
+      - geosite-google
+      - geosite-telegram
+    server: dns_fakeip
 
 sing_box_basic_rules:
   - action: hijack-dns
@@ -106,25 +117,19 @@ sing_box_filtering_rules:
     rule_set: [geoip-private, geosite-private]
     outbound: DIRECT
   - action: route
-    rule_set: [geoip-cn, geosite-geolocation-cn, geosite-win-update]
+    rule_set: [geoip-cn, geosite-cn]
     outbound: DIRECT
   - action: route
     rule_set: [geosite-category-ai-!cn]
     outbound: AI
   - action: route
-    rule_set: [geosite-category-entertainment, "geosite-category-entertainment@!cn"]
+    rule_set: [geosite-category-entertainment]
     outbound: Entertainment
   - action: route
-    rule_set: [geosite-apple]
-    outbound: APPLE
-  - action: route
-    rule_set: [geosite-steam]
-    outbound: STEAM
-  - action: route
-    rule_set: [geosite-telegram, geoip-telegram]
+    rule_set: [geoip-telegram, geosite-telegram]
     outbound: TELEGRAM
   - action: route
-    rule_set: [geosite-google, geosite-github, geosite-debian, geosite-gfw]
+    rule_set: [geosite-gfw, geosite-github, geosite-google]
     outbound: PROXY
 
 sing_box_proxy_groups:
@@ -140,19 +145,10 @@ sing_box_proxy_groups:
   - tag: Entertainment
     type: selector
     outbounds: [PROXY, DIRECT]
-  - tag: APPLE
-    type: selector
-    outbounds: [PROXY, DIRECT]
-  - tag: STEAM
-    type: selector
-    outbounds: [PROXY, DIRECT]
   - tag: TELEGRAM
     type: selector
     outbounds: [PROXY, DIRECT]
   - tag: SSH
-    type: selector
-    outbounds: [DIRECT, PROXY]
-  - tag: DOWNLOADER
     type: selector
     outbounds: [DIRECT, PROXY]
 
@@ -162,7 +158,7 @@ sing_box_auto_groups:
   - tag: "🇭🇰 香港节点 - AUTO"
     filter: "港|HK|Hong Kong"
   - tag: "🇯🇵 日本节点 - AUTO"
-    filter: "日本|川日|东京|大阪|泉日|埼玉|沪日|深日|[^-]日|JP|Japan"
+    filter: "日本|川日|东京|大阪|泉日|埼玉|沪日|深日|JP|Japan"
   - tag: "🇹🇼 台湾节点 - AUTO"
     filter: "台|新北|彰化|TW|Taiwan"
   - tag: "🇺🇸 美国节点 - AUTO"
