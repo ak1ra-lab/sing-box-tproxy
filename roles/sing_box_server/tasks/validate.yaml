@@ -13,6 +13,13 @@
     success_msg: "✓ Required parameters validated"
   when: sing_box_server_tls_mode == 'acme'
 
+- name: validate user count
+  ansible.builtin.assert:
+    that:
+      - sing_box_server_user_count | int > 0
+    fail_msg: "sing_box_server_user_count must be greater than 0"
+    quiet: true
+
 - name: validate shadowsocks configuration
   when: sing_box_server_enable_shadowsocks
   block:

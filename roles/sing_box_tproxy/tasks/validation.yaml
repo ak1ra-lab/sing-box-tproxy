@@ -1,0 +1,24 @@
+---
+- name: validate custom bypassed ip4
+  ansible.builtin.assert:
+    that:
+      - sing_box_tproxy_nftables_custom_bypassed_ip4 is defined
+      - sing_box_tproxy_nftables_custom_bypassed_ip4 | ansible.builtin.type_debug == "list"
+    fail_msg: "sing_box_tproxy_nftables_custom_bypassed_ip4 must be a list of CIDRs."
+    quiet: true
+
+- name: validate custom bypassed ip6
+  ansible.builtin.assert:
+    that:
+      - sing_box_tproxy_nftables_custom_bypassed_ip6 is defined
+      - sing_box_tproxy_nftables_custom_bypassed_ip6 | ansible.builtin.type_debug == "list"
+    fail_msg: "sing_box_tproxy_nftables_custom_bypassed_ip6 must be a list of CIDRs."
+    quiet: true
+
+- name: validate conntrack buckets
+  ansible.builtin.assert:
+    that:
+      - sing_box_tproxy_sysctl_nf_conntrack_buckets | int >= 1024
+    fail_msg: "sing_box_tproxy_sysctl_nf_conntrack_buckets is too small (min 1024)."
+    quiet: true
+  when: sing_box_tproxy_sysctl_nf_conntrack | bool

@@ -1,0 +1,35 @@
+---
+- name: validate sing_box_user
+  ansible.builtin.assert:
+    that:
+      - sing_box_user is defined
+      - sing_box_user.name is defined
+      - sing_box_user.uid is defined
+    fail_msg: "sing_box_user must be defined with name and uid."
+    quiet: true
+
+- name: validate sing_box_group
+  ansible.builtin.assert:
+    that:
+      - sing_box_group is defined
+      - sing_box_group.name is defined
+      - sing_box_group.gid is defined
+    fail_msg: "sing_box_group must be defined with name and gid."
+    quiet: true
+
+- name: validate sing_box_install_apt_repo_packages
+  ansible.builtin.assert:
+    that:
+      - sing_box_install_apt_repo_packages is defined
+      - sing_box_install_apt_repo_packages | length > 0
+    fail_msg: "sing_box_install_apt_repo_packages must be defined and not empty."
+    quiet: true
+
+- name: validate directories definition
+  ansible.builtin.assert:
+    that:
+      - sing_box_etc_dir is defined
+      - sing_box_log_dir is defined
+      - sing_box_state_dir is defined
+    fail_msg: "Standard directory variables (sing_box_etc_dir, etc.) must be defined."
+    quiet: true
