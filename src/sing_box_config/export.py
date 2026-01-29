@@ -1,6 +1,8 @@
 import copy
+import datetime
 import logging
 import re
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -202,6 +204,7 @@ def save_config_from_subscriptions(
     output_path: Path,
     proxies_path: Path,
     use_cache: bool = False,
+    backup_output: bool = True,
 ) -> None:
     """
     Generate final sing-box configuration by merging base config with subscription proxies.
@@ -252,6 +255,14 @@ def save_config_from_subscriptions(
     base_config["outbounds"] = outbounds
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if backup_output and output_path.exists():
+        now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_suffix = f".{now}{output_path.suffix}"
+        shutil.copy2(output_path, output_path.with_suffix(backup_suffix))
+        logger.info(
+            "Saved %s to %s", output_path, output_path.with_suffix(backup_suffix)
+        )
 
     save_json(output_path, base_config, sort_keys=False)
     logger.info("Configuration saved to %s", output_path)
