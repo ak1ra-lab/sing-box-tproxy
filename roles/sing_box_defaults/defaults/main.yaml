@@ -49,6 +49,19 @@ sing_box_route_default_mark: 225
 # Log level. One of: trace debug info warn error fatal panic
 sing_box_log_level: warn
 
+# https://sing-box.sagernet.org/configuration/dns/
+# Default domain strategy for resolving the domain names
+# One of prefer_ipv4 prefer_ipv6 ipv4_only ipv6_only
+sing_box_dns_strategy: prefer_ipv4
+# Disable dns cache
+sing_box_dns_disable_cache: false
+# Disable dns cache expire
+sing_box_dns_disable_expire: false
+# Make each DNS server's cache independent for special purposes. If enabled, will slightly degrade performance
+sing_box_dns_independent_cache: false
+# LRU cache capacity. Value less than 1024 will be ignored
+sing_box_dns_cache_capacity: 65535
+
 sing_box_etc_dir: /etc/sing-box
 sing_box_log_dir: /var/log/sing-box
 sing_box_state_dir: /var/lib/sing-box

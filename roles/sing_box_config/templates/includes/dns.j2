@@ -80,9 +80,11 @@
     "servers": dns_servers,
     "rules": dns_rules,
     "final": "dns_proxy",
-    "strategy": "prefer_ipv4",
-    "disable_cache": false,
-    "disable_expire": false
+    "strategy": sing_box_dns_strategy,
+    "disable_cache": sing_box_dns_disable_cache,
+    "disable_expire": sing_box_dns_disable_expire,
+    "independent_cache": sing_box_dns_independent_cache,
+    "cache_capacity": sing_box_dns_cache_capacity
 } -%}
 {{ dns_config | ansible.builtin.to_json }}
 {%- endmacro -%}
