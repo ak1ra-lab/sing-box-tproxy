@@ -54,14 +54,28 @@ table inet sing_box_tproxy {
 		}
 	}
 
-{% if sing_box_tproxy_nftables_custom_bypassed_ip4 | default([], true) | length > 0 %}
+{% if sing_box_custom_bypassed_ip4 | default([], true) | length > 0 %}
 	# Custom bypassed addresses (user-defined)
 	# Add your custom bypass rules here
 	set custom_bypassed_ip4 {
 		type ipv4_addr
 		flags interval
 		elements = {
-{% for ip in sing_box_tproxy_nftables_custom_bypassed_ip4 %}
+{% for ip in sing_box_custom_bypassed_ip4 %}
+			{{ ip }},
+{% endfor %}
+		}
+	}
+
+{% endif %}
+{% if sing_box_custom_rejected_ip4 | default([], true) | length > 0 %}
+	# Custom rejected addresses (user-defined)
+	# Add your custom reject rules here
+	set custom_rejected_ip4 {
+		type ipv4_addr
+		flags interval
+		elements = {
+{% for ip in sing_box_custom_rejected_ip4 %}
 			{{ ip }},
 {% endfor %}
 		}
@@ -91,14 +105,28 @@ table inet sing_box_tproxy {
 		}
 	}
 
-{% if sing_box_tproxy_nftables_custom_bypassed_ip6 | default([], true) | length > 0 %}
+{% if sing_box_custom_bypassed_ip6 | default([], true) | length > 0 %}
 	# Custom bypassed addresses (user-defined)
 	# Add your custom bypass rules here
 	set custom_bypassed_ip6 {
 		type ipv6_addr
 		flags interval
 		elements = {
-{% for ip in sing_box_tproxy_nftables_custom_bypassed_ip6 %}
+{% for ip in sing_box_custom_bypassed_ip6 %}
+			{{ ip }},
+{% endfor %}
+		}
+	}
+
+{% endif %}
+{% if sing_box_custom_rejected_ip6 | default([], true) | length > 0 %}
+	# Custom rejected addresses (user-defined)
+	# Add your custom reject rules here
+	set custom_rejected_ip6 {
+		type ipv6_addr
+		flags interval
+		elements = {
+{% for ip in sing_box_custom_rejected_ip6 %}
 			{{ ip }},
 {% endfor %}
 		}
@@ -123,13 +151,25 @@ table inet sing_box_tproxy {
 		fib daddr type local meta l4proto { tcp, udp } \
 			th dport $TPROXY_PORT reject with icmpx type host-unreachable comment "Reject direct access to tproxy port to prevent loops"
 
+{% if sing_box_custom_rejected_ip4 | default([], true) | length > 0 %}
+		# Reject custom addresses
+		ip daddr @custom_rejected_ip4 reject with icmpx type host-unreachable comment "Reject custom addresses"
+
+{% endif %}
+{% if _sing_box_enable_ipv6 %}
+{% if sing_box_custom_rejected_ip6 | default([], true) | length > 0 %}
+		# Reject custom addresses (IPv6)
+		ip6 daddr @custom_rejected_ip6 reject with icmpx type no-route comment "Reject custom addresses (IPv6)"
+
+{% endif %}
+{% endif %}
 		# Bypass local packets
 		fib daddr type local accept comment "Bypass local packets"
 
 		# Bypass reserved addresses
 		ip daddr @reserved_ip4 accept comment "Bypass reserved addresses"
 
-{% if sing_box_tproxy_nftables_custom_bypassed_ip4 | default([], true) | length > 0 %}
+{% if sing_box_custom_bypassed_ip4 | default([], true) | length > 0 %}
 		# Bypass custom addresses
 		ip daddr @custom_bypassed_ip4 accept comment "Bypass custom addresses"
 
@@ -138,7 +178,7 @@ table inet sing_box_tproxy {
 		# Bypass reserved addresses (IPv6)
 		ip6 daddr @reserved_ip6 accept comment "Bypass reserved addresses (IPv6)"
 
-{% if sing_box_tproxy_nftables_custom_bypassed_ip6 | default([], true) | length > 0 %}
+{% if sing_box_custom_bypassed_ip6 | default([], true) | length > 0 %}
 		# Bypass custom addresses (IPv6)
 		ip6 daddr @custom_bypassed_ip6 accept comment "Bypass custom addresses (IPv6)"
 
@@ -158,13 +198,13 @@ table inet sing_box_tproxy {
 
 		# Flow Offloading - Only accelerate reserved IPs and custom bypassed IPs
 		ip daddr @reserved_ip4 ct state new flow offload @bypass_ft comment "flowtable offload for reserved IPs"
-{% if sing_box_tproxy_nftables_custom_bypassed_ip4 | default([], true) | length > 0 %}
+{% if sing_box_custom_bypassed_ip4 | default([], true) | length > 0 %}
 		ip daddr @custom_bypassed_ip4 ct state new flow offload @bypass_ft comment "flowtable offload for custom bypassed IPs"
 
 {% endif %}
 {% if _sing_box_enable_ipv6 %}
 		ip daddr @reserved_ip6 ct state new flow offload @bypass_ft comment "flowtable offload for reserved IPs"
-{% if sing_box_tproxy_nftables_custom_bypassed_ip6 | default([], true) | length > 0 %}
+{% if sing_box_custom_bypassed_ip6 | default([], true) | length > 0 %}
 		ip daddr @custom_bypassed_ip6 ct state new flow offload @bypass_ft comment "flowtable offload for custom bypassed IPs"
 
 {% endif %}
@@ -190,6 +230,18 @@ table inet sing_box_tproxy {
 		# Bypass marked packets
 		meta mark $ROUTE_DEFAULT_MARK accept comment "Bypass marked packets"
 
+{% if sing_box_custom_rejected_ip4 | default([], true) | length > 0 %}
+		# Reject custom addresses
+		ip daddr @custom_rejected_ip4 reject with icmpx type host-unreachable comment "Reject custom addresses"
+
+{% endif %}
+{% if _sing_box_enable_ipv6 %}
+{% if sing_box_custom_rejected_ip6 | default([], true) | length > 0 %}
+		# Reject custom addresses (IPv6)
+		ip6 daddr @custom_rejected_ip6 reject with icmpx type no-route comment "Reject custom addresses (IPv6)"
+
+{% endif %}
+{% endif %}
 		# Reroute DNS
 		meta l4proto { tcp, udp } th dport 53 meta mark set $PROXY_MARK accept comment "Reroute DNS"
 
@@ -202,7 +254,7 @@ table inet sing_box_tproxy {
 		# Bypass reserved addresses
 		ip daddr @reserved_ip4 accept comment "Bypass reserved addresses"
 
-{% if sing_box_tproxy_nftables_custom_bypassed_ip4 | default([], true) | length > 0 %}
+{% if sing_box_custom_bypassed_ip4 | default([], true) | length > 0 %}
 		# Bypass custom addresses
 		ip daddr @custom_bypassed_ip4 accept comment "Bypass custom addresses"
 
@@ -211,7 +263,7 @@ table inet sing_box_tproxy {
 		# Bypass reserved addresses (IPv6)
 		ip6 daddr @reserved_ip6 accept comment "Bypass reserved addresses (IPv6)"
 
-{% if sing_box_tproxy_nftables_custom_bypassed_ip6 | default([], true) | length > 0 %}
+{% if sing_box_custom_bypassed_ip6 | default([], true) | length > 0 %}
 		# Bypass custom addresses (IPv6)
 		ip6 daddr @custom_bypassed_ip6 accept comment "Bypass custom addresses (IPv6)"
 

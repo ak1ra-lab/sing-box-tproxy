@@ -36,6 +36,19 @@
 {%- endfor -%}
 
 {# Rules #}
+{# Custom Rejected Rules #}
+{# outbound REJECT/DIRECT defined in templates/includes/outbounds.j2 #}
+{%- set _custom_rejected_ips = (sing_box_custom_rejected_ip4 | default([], true)) + (sing_box_custom_rejected_ip6 | default([], true)) -%}
+{%- if _custom_rejected_ips | length > 0 -%}
+    {%- set _ = route_rules.append({"action": "route", "ip_cidr": _custom_rejected_ips, "outbound": "REJECT"}) -%}
+{%- endif -%}
+
+{# Custom Bypassed (Direct) Rules #}
+{%- set _custom_bypassed_ips = (sing_box_custom_bypassed_ip4 | default([], true)) + (sing_box_custom_bypassed_ip6 | default([], true)) -%}
+{%- if _custom_bypassed_ips | length > 0 -%}
+    {%- set _ = route_rules.append({"action": "route", "ip_cidr": _custom_bypassed_ips, "outbound": "DIRECT"}) -%}
+{%- endif -%}
+
 {# Basic Rules #}
 {%- set _ = route_rules.extend(sing_box_basic_rules) -%}
 
