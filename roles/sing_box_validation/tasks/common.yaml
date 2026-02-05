@@ -17,12 +17,12 @@
     fail_msg: "sing_box_group must be defined with name and gid."
     quiet: true
 
-- name: validate sing_box_install_apt_repo_packages
+- name: validate sing_box_apt_packages
   ansible.builtin.assert:
     that:
-      - sing_box_install_apt_repo_packages is defined
-      - sing_box_install_apt_repo_packages | length > 0
-    fail_msg: "sing_box_install_apt_repo_packages must be defined and not empty."
+      - sing_box_apt_packages is defined
+      - sing_box_apt_packages | length > 0
+    fail_msg: "sing_box_apt_packages must be defined and not empty."
     quiet: true
 
 - name: validate directories definition

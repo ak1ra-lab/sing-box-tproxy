@@ -3,16 +3,13 @@
   hosts: "{{ playbook_hosts | default('sing-box-tproxy') }}"
   become: true
 
-  pre_tasks:
-    - name: validate sing_box_mode
-      ansible.builtin.assert:
-        that:
-          - sing_box_mode in sing_box_mode_available
-        fail_msg: |
-          sing_box_mode must be one of: {{ sing_box_mode_available }} (got: {{ sing_box_mode }})
-        quiet: true
-
   tasks:
+    - name: validate configuration
+      vars:
+        sing_box_validation_profile: tproxy
+      ansible.builtin.import_role:
+        name: sing_box_validation
+
     - name: install sing-box package
       ansible.builtin.import_role:
         name: sing_box_install

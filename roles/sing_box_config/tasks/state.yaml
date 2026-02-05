@@ -2,16 +2,16 @@
 - name: template sing-box-config config/base.json on local
   become: false
   ansible.builtin.template:
-    src: "{{ sing_box_config_base_template }}"
-    dest: "{{ sing_box_config_local_base_dest }}"
+    src: "{{ base_template }}"
+    dest: "{{ base_dest_local }}"
     mode: "0600"
   delegate_to: localhost
   run_once: true
 
 - name: template sing-box-config config/base.json on remote
   ansible.builtin.template:
-    src: "{{ sing_box_config_base_template }}"
-    dest: "{{ sing_box_config_base_dest }}"
+    src: "{{ base_template }}"
+    dest: "{{ base_dest }}"
     owner: "{{ sing_box_user.name }}"
     group: "{{ sing_box_group.name }}"
     mode: "0600"
@@ -19,16 +19,16 @@
 - name: template sing-box-config config/subscriptions.json to local
   become: false
   ansible.builtin.template:
-    src: subscriptions.json.j2
-    dest: "{{ sing_box_config_local_subscriptions_dest }}"
+    src: "{{ subscriptions_template }}"
+    dest: "{{ subscriptions_dest_local }}"
     mode: "0600"
   delegate_to: localhost
   run_once: true
 
 - name: template sing-box-config config/subscriptions.json to remote
   ansible.builtin.template:
-    src: subscriptions.json.j2
-    dest: "{{ sing_box_config_subscriptions_dest }}"
+    src: "{{ subscriptions_template }}"
+    dest: "{{ subscriptions_dest }}"
     owner: "{{ sing_box_user.name }}"
     group: "{{ sing_box_group.name }}"
     mode: "0600"
@@ -61,13 +61,13 @@
 - name: ensure sing-box-config-updater.timer state
   ansible.builtin.systemd_service:
     name: sing-box-config-updater.timer
-    state: "{{ sing_box_config_updater_timer_state }}"
-    enabled: "{{ sing_box_config_updater_timer_enabled }}"
+    state: "{{ sing_box_updater_timer_state }}"
+    enabled: "{{ sing_box_updater_timer_enabled }}"
 
 - name: force clash_api.external_ui (yacd) reinstall
-  when: (sing_box_config_clash_api_external_ui_reinstall | ansible.builtin.bool)
+  when: (sing_box_clash_api_external_ui_reinstall | ansible.builtin.bool)
   ansible.builtin.file:
-    path: "{{ [sing_box_state_dir, sing_box_config_clash_api_external_ui] | ansible.builtin.path_join }}"
+    path: "{{ [sing_box_state_dir, sing_box_clash_api_external_ui] | ansible.builtin.path_join }}"
     state: absent
   notify:
     - systemctl restart sing-box
@@ -75,7 +75,7 @@
 # 是否手动执行 sing-box-config 生成/更新 /etc/sing-box/config.json
 # 这一步配置文件一旦有变更会被 sing-box-reload.path 监听到从而触发 reload, 所以不需要添加 notify restart
 - name: update /etc/sing-box/config.json if requested
-  when: sing_box_config_updater_service_state in sing_box_config_updater_service_active_state
+  when: sing_box_updater_service_state in sing_box_updater_service_active_state
   ansible.builtin.systemd_service:
     name: sing-box-config-updater.service
     state: started

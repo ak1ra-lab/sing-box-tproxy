@@ -1,0 +1,17 @@
+---
+- name: validate sing_box_server_hostname
+  ansible.builtin.assert:
+    that:
+      - sing_box_server_hostname is defined
+      - sing_box_server_hostname | length > 0
+      - sing_box_server_hostname != "localhost"
+    fail_msg: "sing_box_server_hostname must be a valid FQDN."
+    quiet: true
+
+- name: validate sing_box_server_user_count
+  ansible.builtin.assert:
+    that:
+      - sing_box_server_user_count | int > 0
+      - sing_box_server_user_count | int <= 10
+    fail_msg: "sing_box_server_user_count must be between 1 and 10."
+    quiet: true

@@ -1,0 +1,107 @@
+---
+- name: validate sing_box_mode
+  ansible.builtin.assert:
+    that:
+      - sing_box_mode in sing_box_mode_available
+    fail_msg: |
+      sing_box_mode must be one of: {{ sing_box_mode_available }} (got: {{ sing_box_mode }})
+    quiet: true
+
+- name: validate sing_box_subscriptions
+  vars:
+    sub_types: ["inline", "local", "remote"]
+    sub_formats: ["sing-box", "sip002"]
+  when: sing_box_subscriptions is defined
+  block:
+    - name: validate sing_box_subscriptions definition
+      ansible.builtin.assert:
+        that:
+          - sing_box_subscriptions is defined
+          - sing_box_subscriptions is mapping
+          - sing_box_subscriptions | length > 0
+        fail_msg: |
+          Required variable sing_box_subscriptions is not defined or invalid.
+          Please define it in group_vars or host_vars.
+        quiet: true
+
+    - name: validate each subscription entry in sing_box_subscriptions
+      ansible.builtin.assert:
+        that:
+          - subscription.value.type is defined
+          - subscription.value.type in sub_types
+          - subscription.value.format is defined
+          - subscription.value.format in sub_formats
+        fail_msg: |
+          subscription '{{ subscription.key }}' must have 'type' and 'format' defined,
+          and type must in {{ sub_types }}, format must in {{ sub_formats }}
+        quiet: true
+      loop: "{{ sing_box_subscriptions | ansible.builtin.dict2items }}"
+      loop_control:
+        loop_var: subscription
+        label: "{{ subscription.key }}"
+
+    - name: validate subscription urls (optional)
+      when: sing_box_validate_subscription_urls | ansible.builtin.bool
+      block:
+        - name: validate subscription urls (optional)
+          ansible.builtin.uri:
+            url: "{{ subscription.value.url }}"
+            method: HEAD
+            timeout: 10
+            follow_redirects: safe
+            validate_certs: true
+          loop: "{{ sing_box_subscriptions | ansible.builtin.dict2items }}"
+          loop_control:
+            loop_var: subscription
+            label: "{{ subscription.key }}"
+          register: subscription_url_checks
+          failed_when: false
+          changed_when: false
+
+        - name: report subscription urls
+          ansible.builtin.debug:
+            msg: "subscription '{{ url_check.subscription.key }}': {{ 'accessible' if url_check.status == 200 else 'FAILED (' + (url_check.status | string) + ')' }}"
+          loop: "{{ subscription_url_checks.results }}"
+          loop_control:
+            loop_var: url_check
+            label: "{{ url_check.subscription.key }}"
+
+- name: validate custom bypassed ip4
+  ansible.builtin.assert:
+    that:
+      - sing_box_custom_bypassed_ip4 is defined
+      - sing_box_custom_bypassed_ip4 | ansible.builtin.type_debug == "list"
+    fail_msg: "sing_box_custom_bypassed_ip4 must be a list of CIDRs."
+    quiet: true
+
+- name: validate custom bypassed ip6
+  ansible.builtin.assert:
+    that:
+      - sing_box_custom_bypassed_ip6 is defined
+      - sing_box_custom_bypassed_ip6 | ansible.builtin.type_debug == "list"
+    fail_msg: "sing_box_custom_bypassed_ip6 must be a list of CIDRs."
+    quiet: true
+
+- name: validate custom rejected ip4
+  ansible.builtin.assert:
+    that:
+      - sing_box_custom_rejected_ip4 is defined
+      - sing_box_custom_rejected_ip4 | ansible.builtin.type_debug == "list"
+    fail_msg: "sing_box_custom_rejected_ip4 must be a list of CIDRs."
+    quiet: true
+
+- name: validate custom rejected ip6
+  ansible.builtin.assert:
+    that:
+      - sing_box_custom_rejected_ip6 is defined
+      - sing_box_custom_rejected_ip6 | ansible.builtin.type_debug == "list"
+    fail_msg: "sing_box_custom_rejected_ip6 must be a list of CIDRs."
+    quiet: true
+
+- name: validate conntrack buckets
+  ansible.builtin.assert:
+    that:
+      - sing_box_sysctl_nf_conntrack_buckets | int >= 1024
+    fail_msg: "sing_box_sysctl_nf_conntrack_buckets is too small (min 1024)."
+    quiet: true
+  when: sing_box_sysctl_nf_conntrack | bool

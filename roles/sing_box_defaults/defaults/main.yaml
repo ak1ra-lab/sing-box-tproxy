@@ -1,4 +1,9 @@
 ---
+# =============================================================================
+# General project settings (User/Group/Dirs)
+# =============================================================================
+
+# [general]
 # sing-box 安装模式: [mixed, local, gateway]
 # mixed: 仅安装并启用 mixed port, 不配置透明代理, 需要额外配置 system proxy
 # local: 本地透明代理, 不代理内网中其它主机的流量
@@ -6,15 +11,56 @@
 sing_box_mode: gateway
 sing_box_mode_available: ["mixed", "local", "gateway"]
 
-# 基于模式自动计算的特性开关 (内部使用, 不要手动修改)
-_sing_box_enable_tproxy: "{{ sing_box_mode in ['local', 'gateway'] }}"
-_sing_box_enable_nftables: "{{ sing_box_mode in ['local', 'gateway'] }}"
-_sing_box_enable_ip_forward: "{{ sing_box_mode == 'gateway' }}"
-_sing_box_enable_netplan_routing: "{{ sing_box_mode in ['local', 'gateway'] }}"
+# [general]
+# sing-box outbounds 代理节点订阅 URL
+sing_box_subscriptions: {}
+#   # Example 1: Remote subscription with SIP002 format (Shadowsocks)
+#   provider_remote_sip002:
+#     type: remote
+#     format: sip002
+#     enabled: true
+#     url: "https://sub.example.com/api/v1/client/subscribe?token=YOUR_TOKEN_HERE"
+#     exclude:
+#       - "过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"
+#
+#   # Example 2: Remote subscription with sing-box native format (default format)
+#   provider_remote_singbox:
+#     type: remote
+#     format: sing-box
+#     enabled: true
+#     url: "https://sub.example.net/sing-box-config"
+#
+#   # Example 3: Local file subscription (sing-box format)
+#   provider_local_file:
+#     type: local
+#     format: sing-box
+#     path: "/var/lib/sing-box/config/local-proxies.json"
+#
+#   # Example 4: Inline subscription (sing-box format)
+#   provider_inline_singbox:
+#     type: inline
+#     format: sing-box
+#     outbounds:
+#       - type: shadowsocks
+#         tag: "ss-inline-1"
+#         server: "1.2.3.4"
+#         server_port: 8388
+#         method: "aes-256-gcm"
+#         password: "password"
+#
+#   # Example 5: Inline subscription (SIP002 format)
+#   provider_inline_sip002:
+#     type: inline
+#     format: sip002
+#     content: |
+#       c3M6Ly9ZMmhoWTJoaE1qQXRhV1YwWmkxd2IyeDVNVE13TlRwd1lYTnpkMjl5WkFAMS4yLjMuNDo4
+#       Mzg4I0V4YW1wbGUxCnNzOi8vWTJoaFkyaGhNakF0YVdWMFppMXdiMng1TVRNd05UcHdZWE56ZDI5
+#       eVpBQDEuMi4zLjQ6ODQ4OCNFeGFtcGxlMgo=
 
-# 是否启用 IPv6
-_sing_box_enable_ipv6: "{{ ansible_default_ipv6 is defined and ansible_default_ipv6.interface is defined }}"
+# 是否在执行前执行订阅 URL 可访问性检查, 避免订阅 URL 失效而部署失败
+sing_box_validate_subscription_urls: false
 
+# [general]
 # https://wiki.debian.org/SystemGroups#Groups_with_an_associated_user
 # proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
 sing_box_user:
@@ -26,79 +72,162 @@ sing_box_group:
   name: proxy
   gid: 13
 
-# github proxy for ruleset.url
-# sing_box_github_proxy: "https://gh.ak1ra.xyz/"
-sing_box_github_proxy: ""
-
-# 对应 sing-box 中 type = mixed 的 inbounds
-sing_box_mixed_port: 7890
-
-# 对应 sing-box 中 type = tproxy 的 inbounds
-sing_box_tproxy_port: 7895
-
-# ip -f inet rule add fwmark $PROXY_MARK lookup $PROXY_ROUTE_TABLE
-# ip -f inet route add local default dev $INTERFACE table $PROXY_ROUTE_TABLE
-# echo "224 sing_box_tproxy" | sudo tee /etc/iproute2/rt_tables.d/sing_box_tproxy.conf >/dev/null
-sing_box_proxy_route_table: 224
-sing_box_proxy_mark: 224
-
-# 对应 sing-box 配置项 route.default_mark
-sing_box_route_default_mark: 225
-
-# sing-box config.json log.level
-# Log level. One of: trace debug info warn error fatal panic
-sing_box_log_level: warn
-
-# https://sing-box.sagernet.org/configuration/dns/
-# Default domain strategy for resolving the domain names
-# One of prefer_ipv4 prefer_ipv6 ipv4_only ipv6_only
-sing_box_dns_strategy: prefer_ipv4
-# Disable dns cache
-sing_box_dns_disable_cache: false
-# Disable dns cache expire
-sing_box_dns_disable_expire: false
-# Make each DNS server's cache independent for special purposes. If enabled, will slightly degrade performance
-sing_box_dns_independent_cache: false
-# LRU cache capacity. Value less than 1024 will be ignored
-sing_box_dns_cache_capacity: 65535
-
+# [general]
 sing_box_etc_dir: /etc/sing-box
 sing_box_log_dir: /var/log/sing-box
 sing_box_state_dir: /var/lib/sing-box
-
 sing_box_etc_config_file: "{{ sing_box_etc_dir }}/config.json"
-
 sing_box_state_venv_dir: "{{ sing_box_state_dir }}/.venv"
 sing_box_state_config_dir: "{{ sing_box_state_dir }}/config"
 sing_box_state_acme_dir: "{{ sing_box_state_dir }}/acme"
 
-# git repo root dir, also same as uv build dir
-# playbook, host_vars, group_vars 现在放置在 playbooks/ 目录下, 这样按 playbook_dir 取相对路径才不会出错
+# [general]
+# git repo root dir
 sing_box_local_repo_root: "{{ playbook_dir | ansible.builtin.dirname }}"
 sing_box_local_config_dir: "{{ sing_box_local_repo_root }}/config"
-
-# roles/sing_box_server 将 client_outbounds.json.j2 渲染到 sing_box_local_client_outbounds
-# roles/sing_box_config 尝试从 sing_box_local_client_outbounds 目录整体复制到 sing_box_state_config_dir
-# 即目录结构为 /var/lib/sing-box/config/outbounds/{{ inventory_hostname }}.json
 sing_box_local_client_outbounds: "{{ sing_box_local_config_dir }}/client_outbounds"
 
-# https://github.com/MetaCubeX/meta-rules-dat/tree/sing/geo/
-# https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/
-sing_box_remote_rule_set_url_prefix: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/"
+# [general]
+# Apt Repository / Installation Source
+sing_box_apt_key_url: https://sing-box.app/gpg.key
+sing_box_apt_keyrings_dest: /etc/apt/keyrings/sagernet.asc
+sing_box_apt_repo: sagernet
+sing_box_apt_repo_uris: https://deb.sagernet.org/
+sing_box_apt_repo_suites: "*"
+sing_box_apt_repo_components: "*"
+# one of [present, latest]
+# 'latest' ensures that the latest version is installed
+sing_box_apt_packages_state: present
+# one of [sing-box, sing-box-beta]
+sing_box_apt_packages: [sing-box]
 
-sing_box_remote_rule_sets:
-  - path: geoip/cn.srs
-  - path: geoip/private.srs
-  - path: geoip/telegram.srs
-  - path: geosite/category-ai-!cn.srs
-  - path: geosite/category-entertainment.srs
-  - path: geosite/cn.srs
-  - path: geosite/gfw.srs
-  - path: geosite/github.srs
-  - path: geosite/google.srs
-  - path: geosite/private.srs
-  - path: geosite/telegram.srs
+# [sing-box-config]
+# 安装来源: [local, pypi, testpypi] (for src/sing_box_config generator script)
+sing_box_pip_install_source: pypi
+sing_box_pip_extra_args:
+  pypi: ""
+  testpypi: "--index-url=https://test.pypi.org/simple/"
 
+# [sing-box-config]
+# Updater Service States
+sing_box_updater_timer_enabled: true
+sing_box_updater_timer_interval: 1d
+sing_box_updater_timer_state: started
+sing_box_updater_service_state: started
+sing_box_updater_service_active_state: ["started", "restarted"]
+
+# [general]
+# github proxy for ruleset.url
+# sing_box_github_proxy: "https://gh.ak1ra.xyz/"
+sing_box_github_proxy: ""
+
+# [sing-box]
+sing_box_log_level: warn
+# 对应 sing-box 中 type = mixed 的 inbounds
+sing_box_mixed_port: 7890
+# 对应 sing-box 中 type = tproxy 的 inbounds
+sing_box_tproxy_port: 7895
+
+# [sing-box]
+# https://sing-box.sagernet.org/configuration/experimental/
+# sing-box experimental.cache_file
+sing_box_cache_file_enabled: true
+sing_box_cache_file_store_fakeip: true
+sing_box_cache_file_store_rdrc: true
+# sing-box experimental.clash_api
+sing_box_clash_api_secret: ""
+sing_box_clash_api_external_controller: "0.0.0.0:9090"
+sing_box_clash_api_external_ui: yacd
+sing_box_clash_api_external_ui_download_url: "{{ sing_box_github_proxy ~ 'https://github.com/MetaCubeX/Yacd-meta/archive/gh-pages.zip' }}"
+sing_box_clash_api_external_ui_reinstall: false
+
+# =============================================================================
+# System & Network Integration
+# =============================================================================
+
+# [iproute, nftables]
+sing_box_proxy_route_table: 224
+sing_box_proxy_mark: 224
+sing_box_route_default_mark: 225
+
+# [nftables]
+# 是否开启 nftables flow offloading (flowtable)
+sing_box_nftables_flow_offload: true
+
+# [sysctl]
+# 为 sing-box-tproxy 主机开启 TCP BBR 拥塞控制算法
+sing_box_tcp_bbr_enabled: true
+
+# [sysctl, nftables conntrack]
+# 是否设置 /proc/sys/net/netfilter/nf_conntrack_*
+sing_box_sysctl_nf_conntrack: true
+# nf_conntrack_buckets
+sing_box_sysctl_nf_conntrack_buckets: 65536
+# nf_conntrack_max
+sing_box_sysctl_nf_conntrack_max: 262144
+# nf_conntrack_tcp_timeout_established
+sing_box_sysctl_nf_conntrack_tcp_timeout_established: 86400
+
+# =============================================================================
+# DNS Configuration
+# =============================================================================
+
+# [sing-box]
+# 预定义的 dns_hosts dns.servers[]
+# 被 DoT/DoH 类型的 dns.servers[].domain_resolver 引用
+# 此类公共 DoT/DoH DNS server IP 地址不会轻易变更
+# 预定义其地址可使 domain_resolver 快速获取 DoT/DoH 服务器地址
+# https://sing-box.sagernet.org/configuration/dns/server/hosts/
+sing_box_dns_hosts_predefined:
+  "dns.alidns.com": ["223.5.5.5", "223.6.6.6"]
+  "one.one.one.one": ["1.1.1.1", "1.0.0.1"]
+
+# [sing-box]
+# Public DNS Servers
+sing_box_dns_public_dns_servers:
+  - tag: dns_direct
+    type: tls
+    server: dns.alidns.com
+    server_port: 853
+    domain_resolver: dns_hosts
+  - tag: dns_proxy
+    type: tls
+    server: one.one.one.one
+    server_port: 853
+    domain_resolver: dns_hosts
+    detour: PROXY
+  - tag: dns_fakeip
+    type: fakeip
+    inet4_range: 198.18.0.0/15
+    inet6_range: fc00::/18
+
+# [sing-box dns.servers]
+# 可选的预定义的 dns_hosts dns.servers[], 用于局域网内部 DNS server
+# 用于命中 sing_box_custom_internal_rule_set rule_set 的域名解析
+sing_box_dns_internal_tag: dns_internal
+# 填入局域网内部 DNS server IP 地址
+# fixed type: UDP, server_port: 53
+sing_box_dns_internal_servers: []
+
+# [sing-box route.rules and route.rule_set]
+# Custom headless rules in sing-box route.rule_set
+# https://sing-box.sagernet.org/configuration/rule-set/headless-rule/
+# 只能使用局域网的内部 DNS server 解析的域名
+# 使用 dns_internal 解析域名, 同时在 route.rules 使用 DIRECT outbound
+sing_box_custom_internal_rule_set: custom-internal-rule-set
+sing_box_custom_internal_rule_set_dns: dns_internal
+# fixed type: inline, format: source
+sing_box_custom_internal_rule_set_rules: []
+# 此项目的 sing-box 配置中, dns.final 默认使用 dns_proxy, 而 route.final 默认走代理 (虽可切换为 DIRECT 但影响面过大)
+# 这时可能存在一些需要直连的域名, 但是它们并不会出现在公共 rule_set, 我们可以在这里定义一组自定义 headless rule_set
+# 使用 dns_direct 解析域名, 同时在 route.rules 使用 DIRECT outbound
+sing_box_custom_direct_rule_set: custom-direct-rule-set
+sing_box_custom_direct_rule_set_dns: dns_direct
+# fixed type: inline, format: source
+sing_box_custom_direct_rule_set_rules: []
+
+# [sing-box]
+# General DNS Routing Rules
 sing_box_dns_rules:
   - action: route
     rule_set:
@@ -116,6 +245,58 @@ sing_box_dns_rules:
       - geosite-telegram
     server: dns_fakeip
 
+# [sing-box]
+sing_box_dns_final: dns_proxy
+sing_box_dns_strategy: prefer_ipv4
+sing_box_dns_disable_cache: false
+sing_box_dns_disable_expire: false
+sing_box_dns_independent_cache: false
+sing_box_dns_cache_capacity: 65535
+
+# =============================================================================
+# Rule Sets
+# =============================================================================
+
+# [sing-box]
+# https://github.com/MetaCubeX/meta-rules-dat/tree/sing
+sing_box_remote_rule_set_url_prefix: "{{ sing_box_github_proxy ~ 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/' }}"
+sing_box_remote_rule_set_update_interval: 30d
+
+# [sing-box]
+sing_box_remote_rule_sets:
+  - path: geoip/cn.srs
+  - path: geoip/private.srs
+  - path: geoip/telegram.srs
+  - path: geosite/category-ai-!cn.srs
+  - path: geosite/category-entertainment.srs
+  - path: geosite/cn.srs
+  - path: geosite/gfw.srs
+  - path: geosite/github.srs
+  - path: geosite/google.srs
+  - path: geosite/private.srs
+  - path: geosite/telegram.srs
+
+# =============================================================================
+# Routing Rules & Proxy Groups
+# =============================================================================
+
+sing_box_route_final: FINAL
+sing_box_route_auto_detect_interface: true
+sing_box_route_default_domain_resolver: dns_direct
+
+# [sing-box, nftables]
+# Custom rejected addresses (IPv4/IPv6) - List of CIDR strings
+# 一些需要被显式拒绝的 IPv4/IPv6 CIDR, 会同时出现在 sing-box route.rules 和 nftables 中
+sing_box_custom_rejected_ip4: []
+sing_box_custom_rejected_ip6: []
+
+# [sing-box, nftables]
+# Custom bypassed addresses (IPv4/IPv6) - List of CIDR strings
+# 一些需要被显式放行的 IPv4/IPv6 CIDR, 会同时出现在 sing-box route.rules 和 nftables 中
+sing_box_custom_bypassed_ip4: []
+sing_box_custom_bypassed_ip6: []
+
+# [sing-box]
 sing_box_basic_rules:
   - action: hijack-dns
     port: 53
@@ -125,6 +306,7 @@ sing_box_basic_rules:
     port: 22
     outbound: SSH
 
+# [sing-box]
 sing_box_filtering_rules:
   - action: route
     rule_set: [geoip-private, geosite-private]
@@ -145,6 +327,7 @@ sing_box_filtering_rules:
     rule_set: [geosite-gfw, geosite-github, geosite-google]
     outbound: PROXY
 
+# [sing-box]
 sing_box_proxy_groups:
   - tag: PROXY
     type: selector
@@ -165,6 +348,7 @@ sing_box_proxy_groups:
     type: selector
     outbounds: [DIRECT, PROXY]
 
+# [sing-box]
 sing_box_auto_groups:
   - tag: "🇸🇬 狮城节点 - AUTO"
     filter: "新加坡|坡|狮城|SG|Singapore"
@@ -181,6 +365,7 @@ sing_box_auto_groups:
   - tag: "🇰🇷 韩国节点 - AUTO"
     filter: "KR|Korea|KOR|首尔|韩|韓"
 
+# [sing-box]
 sing_box_selector_groups:
   - tag: "🇸🇬 狮城节点"
     filter: "新加坡|坡|狮城|SG|Singapore"
@@ -197,12 +382,14 @@ sing_box_selector_groups:
   - tag: "🇰🇷 韩国节点"
     filter: "KR|Korea|KOR|首尔|韩|韓"
 
-# Custom rejected addresses (IPv4/IPv6)
-# List of CIDR strings
-sing_box_custom_rejected_ip4: []
-sing_box_custom_rejected_ip6: []
+# =============================================================================
+# Internal Templates Variables
+# =============================================================================
 
-# Custom bypassed addresses (IPv4/IPv6)
-# List of CIDR strings
-sing_box_custom_bypassed_ip4: []
-sing_box_custom_bypassed_ip6: []
+# [internal]
+# 基于模式自动计算的特性开关 (内部使用, 不要手动修改)
+_sing_box_enable_tproxy: "{{ sing_box_mode in ['local', 'gateway'] }}"
+_sing_box_enable_nftables: "{{ sing_box_mode in ['local', 'gateway'] }}"
+_sing_box_enable_ip_forward: "{{ sing_box_mode == 'gateway' }}"
+_sing_box_enable_netplan_routing: "{{ sing_box_mode in ['local', 'gateway'] }}"
+_sing_box_enable_ipv6: "{{ ansible_default_ipv6 is defined and ansible_default_ipv6.interface is defined }}"

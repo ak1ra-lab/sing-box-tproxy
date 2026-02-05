@@ -1,0 +1,11 @@
+---
+- name: validation | common
+  ansible.builtin.include_tasks: common.yaml
+
+- name: validation | tproxy
+  when: sing_box_validation_profile is defined and sing_box_validation_profile == 'tproxy'
+  ansible.builtin.include_tasks: tproxy.yaml
+
+- name: validation | server
+  when: sing_box_validation_profile is defined and sing_box_validation_profile == 'server'
+  ansible.builtin.include_tasks: server.yaml

@@ -134,10 +134,10 @@ table inet sing_box_tproxy {
 
 {% endif %}
 {% endif %}
-{% if sing_box_tproxy_nftables_flow_offload %}
+{% if sing_box_nftables_flow_offload %}
 	flowtable bypass_ft {
 		hook ingress priority 0
-		devices = { {{ sing_box_tproxy_nftables_flow_offload_interfaces | join(', ') }} }
+		devices = { {{ sing_box_nftables_flow_offload_interfaces | join(', ') }} }
 	}
 
 {% endif %}
@@ -191,7 +191,7 @@ table inet sing_box_tproxy {
 		meta l4proto { tcp, udp } counter tproxy to :$TPROXY_PORT meta mark set $PROXY_MARK comment "Redirect the remaining packets to the TPROXY_PORT"
 	}
 
-{% if sing_box_tproxy_nftables_flow_offload %}
+{% if sing_box_nftables_flow_offload %}
 	chain forward_flowtable {
 		type filter hook forward priority 0; policy accept;
 		counter

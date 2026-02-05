@@ -3,24 +3,27 @@
 {%- set route_rule_sets = [] -%}
 
 {# Rule Sets #}
-{%- if sing_box_config_custom_internal_rules | length > 0 -%}
+{# custom-internal-rule-set #}
+{%- if sing_box_custom_internal_rule_set_rules | length > 0 -%}
     {%- set _ = route_rule_sets.append({
-        "tag": "custom-internal",
+        "tag": sing_box_custom_internal_rule_set,
         "type": "inline",
         "format": "source",
-        "rules": sing_box_config_custom_internal_rules
+        "rules": sing_box_custom_internal_rule_set_rules
     }) -%}
 {%- endif -%}
 
-{%- if sing_box_config_custom_direct_rules | length > 0 -%}
+{# custom-direct-rule-set #}
+{%- if sing_box_custom_direct_rule_set_rules | length > 0 -%}
     {%- set _ = route_rule_sets.append({
-        "tag": "custom-direct",
+        "tag": sing_box_custom_direct_rule_set,
         "type": "inline",
         "format": "source",
-        "rules": sing_box_config_custom_direct_rules
+        "rules": sing_box_custom_direct_rule_set_rules
     }) -%}
 {%- endif -%}
 
+{# https://github.com/MetaCubeX/meta-rules-dat/tree/sing #}
 {%- for item in sing_box_remote_rule_sets -%}
     {%- set path = item.path -%}
     {%- set _ext = path.split('.') | last -%}
@@ -30,8 +33,8 @@
         "tag": _tag,
         "type": "remote",
         "format": _format,
-        "url": sing_box_github_proxy ~ sing_box_remote_rule_set_url_prefix ~ path,
-        "update_interval": "30d"
+        "url": sing_box_remote_rule_set_url_prefix ~ path,
+        "update_interval": sing_box_remote_rule_set_update_interval
     }) -%}
 {%- endfor -%}
 
@@ -53,12 +56,12 @@
 {%- set _ = route_rules.extend(sing_box_basic_rules) -%}
 
 {# Custom Rules #}
-{%- if sing_box_config_custom_direct_rules | length > 0 -%}
-    {%- set _ = route_rules.append({"action": "route", "rule_set": ["custom-direct"], "outbound": "DIRECT"}) -%}
+{%- if sing_box_custom_internal_rule_set_rules | length > 0 -%}
+    {%- set _ = route_rules.append({"action": "route", "rule_set": [sing_box_custom_internal_rule_set], "outbound": "DIRECT"}) -%}
 {%- endif -%}
 
-{%- if sing_box_config_custom_internal_rules | length > 0 -%}
-    {%- set _ = route_rules.append({"action": "route", "rule_set": ["custom-internal"], "outbound": "DIRECT"}) -%}
+{%- if sing_box_custom_direct_rule_set_rules | length > 0 -%}
+    {%- set _ = route_rules.append({"action": "route", "rule_set": [sing_box_custom_direct_rule_set], "outbound": "DIRECT"}) -%}
 {%- endif -%}
 
 {# Filtering Rules #}
@@ -67,9 +70,9 @@
 {%- set route_config = {
     "rules": route_rules,
     "rule_set": route_rule_sets,
-    "final": "FINAL",
-    "auto_detect_interface": true,
-    "default_domain_resolver": "dns_direct"
+    "final": sing_box_route_final,
+    "auto_detect_interface": sing_box_route_auto_detect_interface,
+    "default_domain_resolver": sing_box_route_default_domain_resolver
 } -%}
 {{ route_config | ansible.builtin.to_json }}
 {%- endmacro -%}

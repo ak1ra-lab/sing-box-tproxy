@@ -25,7 +25,7 @@
 
 - name: collect flow offload capable interfaces
   ansible.builtin.set_fact:
-    sing_box_tproxy_nftables_flow_offload_interfaces: >-
+    sing_box_nftables_flow_offload_interfaces: >-
       {{
           ansible_facts.interfaces
           | select('ansible.builtin.match', '^(eth|en[psx]|br)')

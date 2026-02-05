@@ -1,15 +1,15 @@
 {%- macro get_experimental_config() -%}
 {%- set experimental_config = {
     "cache_file": {
-        "enabled": sing_box_config_cache_file_enabled,
-        "store_fakeip": sing_box_config_cache_file_store_fakeip,
-        "store_rdrc": sing_box_config_cache_file_store_rdrc
+        "enabled": sing_box_cache_file_enabled,
+        "store_fakeip": sing_box_cache_file_store_fakeip,
+        "store_rdrc": sing_box_cache_file_store_rdrc
     },
     "clash_api": {
-        "external_controller": sing_box_config_clash_api_external_controller,
-        "external_ui": sing_box_config_clash_api_external_ui,
-        "external_ui_download_url": sing_box_config_clash_api_external_ui_download_url,
-        "secret": sing_box_config_clash_api_secret,
+        "external_controller": sing_box_clash_api_external_controller,
+        "external_ui": sing_box_clash_api_external_ui,
+        "external_ui_download_url": sing_box_clash_api_external_ui_download_url,
+        "secret": sing_box_clash_api_secret,
         "default_mode": "rule"
     }
 } -%}

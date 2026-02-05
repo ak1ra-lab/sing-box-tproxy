@@ -1,14 +1,12 @@
 {%- macro get_dns_config() -%}
 {%- set dns_servers = [] -%}
 
-{# Predefined hosts #}
-{%- set _dns_hosts_predefined = {
-    "dns.alidns.com": ["223.5.5.5", "223.6.6.6"],
-    "one.one.one.one": ["1.1.1.1", "1.0.0.1"]
-} -%}
+{# Predefined hosts from defaults #}
+{%- set _dns_hosts_predefined = sing_box_dns_hosts_predefined | default({}) -%}
 
-{%- if sing_box_config_dns_internal | length > 0 -%}
-    {%- set _ = _dns_hosts_predefined.update({"dns_internal": sing_box_config_dns_internal}) -%}
+{# Internal DNS (Merged into static hosts if needed, but really just for dns_hosts) #}
+{%- if sing_box_dns_internal_servers | length > 0 -%}
+    {%- set _ = _dns_hosts_predefined.update({sing_box_dns_internal_tag: sing_box_dns_internal_servers}) -%}
 {%- endif -%}
 
 {%- set _ = dns_servers.append({
@@ -17,58 +15,38 @@
     "predefined": _dns_hosts_predefined
 }) -%}
 
-{# Internal DNS #}
-{%- if sing_box_config_dns_internal | length > 0 -%}
+{# Internal DNS Server Definition #}
+{%- if sing_box_dns_internal_servers | length > 0 -%}
     {%- set _ = dns_servers.append({
-        "tag": "dns_internal",
         "type": "udp",
-        "server": "dns_internal",
+        "tag": sing_box_dns_internal_tag,
+        "server": sing_box_dns_internal_tag,
         "server_port": 53,
         "domain_resolver": "dns_hosts"
     }) -%}
 {%- endif -%}
 
-{# Public DNS #}
-{%- set _ = dns_servers.extend([
-    {
-        "tag": "dns_direct",
-        "type": "tls",
-        "server": "dns.alidns.com",
-        "server_port": 853,
-        "domain_resolver": "dns_hosts"
-    },
-    {
-        "tag": "dns_proxy",
-        "type": "tls",
-        "server": "one.one.one.one",
-        "server_port": 853,
-        "domain_resolver": "dns_hosts",
-        "detour": "PROXY"
-    },
-    {
-        "tag": "dns_fakeip",
-        "type": "fakeip",
-        "inet4_range": "198.18.0.0/15",
-        "inet6_range": "fc00::/18"
-    }
-]) -%}
+{# Public DNS Servers (from defaults) #}
+{%- if sing_box_dns_public_dns_servers is defined -%}
+    {%- set _ = dns_servers.extend(sing_box_dns_public_dns_servers) -%}
+{%- endif -%}
 
 {# DNS Rules #}
 {%- set dns_rules = [] -%}
 
-{%- if sing_box_config_custom_internal_rules | length > 0 -%}
+{%- if sing_box_custom_internal_rule_set_rules | length > 0 -%}
     {%- set _ = dns_rules.append({
         "action": "route",
-        "rule_set": ["custom-internal"],
-        "server": "dns_internal"
+        "rule_set": [sing_box_custom_internal_rule_set],
+        "server": sing_box_custom_internal_rule_set_dns
     }) -%}
 {%- endif -%}
 
-{%- if sing_box_config_custom_direct_rules | length > 0 -%}
+{%- if sing_box_custom_direct_rule_set_rules | length > 0 -%}
     {%- set _ = dns_rules.append({
         "action": "route",
-        "rule_set": ["custom-direct"],
-        "server": "dns_direct"
+        "rule_set": [sing_box_custom_direct_rule_set],
+        "server": sing_box_custom_direct_rule_set_dns
     }) -%}
 {%- endif -%}
 
@@ -79,7 +57,7 @@
 {%- set dns_config = {
     "servers": dns_servers,
     "rules": dns_rules,
-    "final": "dns_proxy",
+    "final": sing_box_dns_final,
     "strategy": sing_box_dns_strategy,
     "disable_cache": sing_box_dns_disable_cache,
     "disable_expire": sing_box_dns_disable_expire,
