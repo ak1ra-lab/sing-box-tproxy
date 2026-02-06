@@ -33,3 +33,19 @@
       - sing_box_state_dir is defined
     fail_msg: "Standard directory variables (sing_box_etc_dir, etc.) must be defined."
     quiet: true
+
+- name: validate custom rules (no ip_cidr allowed in rules list)
+  ansible.builtin.assert:
+    that:
+      - item.rules | selectattr('ip_cidr', 'defined') | list | length == 0
+    fail_msg: >-
+      ip_cidr is not allowed in {{ item.name }}. Please move IP CIDR rules to {{ item.ip4_name }} or {{ item.ip6_name }}.
+  loop:
+    - name: sing_box_custom_rejected_rule_set_rules
+      ip4_name: sing_box_custom_rejected_ip4
+      ip6_name: sing_box_custom_rejected_ip6
+      rules: "{{ sing_box_custom_rejected_rule_set_rules | default([]) }}"
+    - name: sing_box_custom_bypassed_rule_set_rules
+      ip4_name: sing_box_custom_bypassed_ip4
+      ip6_name: sing_box_custom_bypassed_ip6
+      rules: "{{ sing_box_custom_bypassed_rule_set_rules | default([]) }}"

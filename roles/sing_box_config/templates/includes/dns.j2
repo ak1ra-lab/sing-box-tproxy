@@ -42,16 +42,16 @@
     }) -%}
 {%- endif -%}
 
-{%- if sing_box_custom_direct_rule_set_rules | length > 0 -%}
+{%- if sing_box_custom_bypassed_rule_set_rules | length > 0 -%}
     {%- set _ = dns_rules.append({
         "action": "route",
-        "rule_set": [sing_box_custom_direct_rule_set],
-        "server": sing_box_custom_direct_rule_set_dns
+        "rule_set": [sing_box_custom_bypassed_rule_set],
+        "server": sing_box_custom_bypassed_rule_set_dns
     }) -%}
 {%- endif -%}
 
-{%- if sing_box_dns_rules | length > 0 -%}
-    {%- set _ = dns_rules.extend(sing_box_dns_rules) -%}
+{%- if sing_box_basic_dns_rules | length > 0 -%}
+    {%- set _ = dns_rules.extend(sing_box_basic_dns_rules) -%}
 {%- endif -%}
 
 {%- set dns_config = {

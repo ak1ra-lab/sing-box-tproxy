@@ -169,21 +169,21 @@ sing_box_sysctl_nf_conntrack_max: 262144
 sing_box_sysctl_nf_conntrack_tcp_timeout_established: 86400
 
 # =============================================================================
-# DNS Configuration
+# DNS servers
 # =============================================================================
 
-# [sing-box]
-# 预定义的 dns_hosts dns.servers[]
-# 被 DoT/DoH 类型的 dns.servers[].domain_resolver 引用
-# 此类公共 DoT/DoH DNS server IP 地址不会轻易变更
-# 预定义其地址可使 domain_resolver 快速获取 DoT/DoH 服务器地址
+# [sing-box dns.servers[dns_hosts]]
 # https://sing-box.sagernet.org/configuration/dns/server/hosts/
+# 此处定义的 predefined hosts 会被直接插入 dns.servers[dns_hosts].predefined 记录
+# dns.servers[dns_hosts] 会被 dns.servers[dns_direct, dns_proxy].domain_resolver 使用
 sing_box_dns_hosts_predefined:
   "dns.alidns.com": ["223.5.5.5", "223.6.6.6"]
   "one.one.one.one": ["1.1.1.1", "1.0.0.1"]
 
-# [sing-box]
-# Public DNS Servers
+# [sing-box dns.servers[dns_direct, dns_proxy, dns_fakeip]]
+# 我们默认为 dns.servers[dns_direct, dns_proxy] 配置了 DoT
+# 此类公共 DoT/DoH DNS server IP 地址不会轻易变更
+# 在 dns.servers[dns_hosts] 中预定义其 IP 地址并通过 domain_resolver 引用可快速获取 DoT/DoH 服务器地址
 sing_box_dns_public_dns_servers:
   - tag: dns_direct
     type: tls
@@ -201,51 +201,22 @@ sing_box_dns_public_dns_servers:
     inet4_range: 198.18.0.0/15
     inet6_range: fc00::/18
 
-# [sing-box dns.servers]
-# 可选的预定义的 dns_hosts dns.servers[], 用于局域网内部 DNS server
-# 用于命中 sing_box_custom_internal_rule_set rule_set 的域名解析
+# [sing-box dns.servers[dns_internal]]
+# 局域网内部 DNS server
+# 用于命中 sing_box_custom_internal_rule_set 的域名 DNS 解析
 sing_box_dns_internal_tag: dns_internal
 # 填入局域网内部 DNS server IP 地址
 # fixed type: UDP, server_port: 53
+# 此处定义的 Internal DNS servers 地址会首先构造一条记录插入 dns.servers[dns_hosts]
+# 然后还会构造一条 dns.servers[dns_internal] 记录, 其中 .domain_resolver 会使用 dns_hosts
 sing_box_dns_internal_servers: []
 
-# [sing-box route.rules and route.rule_set]
-# Custom headless rules in sing-box route.rule_set
-# https://sing-box.sagernet.org/configuration/rule-set/headless-rule/
-# 只能使用局域网的内部 DNS server 解析的域名
-# 使用 dns_internal 解析域名, 同时在 route.rules 使用 DIRECT outbound
-sing_box_custom_internal_rule_set: custom-internal-rule-set
-sing_box_custom_internal_rule_set_dns: dns_internal
-# fixed type: inline, format: source
-sing_box_custom_internal_rule_set_rules: []
-# 此项目的 sing-box 配置中, dns.final 默认使用 dns_proxy, 而 route.final 默认走代理 (虽可切换为 DIRECT 但影响面过大)
-# 这时可能存在一些需要直连的域名, 但是它们并不会出现在公共 rule_set, 我们可以在这里定义一组自定义 headless rule_set
-# 使用 dns_direct 解析域名, 同时在 route.rules 使用 DIRECT outbound
-sing_box_custom_direct_rule_set: custom-direct-rule-set
-sing_box_custom_direct_rule_set_dns: dns_direct
-# fixed type: inline, format: source
-sing_box_custom_direct_rule_set_rules: []
-
 # [sing-box]
-# General DNS Routing Rules
-sing_box_dns_rules:
-  - action: route
-    rule_set:
-      - geosite-cn
-      - geosite-private
-    server: dns_direct
-  - action: route
-    query_type: [A, AAAA]
-    rule_set:
-      - geosite-category-ai-!cn
-      - geosite-category-entertainment
-      - geosite-gfw
-      - geosite-github
-      - geosite-google
-      - geosite-telegram
-    server: dns_fakeip
-
-# [sing-box]
+# dns.rules[] 与 dns.final 中设定的 dns.servers[] 用于解析客户端连接
+# 此处没有在 dns.rules[] 命中使用 dns_direct 和 dns_fakeip 的 DNS 请求会 fallback 到 dns_proxy
+# 此项需要配合 route.final (sing_box_route_final) 一起决定
+# route.final 是没有命中 route.rules[] 的客户端连接最终会使用哪个 outbound 连接
+# 我们 FINAL proxy group 默认值是 PROXY, 因此这里应该使用 dns_proxy
 sing_box_dns_final: dns_proxy
 sing_box_dns_strategy: prefer_ipv4
 sing_box_dns_disable_cache: false
@@ -254,7 +225,61 @@ sing_box_dns_independent_cache: false
 sing_box_dns_cache_capacity: 65535
 
 # =============================================================================
-# Rule Sets
+# Route rules
+# =============================================================================
+
+sing_box_route_final: FINAL
+# https://sing-box.sagernet.org/configuration/shared/dial/#domain_resolver
+# 文档中只有简单一句 "Set domain resolver to use for resolving domain names"
+# 但是没有提及是用来解析什么域名? 不过它既然能出现在 outbound.domain_resolver 中, 想必是用来解析代理服务器的域名
+# 这里不能用 dns_proxy 和 dns_fakeip, 二者是在 代理服务器 上执行 DNS 解析,
+# 因此它首先需要知道 代理服务器 的 IP 地址才能连接上 代理服务器, 因此这里只能使用无需使用 代理服务器 的 dns.server[dns_direct]
+# 相对地, dns.rules[] 与 dns.final 中设定的 dns.servers[] 用于解析客户端连接的域名
+sing_box_route_default_domain_resolver: dns_direct
+sing_box_route_auto_detect_interface: true
+
+# [sing-box route.rules and route.rule_set]
+# Custom headless rules in sing-box route.rule_set
+# https://sing-box.sagernet.org/configuration/route/rule/
+# 这里定义的规则将被合并到 sing_box_custom_rejected_rule_set 指向的 headless rule set 中
+# 并且 sing_box_custom_rejected_ip4 / sing_box_custom_rejected_ip6 也会被自动合并进去 (作为 ip_cidr 项)
+# 因此在此处定义 rules 时不要重复包含 ip_cidr
+sing_box_custom_rejected_rule_set: custom-rejected-rule-set
+sing_box_custom_rejected_rule_set_rules: []
+
+# [sing-box, nftables]
+# Custom rejected addresses (IPv4/IPv6) - List of CIDR strings
+# 一些需要被显式拒绝的 IPv4/IPv6 CIDR, 会同时出现在 sing-box route.rules 和 nftables 中
+sing_box_custom_rejected_ip4: []
+sing_box_custom_rejected_ip6: []
+
+# 只能使用局域网的内部 DNS server 解析的域名
+# 使用 dns_internal 解析域名, 同时在 route.rules 使用 DIRECT outbound
+sing_box_custom_internal_rule_set: custom-internal-rule-set
+sing_box_custom_internal_rule_set_dns: dns_internal
+# fixed type: inline, format: source
+sing_box_custom_internal_rule_set_rules: []
+
+# 此项目的 sing-box 配置中, dns.final 默认使用 dns_proxy, 而 route.final (sing_box_route_final) 默认值 FINAL 默认会走 PROXY,
+# 即 FINAL proxy group 默认 outbounds 为 [PROXY, DIRECT], 允许我们在需要的时候切换为直连, 但这样作用范围比较大,
+# 这时可能存在一些需要直连的域名, 但是它们并不会出现在公共 rule_set, 我们可以在这里定义一组自定义 headless rule_set
+# 使用 dns_direct 解析域名, 同时在 route.rules 使用 DIRECT outbound
+# 这里定义的规则将被合并到 sing_box_custom_bypassed_rule_set 指向的 headless rule set 中
+# 并且 sing_box_custom_bypassed_ip4 / sing_box_custom_bypassed_ip6 也会被自动合并进去 (作为 ip_cidr 项)
+# 因此在此处定义 rules 时不要重复包含 ip_cidr
+sing_box_custom_bypassed_rule_set: custom-direct-rule-set
+sing_box_custom_bypassed_rule_set_dns: dns_direct
+# fixed type: inline, format: source
+sing_box_custom_bypassed_rule_set_rules: []
+
+# [sing-box, nftables]
+# Custom bypassed addresses (IPv4/IPv6) - List of CIDR strings
+# 一些需要被显式放行的 IPv4/IPv6 CIDR, 会同时出现在 sing-box route.rules 和 nftables 中
+sing_box_custom_bypassed_ip4: []
+sing_box_custom_bypassed_ip6: []
+
+# =============================================================================
+# Route rule sets
 # =============================================================================
 
 # [sing-box]
@@ -276,28 +301,27 @@ sing_box_remote_rule_sets:
   - path: geosite/private.srs
   - path: geosite/telegram.srs
 
-# =============================================================================
-# Routing Rules & Proxy Groups
-# =============================================================================
-
-sing_box_route_final: FINAL
-sing_box_route_auto_detect_interface: true
-sing_box_route_default_domain_resolver: dns_direct
-
-# [sing-box, nftables]
-# Custom rejected addresses (IPv4/IPv6) - List of CIDR strings
-# 一些需要被显式拒绝的 IPv4/IPv6 CIDR, 会同时出现在 sing-box route.rules 和 nftables 中
-sing_box_custom_rejected_ip4: []
-sing_box_custom_rejected_ip6: []
-
-# [sing-box, nftables]
-# Custom bypassed addresses (IPv4/IPv6) - List of CIDR strings
-# 一些需要被显式放行的 IPv4/IPv6 CIDR, 会同时出现在 sing-box route.rules 和 nftables 中
-sing_box_custom_bypassed_ip4: []
-sing_box_custom_bypassed_ip6: []
+# [sing-box]
+# General DNS Routing Rules
+sing_box_basic_dns_rules:
+  - action: route
+    rule_set:
+      - geosite-cn
+      - geosite-private
+    server: dns_direct
+  - action: route
+    query_type: [A, AAAA]
+    rule_set:
+      - geosite-category-ai-!cn
+      - geosite-category-entertainment
+      - geosite-gfw
+      - geosite-github
+      - geosite-google
+      - geosite-telegram
+    server: dns_fakeip
 
 # [sing-box]
-sing_box_basic_rules:
+sing_box_basic_route_rules:
   - action: hijack-dns
     port: 53
   - action: hijack-dns
@@ -307,7 +331,7 @@ sing_box_basic_rules:
     outbound: SSH
 
 # [sing-box]
-sing_box_filtering_rules:
+sing_box_filtering_route_rules:
   - action: route
     rule_set: [geoip-private, geosite-private]
     outbound: DIRECT
@@ -327,7 +351,11 @@ sing_box_filtering_rules:
     rule_set: [geosite-gfw, geosite-github, geosite-google]
     outbound: PROXY
 
-# [sing-box]
+# =============================================================================
+# Outbounds & proxy groups
+# =============================================================================
+
+# [sing-box outbounds[]]
 sing_box_proxy_groups:
   - tag: PROXY
     type: selector
@@ -348,7 +376,7 @@ sing_box_proxy_groups:
     type: selector
     outbounds: [DIRECT, PROXY]
 
-# [sing-box]
+# [sing-box outbounds[]]
 sing_box_auto_groups:
   - tag: "🇸🇬 狮城节点 - AUTO"
     filter: "新加坡|坡|狮城|SG|Singapore"
@@ -365,7 +393,7 @@ sing_box_auto_groups:
   - tag: "🇰🇷 韩国节点 - AUTO"
     filter: "KR|Korea|KOR|首尔|韩|韓"
 
-# [sing-box]
+# [sing-box outbounds[]]
 sing_box_selector_groups:
   - tag: "🇸🇬 狮城节点"
     filter: "新加坡|坡|狮城|SG|Singapore"

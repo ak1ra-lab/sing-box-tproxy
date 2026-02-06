@@ -2,25 +2,53 @@
 {%- set route_rules = [] -%}
 {%- set route_rule_sets = [] -%}
 
+{# Helper Macro to Construct Headless Rule Set #}
+{%- macro _add_headless_rule_set(tag, rules_var, ip4_var = [], ip6_var = []) -%}
+    {%- set _ips = (ip4_var | default([], true)) + (ip6_var | default([], true)) -%}
+    {%- set _rules = (rules_var | default([], true)) | list -%}
+    {%- if _ips | length > 0 -%}
+        {%- set _ = _rules.append({"ip_cidr": _ips}) -%}
+    {%- endif -%}
+    {%- if _rules | length > 0 -%}
+        {{- {
+            "tag": tag,
+            "type": "inline",
+            "format": "source",
+            "rules": _rules
+        } | ansible.builtin.to_json -}}
+    {%- endif -%}
+{%- endmacro -%}
+
 {# Rule Sets #}
+{# custom-rejected-rule-set #}
+{%- set _rejected_rs_json = _add_headless_rule_set(
+    sing_box_custom_rejected_rule_set,
+    sing_box_custom_rejected_rule_set_rules,
+    sing_box_custom_rejected_ip4,
+    sing_box_custom_rejected_ip6
+) -%}
+{%- if _rejected_rs_json | length > 0 -%}
+    {%- set _ = route_rule_sets.append(_rejected_rs_json | ansible.builtin.from_json) -%}
+{%- endif -%}
+
 {# custom-internal-rule-set #}
-{%- if sing_box_custom_internal_rule_set_rules | length > 0 -%}
-    {%- set _ = route_rule_sets.append({
-        "tag": sing_box_custom_internal_rule_set,
-        "type": "inline",
-        "format": "source",
-        "rules": sing_box_custom_internal_rule_set_rules
-    }) -%}
+{%- set _internal_rs_json = _add_headless_rule_set(
+    sing_box_custom_internal_rule_set,
+    sing_box_custom_internal_rule_set_rules
+) -%}
+{%- if _internal_rs_json | length > 0 -%}
+    {%- set _ = route_rule_sets.append(_internal_rs_json | ansible.builtin.from_json) -%}
 {%- endif -%}
 
 {# custom-direct-rule-set #}
-{%- if sing_box_custom_direct_rule_set_rules | length > 0 -%}
-    {%- set _ = route_rule_sets.append({
-        "tag": sing_box_custom_direct_rule_set,
-        "type": "inline",
-        "format": "source",
-        "rules": sing_box_custom_direct_rule_set_rules
-    }) -%}
+{%- set _bypassed_rs_json = _add_headless_rule_set(
+    sing_box_custom_bypassed_rule_set,
+    sing_box_custom_bypassed_rule_set_rules,
+    sing_box_custom_bypassed_ip4,
+    sing_box_custom_bypassed_ip6
+) -%}
+{%- if _bypassed_rs_json | length > 0 -%}
+    {%- set _ = route_rule_sets.append(_bypassed_rs_json | ansible.builtin.from_json) -%}
 {%- endif -%}
 
 {# https://github.com/MetaCubeX/meta-rules-dat/tree/sing #}
@@ -41,31 +69,36 @@
 {# Rules #}
 {# Custom Rejected Rules #}
 {# outbound REJECT/DIRECT defined in templates/includes/outbounds.j2 #}
-{%- set _custom_rejected_ips = (sing_box_custom_rejected_ip4 | default([], true)) + (sing_box_custom_rejected_ip6 | default([], true)) -%}
-{%- if _custom_rejected_ips | length > 0 -%}
-    {%- set _ = route_rules.append({"action": "route", "ip_cidr": _custom_rejected_ips, "outbound": "REJECT"}) -%}
-{%- endif -%}
-
-{# Custom Bypassed (Direct) Rules #}
-{%- set _custom_bypassed_ips = (sing_box_custom_bypassed_ip4 | default([], true)) + (sing_box_custom_bypassed_ip6 | default([], true)) -%}
-{%- if _custom_bypassed_ips | length > 0 -%}
-    {%- set _ = route_rules.append({"action": "route", "ip_cidr": _custom_bypassed_ips, "outbound": "DIRECT"}) -%}
+{%- if _rejected_rs_json | length > 0 -%}
+    {%- set _ = route_rules.append({
+        "action": "route",
+        "rule_set": [sing_box_custom_rejected_rule_set],
+        "outbound": "REJECT"
+    }) -%}
 {%- endif -%}
 
 {# Basic Rules #}
-{%- set _ = route_rules.extend(sing_box_basic_rules) -%}
+{%- set _ = route_rules.extend(sing_box_basic_route_rules) -%}
 
 {# Custom Rules #}
-{%- if sing_box_custom_internal_rule_set_rules | length > 0 -%}
-    {%- set _ = route_rules.append({"action": "route", "rule_set": [sing_box_custom_internal_rule_set], "outbound": "DIRECT"}) -%}
+{%- if _internal_rs_json | length > 0 -%}
+    {%- set _ = route_rules.append({
+        "action": "route",
+        "rule_set": [sing_box_custom_internal_rule_set],
+        "outbound": "DIRECT"
+    }) -%}
 {%- endif -%}
 
-{%- if sing_box_custom_direct_rule_set_rules | length > 0 -%}
-    {%- set _ = route_rules.append({"action": "route", "rule_set": [sing_box_custom_direct_rule_set], "outbound": "DIRECT"}) -%}
+{%- if _bypassed_rs_json | length > 0 -%}
+    {%- set _ = route_rules.append({
+        "action": "route",
+        "rule_set": [sing_box_custom_bypassed_rule_set],
+        "outbound": "DIRECT"
+    }) -%}
 {%- endif -%}
 
 {# Filtering Rules #}
-{%- set _ = route_rules.extend(sing_box_filtering_rules) -%}
+{%- set _ = route_rules.extend(sing_box_filtering_route_rules) -%}
 
 {%- set route_config = {
     "rules": route_rules,
