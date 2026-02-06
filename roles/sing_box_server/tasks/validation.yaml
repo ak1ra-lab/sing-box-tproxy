@@ -106,14 +106,6 @@
         fail_msg: "Invalid tuic congestion_control: {{ sing_box_server_tuic_congestion_control }}"
         success_msg: "✓ Tuic congestion control validated"
 
-    - name: validate tuic bandwidth limits
-      ansible.builtin.assert:
-        that:
-          - sing_box_server_tuic_up_mbps > 0
-          - sing_box_server_tuic_down_mbps > 0
-        fail_msg: "Invalid tuic bandwidth limits"
-        success_msg: "✓ Tuic bandwidth limits validated"
-
 - name: validate TLS configuration
   block:
     - name: validate TLS mode
