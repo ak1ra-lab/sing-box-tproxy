@@ -15,8 +15,8 @@ sing_box_server_acme_email: ""
 # Server region code (for client outbound tags, e.g., US, HK, SG, JP)
 sing_box_server_region: ""
 
-# Number of users to generate (1-10, default: 3)
-sing_box_server_user_count: 3
+# Number of users to generate (1-10, default: 1)
+sing_box_server_user_count: 1
 
 # Predefined user names pool (randomly selected if not enough)
 sing_box_server_user_names:
@@ -145,5 +145,6 @@ _sing_box_server_acme_disable_tls_alpn_challenge: "{{ sing_box_server_acme_use_d
 _sing_box_server_dns_servers:
   - {tag: google, type: tls, server: 8.8.8.8}
   - {tag: cloudflare, type: tls, server: 1.1.1.1}
+_sing_box_server_route_default_domain_resolver: cloudflare
 _sing_box_server_default_outbound: direct
 _sing_box_server_hysteria2_masquerade_type: proxy
