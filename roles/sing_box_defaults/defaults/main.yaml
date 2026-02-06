@@ -4,15 +4,15 @@
 # =============================================================================
 
 # [general]
-# sing-box 安装模式: [mixed, local, gateway]
-# mixed: 仅安装并启用 mixed port, 不配置透明代理, 需要额外配置 system proxy
-# local: 本地透明代理, 不代理内网中其它主机的流量
-# gateway: 用作透明代理网关, 这也是目前的默认行为
+# sing-box installation mode: [mixed, local, gateway]
+# mixed: Install and enable mixed port only, no transparent proxy, requires manual system proxy config
+# local: Local transparent proxy, does not proxy traffic for other hosts in the LAN
+# gateway: Transparent proxy gateway, this is the default behavior
 sing_box_mode: gateway
 sing_box_mode_available: ["mixed", "local", "gateway"]
 
 # [general]
-# sing-box outbounds 代理节点订阅 URL
+# sing-box outbounds proxy subscription URLs
 sing_box_subscriptions: {}
 #   # Example 1: Remote subscription with SIP002 format (Shadowsocks)
 #   provider_remote_sip002:
@@ -57,7 +57,7 @@ sing_box_subscriptions: {}
 #       Mzg4I0V4YW1wbGUxCnNzOi8vWTJoaFkyaGhNakF0YVdWMFppMXdiMng1TVRNd05UcHdZWE56ZDI5
 #       eVpBQDEuMi4zLjQ6ODQ4OCNFeGFtcGxlMgo=
 
-# 是否在执行前执行订阅 URL 可访问性检查, 避免订阅 URL 失效而部署失败
+# Whether to check subscription URL accessibility before execution to avoid deployment failure
 sing_box_validate_subscription_urls: false
 
 # [general]
@@ -102,14 +102,14 @@ sing_box_apt_packages_state: present
 sing_box_apt_packages: [sing-box]
 
 # [sing-box-config]
-# 安装来源: [local, pypi, testpypi] (for src/sing_box_config generator script)
+# Install source: [local, pypi, testpypi] (for src/sing_box_config generator script)
 sing_box_pip_install_source: pypi
 sing_box_pip_extra_args:
   pypi: ""
   testpypi: "--index-url=https://test.pypi.org/simple/"
 
 # [sing-box-config]
-# Updater Service States
+# sing-box-config-config-updater.service states
 sing_box_updater_timer_enabled: true
 sing_box_updater_timer_interval: 1d
 sing_box_updater_timer_state: started
@@ -123,9 +123,9 @@ sing_box_github_proxy: ""
 
 # [sing-box]
 sing_box_log_level: warn
-# 对应 sing-box 中 type = mixed 的 inbounds
+# sing-box inbounds for mixed type (http/socks)
 sing_box_mixed_port: 7890
-# 对应 sing-box 中 type = tproxy 的 inbounds
+# sing-box inbounds for tproxy type
 sing_box_tproxy_port: 7895
 
 # [sing-box]
@@ -151,15 +151,16 @@ sing_box_proxy_mark: 224
 sing_box_route_default_mark: 225
 
 # [nftables]
-# 是否开启 nftables flow offloading (flowtable)
+# Whether to enable nftables flow offloading (flowtable)
+# https://docs.kernel.org/networking/nf_flowtable.html
 sing_box_nftables_flow_offload: true
 
 # [sysctl]
-# 为 sing-box-tproxy 主机开启 TCP BBR 拥塞控制算法
+# Enable TCP BBR congestion control algorithm
 sing_box_tcp_bbr_enabled: true
 
 # [sysctl, nftables conntrack]
-# 是否设置 /proc/sys/net/netfilter/nf_conntrack_*
+# Whether to configure /proc/sys/net/netfilter/nf_conntrack_*
 sing_box_sysctl_nf_conntrack: true
 # nf_conntrack_buckets
 sing_box_sysctl_nf_conntrack_buckets: 65536
@@ -174,16 +175,14 @@ sing_box_sysctl_nf_conntrack_tcp_timeout_established: 86400
 
 # [sing-box dns.servers[dns_hosts]]
 # https://sing-box.sagernet.org/configuration/dns/server/hosts/
-# 此处定义的 predefined hosts 会被直接插入 dns.servers[dns_hosts].predefined 记录
-# dns.servers[dns_hosts] 会被 dns.servers[dns_direct, dns_proxy].domain_resolver 使用
+# Predefined hosts will be inserted into dns.servers[dns_hosts].predefined
+# dns.servers[dns_hosts] is used by dns.servers[dns_direct, dns_proxy].domain_resolver
 sing_box_dns_hosts_predefined:
   "dns.alidns.com": ["223.5.5.5", "223.6.6.6"]
   "one.one.one.one": ["1.1.1.1", "1.0.0.1"]
 
 # [sing-box dns.servers[dns_direct, dns_proxy, dns_fakeip]]
-# 我们默认为 dns.servers[dns_direct, dns_proxy] 配置了 DoT
-# 此类公共 DoT/DoH DNS server IP 地址不会轻易变更
-# 在 dns.servers[dns_hosts] 中预定义其 IP 地址并通过 domain_resolver 引用可快速获取 DoT/DoH 服务器地址
+# DoT/DoH DNS servers configuration
 sing_box_dns_public_dns_servers:
   - tag: dns_direct
     type: tls
@@ -202,21 +201,13 @@ sing_box_dns_public_dns_servers:
     inet6_range: fc00::/18
 
 # [sing-box dns.servers[dns_internal]]
-# 局域网内部 DNS server
-# 用于命中 sing_box_custom_internal_rule_set 的域名 DNS 解析
+# Internal DNS server (for custom-internal-rule-set)
 sing_box_dns_internal_tag: dns_internal
-# 填入局域网内部 DNS server IP 地址
 # fixed type: UDP, server_port: 53
-# 此处定义的 Internal DNS servers 地址会首先构造一条记录插入 dns.servers[dns_hosts]
-# 然后还会构造一条 dns.servers[dns_internal] 记录, 其中 .domain_resolver 会使用 dns_hosts
 sing_box_dns_internal_servers: []
 
 # [sing-box]
-# dns.rules[] 与 dns.final 中设定的 dns.servers[] 用于解析客户端连接
-# 此处没有在 dns.rules[] 命中使用 dns_direct 和 dns_fakeip 的 DNS 请求会 fallback 到 dns_proxy
-# 此项需要配合 route.final (sing_box_route_final) 一起决定
-# route.final 是没有命中 route.rules[] 的客户端连接最终会使用哪个 outbound 连接
-# 我们 FINAL proxy group 默认值是 PROXY, 因此这里应该使用 dns_proxy
+# dns.final should match route.final (which usually goes to PROXY)
 sing_box_dns_final: dns_proxy
 sing_box_dns_strategy: prefer_ipv4
 sing_box_dns_disable_cache: false
@@ -230,51 +221,38 @@ sing_box_dns_cache_capacity: 65535
 
 sing_box_route_final: FINAL
 # https://sing-box.sagernet.org/configuration/shared/dial/#domain_resolver
-# 文档中只有简单一句 "Set domain resolver to use for resolving domain names"
-# 但是没有提及是用来解析什么域名? 不过它既然能出现在 outbound.domain_resolver 中, 想必是用来解析代理服务器的域名
-# 这里不能用 dns_proxy 和 dns_fakeip, 二者是在 代理服务器 上执行 DNS 解析,
-# 因此它首先需要知道 代理服务器 的 IP 地址才能连接上 代理服务器, 因此这里只能使用无需使用 代理服务器 的 dns.server[dns_direct]
-# 相对地, dns.rules[] 与 dns.final 中设定的 dns.servers[] 用于解析客户端连接的域名
+# route.default_domain_resolver and outbound.domain_resolver cannot use PROXY, we have to use dns_direct here
 sing_box_route_default_domain_resolver: dns_direct
 sing_box_route_auto_detect_interface: true
 
 # [sing-box route.rules and route.rule_set]
 # Custom headless rules in sing-box route.rule_set
-# https://sing-box.sagernet.org/configuration/route/rule/
-# 这里定义的规则将被合并到 sing_box_custom_rejected_rule_set 指向的 headless rule set 中
-# 并且 sing_box_custom_rejected_ip4 / sing_box_custom_rejected_ip6 也会被自动合并进去 (作为 ip_cidr 项)
-# 因此在此处定义 rules 时不要重复包含 ip_cidr
+# https://sing-box.sagernet.org/configuration/rule-set/headless-rule/
+# custom-rejected-rule-set (LANs, Ads, Malicious etc.)
+# NOTE: defined rules will be merged with ip_cidr from sing_box_custom_rejected_ip4/6
 sing_box_custom_rejected_rule_set: custom-rejected-rule-set
 sing_box_custom_rejected_rule_set_rules: []
 
 # [sing-box, nftables]
-# Custom rejected addresses (IPv4/IPv6) - List of CIDR strings
-# 一些需要被显式拒绝的 IPv4/IPv6 CIDR, 会同时出现在 sing-box route.rules 和 nftables 中
+# Custom rejected IP CIDRs (Also used in nftables)
 sing_box_custom_rejected_ip4: []
 sing_box_custom_rejected_ip6: []
 
-# 只能使用局域网的内部 DNS server 解析的域名
-# 使用 dns_internal 解析域名, 同时在 route.rules 使用 DIRECT outbound
+# custom-internal-rule-set (Intranet domains)
+# Use dns_internal for DNS resolution and DIRECT outbound
 sing_box_custom_internal_rule_set: custom-internal-rule-set
 sing_box_custom_internal_rule_set_dns: dns_internal
-# fixed type: inline, format: source
 sing_box_custom_internal_rule_set_rules: []
 
-# 此项目的 sing-box 配置中, dns.final 默认使用 dns_proxy, 而 route.final (sing_box_route_final) 默认值 FINAL 默认会走 PROXY,
-# 即 FINAL proxy group 默认 outbounds 为 [PROXY, DIRECT], 允许我们在需要的时候切换为直连, 但这样作用范围比较大,
-# 这时可能存在一些需要直连的域名, 但是它们并不会出现在公共 rule_set, 我们可以在这里定义一组自定义 headless rule_set
-# 使用 dns_direct 解析域名, 同时在 route.rules 使用 DIRECT outbound
-# 这里定义的规则将被合并到 sing_box_custom_bypassed_rule_set 指向的 headless rule set 中
-# 并且 sing_box_custom_bypassed_ip4 / sing_box_custom_bypassed_ip6 也会被自动合并进去 (作为 ip_cidr 项)
-# 因此在此处定义 rules 时不要重复包含 ip_cidr
-sing_box_custom_bypassed_rule_set: custom-direct-rule-set
+# custom-bypassed-rule-set (Force Direct domains)
+# Use dns_direct for DNS resolution and DIRECT outbound
+# NOTE: defined rules will be merged with ip_cidr from sing_box_custom_bypassed_ip4/6
+sing_box_custom_bypassed_rule_set: custom-bypassed-rule-set
 sing_box_custom_bypassed_rule_set_dns: dns_direct
-# fixed type: inline, format: source
 sing_box_custom_bypassed_rule_set_rules: []
 
 # [sing-box, nftables]
-# Custom bypassed addresses (IPv4/IPv6) - List of CIDR strings
-# 一些需要被显式放行的 IPv4/IPv6 CIDR, 会同时出现在 sing-box route.rules 和 nftables 中
+# Custom bypassed IP CIDRs (Also used in nftables)
 sing_box_custom_bypassed_ip4: []
 sing_box_custom_bypassed_ip6: []
 
@@ -415,7 +393,7 @@ sing_box_selector_groups:
 # =============================================================================
 
 # [internal]
-# 基于模式自动计算的特性开关 (内部使用, 不要手动修改)
+# Auto-calculated feature flags based on mode (Internal use, do not modify manually)
 _sing_box_enable_tproxy: "{{ sing_box_mode in ['local', 'gateway'] }}"
 _sing_box_enable_nftables: "{{ sing_box_mode in ['local', 'gateway'] }}"
 _sing_box_enable_ip_forward: "{{ sing_box_mode == 'gateway' }}"
