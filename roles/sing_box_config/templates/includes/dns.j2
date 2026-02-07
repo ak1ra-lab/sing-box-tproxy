@@ -2,10 +2,10 @@
 {%- set dns_servers = [] -%}
 
 {# Predefined hosts from defaults #}
-{%- set _dns_hosts_predefined = sing_box_dns_hosts_predefined | default({}) -%}
+{%- set _dns_hosts_predefined = sing_box_dns_hosts_predefined | default({}, true) -%}
 
 {# Internal DNS (Merged into static hosts if needed, but really just for dns_hosts) #}
-{%- if sing_box_dns_internal_servers | length > 0 -%}
+{%- if (sing_box_dns_internal_servers | default([], true)) | length > 0 -%}
     {%- set _ = _dns_hosts_predefined.update({sing_box_dns_internal_tag: sing_box_dns_internal_servers}) -%}
 {%- endif -%}
 
@@ -16,7 +16,7 @@
 }) -%}
 
 {# Internal DNS Server Definition #}
-{%- if sing_box_dns_internal_servers | length > 0 -%}
+{%- if (sing_box_dns_internal_servers | default([], true)) | length > 0 -%}
     {%- set _ = dns_servers.append({
         "type": "udp",
         "tag": sing_box_dns_internal_tag,
@@ -27,14 +27,22 @@
 {%- endif -%}
 
 {# Public DNS Servers (from defaults) #}
-{%- if sing_box_dns_public_dns_servers is defined -%}
+{%- if (sing_box_dns_public_dns_servers | default({}, true)) | length > 0 -%}
     {%- set _ = dns_servers.extend(sing_box_dns_public_dns_servers) -%}
 {%- endif -%}
 
 {# DNS Rules #}
 {%- set dns_rules = [] -%}
 
-{%- if sing_box_custom_internal_rule_set_rules | length > 0 -%}
+{# https://sing-box.sagernet.org/configuration/route/rule_action/#reject #}
+{%- if (sing_box_custom_rejected_rule_set_rules | default([], true)) | length > 0 -%}
+    {%- set _ = dns_rules.append({
+        "action": "reject",
+        "rule_set": [sing_box_custom_rejected_rule_set]
+    }) -%}
+{%- endif -%}
+
+{%- if (sing_box_custom_internal_rule_set_rules | default([], true)) | length > 0 -%}
     {%- set _ = dns_rules.append({
         "action": "route",
         "rule_set": [sing_box_custom_internal_rule_set],
@@ -42,7 +50,7 @@
     }) -%}
 {%- endif -%}
 
-{%- if sing_box_custom_bypassed_rule_set_rules | length > 0 -%}
+{%- if (sing_box_custom_bypassed_rule_set_rules | default([], true)) | length > 0 -%}
     {%- set _ = dns_rules.append({
         "action": "route",
         "rule_set": [sing_box_custom_bypassed_rule_set],
@@ -50,7 +58,7 @@
     }) -%}
 {%- endif -%}
 
-{%- if sing_box_basic_dns_rules | length > 0 -%}
+{%- if (sing_box_basic_dns_rules | default([], true)) | length > 0 -%}
     {%- set _ = dns_rules.extend(sing_box_basic_dns_rules) -%}
 {%- endif -%}
 

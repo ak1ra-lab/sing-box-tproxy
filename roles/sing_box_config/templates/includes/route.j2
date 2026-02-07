@@ -21,34 +21,60 @@
 
 {# Rule Sets #}
 {# custom-rejected-rule-set #}
+{%- set _rejected_rule_sets = [] -%}
 {%- set _rejected_rs_json = _add_headless_rule_set(
     sing_box_custom_rejected_rule_set,
-    sing_box_custom_rejected_rule_set_rules,
-    sing_box_custom_rejected_ip4,
-    sing_box_custom_rejected_ip6
+    sing_box_custom_rejected_rule_set_rules | default([], true)
 ) -%}
-{%- if _rejected_rs_json | length > 0 -%}
+{%- if (_rejected_rs_json | default('', true)) | length > 0 -%}
     {%- set _ = route_rule_sets.append(_rejected_rs_json | ansible.builtin.from_json) -%}
+    {%- set _ = _rejected_rule_sets.append(sing_box_custom_rejected_rule_set) -%}
+{%- endif -%}
+
+{# IP Set #}
+{# custom-rejected-rule-set-ip #}
+{%- set _rejected_ip_rs_json = _add_headless_rule_set(
+    sing_box_custom_rejected_rule_set ~ '-ip',
+    [],
+    sing_box_custom_rejected_ip4 | default([], true),
+    sing_box_custom_rejected_ip6 | default([], true)
+) -%}
+{%- if (_rejected_ip_rs_json | default('', true)) | length > 0 -%}
+    {%- set _ = route_rule_sets.append(_rejected_ip_rs_json | ansible.builtin.from_json) -%}
+    {%- set _ = _rejected_rule_sets.append(sing_box_custom_rejected_rule_set ~ '-ip') -%}
 {%- endif -%}
 
 {# custom-internal-rule-set #}
 {%- set _internal_rs_json = _add_headless_rule_set(
     sing_box_custom_internal_rule_set,
-    sing_box_custom_internal_rule_set_rules
+    sing_box_custom_internal_rule_set_rules | default([], true)
 ) -%}
-{%- if _internal_rs_json | length > 0 -%}
+{%- if (_internal_rs_json | default('', true)) | length > 0 -%}
     {%- set _ = route_rule_sets.append(_internal_rs_json | ansible.builtin.from_json) -%}
 {%- endif -%}
 
 {# custom-direct-rule-set #}
+{%- set _bypassed_rule_sets = [] -%}
 {%- set _bypassed_rs_json = _add_headless_rule_set(
     sing_box_custom_bypassed_rule_set,
-    sing_box_custom_bypassed_rule_set_rules,
-    sing_box_custom_bypassed_ip4,
-    sing_box_custom_bypassed_ip6
+    sing_box_custom_bypassed_rule_set_rules | default([], true)
 ) -%}
-{%- if _bypassed_rs_json | length > 0 -%}
+{%- if (_bypassed_rs_json | default('', true)) | length > 0 -%}
     {%- set _ = route_rule_sets.append(_bypassed_rs_json | ansible.builtin.from_json) -%}
+    {%- set _ = _bypassed_rule_sets.append(sing_box_custom_bypassed_rule_set) -%}
+{%- endif -%}
+
+{# IP Set #}
+{# custom-direct-rule-set-ip #}
+{%- set _bypassed_ip_rs_json = _add_headless_rule_set(
+    sing_box_custom_bypassed_rule_set ~ '-ip',
+    [],
+    sing_box_custom_bypassed_ip4 | default([], true),
+    sing_box_custom_bypassed_ip6 | default([], true)
+) -%}
+{%- if (_bypassed_ip_rs_json | default('', true)) | length > 0 -%}
+    {%- set _ = route_rule_sets.append(_bypassed_ip_rs_json | ansible.builtin.from_json) -%}
+    {%- set _ = _bypassed_rule_sets.append(sing_box_custom_bypassed_rule_set ~ '-ip') -%}
 {%- endif -%}
 
 {# https://github.com/MetaCubeX/meta-rules-dat/tree/sing #}
@@ -69,19 +95,19 @@
 {# Rules #}
 {# Custom Rejected Rules #}
 {# outbound REJECT/DIRECT defined in templates/includes/outbounds.j2 #}
-{%- if _rejected_rs_json | length > 0 -%}
+{%- if (_rejected_rule_sets | default([], true)) | length > 0 -%}
     {%- set _ = route_rules.append({
         "action": "route",
-        "rule_set": [sing_box_custom_rejected_rule_set],
+        "rule_set": _rejected_rule_sets,
         "outbound": "REJECT"
     }) -%}
 {%- endif -%}
 
 {# Basic Rules #}
-{%- set _ = route_rules.extend(sing_box_basic_route_rules) -%}
+{%- set _ = route_rules.extend(sing_box_basic_route_rules | default([], true)) -%}
 
 {# Custom Rules #}
-{%- if _internal_rs_json | length > 0 -%}
+{%- if (_internal_rs_json | default('', true)) | length > 0 -%}
     {%- set _ = route_rules.append({
         "action": "route",
         "rule_set": [sing_box_custom_internal_rule_set],
@@ -89,16 +115,16 @@
     }) -%}
 {%- endif -%}
 
-{%- if _bypassed_rs_json | length > 0 -%}
+{%- if (_bypassed_rule_sets | default([], true)) | length > 0 -%}
     {%- set _ = route_rules.append({
         "action": "route",
-        "rule_set": [sing_box_custom_bypassed_rule_set],
+        "rule_set": _bypassed_rule_sets,
         "outbound": "DIRECT"
     }) -%}
 {%- endif -%}
 
 {# Filtering Rules #}
-{%- set _ = route_rules.extend(sing_box_filtering_route_rules) -%}
+{%- set _ = route_rules.extend(sing_box_filtering_route_rules | default([], true)) -%}
 
 {%- set route_config = {
     "rules": route_rules,
