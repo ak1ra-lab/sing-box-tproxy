@@ -167,7 +167,7 @@ sing_box_sysctl_nf_conntrack_buckets: 65536
 # nf_conntrack_max
 sing_box_sysctl_nf_conntrack_max: 262144
 # nf_conntrack_tcp_timeout_established
-sing_box_sysctl_nf_conntrack_tcp_timeout_established: 86400
+sing_box_sysctl_nf_conntrack_tcp_timeout_established: 3600
 
 # =============================================================================
 # DNS servers
