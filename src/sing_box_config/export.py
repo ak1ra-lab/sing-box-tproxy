@@ -1,4 +1,3 @@
-import copy
 import datetime
 import logging
 import re
@@ -97,7 +96,7 @@ def get_proxies_from_subscriptions(
         try:
             resp = fetch_url_with_retries(url, follow_redirects=True)
             content = resp.text
-            logger.info("resp.text = %s", resp.text[:100])
+            logger.debug("resp.text = %s", resp.text[:100])
         except httpx.HTTPError as err:
             logger.error("Failed to fetch subscription %s: %s", name, err)
             return []
@@ -144,7 +143,7 @@ def filter_valid_proxies(
         proxies: List of available proxy configurations
     """
     for outbound in outbounds:
-        if all(k not in outbound.keys() for k in ["exclude", "filter"]):
+        if "exclude" not in outbound and "filter" not in outbound:
             continue
 
         exclude_patterns = outbound.pop("exclude", [])
@@ -168,9 +167,9 @@ def remove_invalid_outbounds(outbounds: list[dict[str, Any]]) -> None:
     while True:
         invalid_tags = set()
         # Use copy to avoid modifying list during iteration
-        for proxy_group in copy.deepcopy(outbounds):
+        for proxy_group in outbounds[:]:
             # Keep real proxy server, only processing proxy_group
-            if "outbounds" not in proxy_group.keys():
+            if "outbounds" not in proxy_group:
                 continue
             if not isinstance(proxy_group["outbounds"], list):
                 continue
@@ -188,7 +187,7 @@ def remove_invalid_outbounds(outbounds: list[dict[str, Any]]) -> None:
         # Remove invalid tags from all outbounds' "outbounds" lists
         for proxy_group in outbounds:
             # Keep real proxy server, only processing proxy_group
-            if "outbounds" not in proxy_group.keys():
+            if "outbounds" not in proxy_group:
                 continue
             if not isinstance(proxy_group["outbounds"], list):
                 continue
@@ -215,6 +214,7 @@ def save_config_from_subscriptions(
         output_path: Path to save the generated config
         proxies_path: Path to load/save proxies cache
         use_cache: Whether to use cached proxies if available
+        backup_output: Whether to backup existing output file before overwriting
     """
     proxies = []
 
@@ -235,7 +235,7 @@ def save_config_from_subscriptions(
 
     if not proxies:
         for name, subscription in subscriptions_config.items():
-            proxies += get_proxies_from_subscriptions(name, subscription)
+            proxies.extend(get_proxies_from_subscriptions(name, subscription))
 
         if proxies_path:
             proxies_path.parent.mkdir(parents=True, exist_ok=True)

@@ -56,10 +56,10 @@ def main() -> None:
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
-    base_config = read_json(Path(args.base))
-    subscriptions_config = read_json(Path(args.subscriptions))
-    output_path = Path(args.output)
-    proxies_path = Path(args.proxies_path)
+    base_config = read_json(args.base)
+    subscriptions_config = read_json(args.subscriptions)
+    output_path = args.output
+    proxies_path = args.proxies_path
     save_config_from_subscriptions(
         base_config=base_config,
         subscriptions_config=subscriptions_config,

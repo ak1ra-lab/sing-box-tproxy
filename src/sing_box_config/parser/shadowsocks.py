@@ -3,7 +3,7 @@
 
 import logging
 import urllib.parse
-from typing import Any, Optional
+from typing import Any
 
 from chaos_utils.text_utils import b64decode
 
@@ -13,11 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 # https://shadowsocks.org/doc/sip003.html
-supported_plugins = ["obfs-local", "v2ray-plugin"]
+SUPPORTED_PLUGINS: frozenset[str] = frozenset({"obfs-local", "v2ray-plugin"})
 
 
 class ShadowsocksURIParser(URIParser):
-    def parse(self, uri: str) -> Optional[dict[str, Any]]:
+    def parse(self, uri: str) -> dict[str, Any] | None:
         """
         Decodes a Shadowsocks SIP002 URI into a sing-box shadowsocks outbound configuration.
 
@@ -38,7 +38,7 @@ class ShadowsocksURIParser(URIParser):
             return None
 
         try:
-            userinfo_encoded = parsed_uri.netloc.split("@")[0]
+            userinfo_encoded, hostname_port = parsed_uri.netloc.rsplit("@", 1)
             userinfo_decoded = b64decode(userinfo_encoded)
             method, password = userinfo_decoded.split(":", 1)
         except Exception:
@@ -46,7 +46,6 @@ class ShadowsocksURIParser(URIParser):
             return None
 
         try:
-            hostname_port = parsed_uri.netloc.split("@")[1]
             hostname, port_str = hostname_port.split(":")
             port = int(port_str)
         except (IndexError, ValueError):
@@ -78,7 +77,7 @@ class ShadowsocksURIParser(URIParser):
 
             # Only obfs-local and v2ray-plugin are supported.
             # https://sing-box.sagernet.org/configuration/outbound/shadowsocks/#plugin
-            if plugin_parts[0] not in supported_plugins:
+            if plugin_parts[0] not in SUPPORTED_PLUGINS:
                 logger.warning("sing-box doesn't support plugin %s", plugin_parts[0])
                 return None
 

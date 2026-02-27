@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 
 class URIParser(ABC):
@@ -8,7 +8,7 @@ class URIParser(ABC):
     """
 
     @abstractmethod
-    def parse(self, uri: str) -> Optional[dict[str, Any]]:
+    def parse(self, uri: str) -> dict[str, Any] | None:
         """
         Parse a single proxy configuration string (e.g. URI) into a sing-box outbound config.
 
