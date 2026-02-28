@@ -4,12 +4,12 @@ import argparse
 from pathlib import Path
 
 import argcomplete
-from chaos_utils.logging import setup_json_logger
+from chaos_utils.logging import setup_logger
 from chaos_utils.text_utils import read_json
 
 from sing_box_config.export import save_config_from_subscriptions
 
-logger = setup_json_logger(__name__)
+logger = setup_logger(__name__)
 
 
 def main() -> None:
@@ -56,14 +56,38 @@ def main() -> None:
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
-    base_config = read_json(args.base)
-    subscriptions_config = read_json(args.subscriptions)
-    output_path = args.output
-    proxies_path = args.proxies_path
-    save_config_from_subscriptions(
-        base_config=base_config,
-        subscriptions_config=subscriptions_config,
-        output_path=output_path,
-        proxies_path=proxies_path,
-        use_cache=args.use_cache,
-    )
+    try:
+        logger.info(
+            "starting sing-box config generation",
+            extra={
+                "base": str(args.base),
+                "subscriptions": str(args.subscriptions),
+                "output": str(args.output),
+                "proxies_path": str(args.proxies_path),
+                "use_cache": args.use_cache,
+            },
+        )
+
+        base_config = read_json(args.base)
+        subscriptions_config = read_json(args.subscriptions)
+        output_path = args.output
+        proxies_path = args.proxies_path
+
+        save_config_from_subscriptions(
+            base_config=base_config,
+            subscriptions_config=subscriptions_config,
+            output_path=output_path,
+            proxies_path=proxies_path,
+            use_cache=args.use_cache,
+        )
+        logger.info(
+            "sing-box config generation completed", extra={"output": str(output_path)}
+        )
+
+    except Exception as e:
+        logger.error(
+            "sing-box config generation failed",
+            extra={"error": str(e)},
+            exc_info=True,
+        )
+        raise
