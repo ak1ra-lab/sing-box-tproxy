@@ -325,12 +325,6 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# GitHub Copilot
-.github/prompts/*
-.github/instructions/*
-.github/template.sh
-.github/copilot-instructions.md
-
 # Ansible
 inventory/*.yaml
 playbooks/host_vars/**/*.yaml
