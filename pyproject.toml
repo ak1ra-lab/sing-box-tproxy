@@ -34,6 +34,7 @@ Changelog = "https://github.com/ak1ra-lab/sing-box-tproxy/blob/master/CHANGELOG.
 
 [project.scripts]
 sing-box-config = "sing_box_config.main:main"
+sing-box-liveness-probe = "sing_box_config.probe:main"
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]

@@ -43,3 +43,7 @@
     subscriptions_dest: "{{ [sing_box_state_config_dir, subscriptions_basename] | ansible.builtin.path_join }}"
     subscriptions_dest_local: "{{ [sing_box_local_config_dir, subscriptions_basename] | ansible.builtin.path_join }}"
   ansible.builtin.import_tasks: state.yaml
+
+- name: deploy sing-box-liveness-probe.service
+  when: sing_box_liveness_probe_deploy | ansible.builtin.bool
+  ansible.builtin.import_tasks: liveness_probe.yaml

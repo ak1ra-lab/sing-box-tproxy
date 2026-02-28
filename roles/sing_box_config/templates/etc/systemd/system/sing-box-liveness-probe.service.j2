@@ -1,0 +1,21 @@
+[Unit]
+Description=sing-box liveness probe
+After=network-online.target sing-box.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+ExecStart={{ sing_box_state_venv_dir }}/bin/sing-box-liveness-probe \
+    --url {{ sing_box_liveness_probe_url }} \
+    --interval {{ sing_box_liveness_probe_interval }} \
+    --timeout {{ sing_box_liveness_probe_timeout }} \
+    --expected-status {{ sing_box_liveness_probe_expected_status | join(' ') }} \
+    --failure-threshold {{ sing_box_liveness_probe_failure_threshold }} \
+    --success-threshold {{ sing_box_liveness_probe_success_threshold }} \
+    --action {{ sing_box_liveness_probe_action | join(' ') }}
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

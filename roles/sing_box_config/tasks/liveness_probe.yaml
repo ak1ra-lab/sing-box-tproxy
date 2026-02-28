@@ -1,0 +1,17 @@
+---
+# tasks for deploying sing-box-liveness-probe.service
+
+- name: template sing-box-liveness-probe.service on remote
+  ansible.builtin.template:
+    src: etc/systemd/system/sing-box-liveness-probe.service.j2
+    dest: /etc/systemd/system/sing-box-liveness-probe.service
+    mode: "0644"
+  notify:
+    - systemctl daemon-reload
+
+- name: ensure sing-box-liveness-probe.service state
+  ansible.builtin.systemd_service:
+    name: sing-box-liveness-probe.service
+    enabled: "{{ sing_box_liveness_probe_enabled }}"
+    state: "{{ sing_box_liveness_probe_state }}"
+    daemon_reload: true

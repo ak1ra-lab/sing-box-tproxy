@@ -116,6 +116,47 @@ sing_box_updater_timer_state: started
 sing_box_updater_service_state: started
 sing_box_updater_service_active_state: ["started", "restarted"]
 
+# [sing-box-liveness-probe]
+# Whether to deploy the sing-box-liveness-probe.service systemd unit.
+# When false the unit file is not created on the target host.
+sing_box_liveness_probe_deploy: false
+
+# [sing-box-liveness-probe]
+# Service enabled/state management (only effective when sing_box_liveness_probe_deploy is true).
+# enabled: whether to enable the service on boot
+# state: desired systemd service state (started | stopped)
+# Default: deploy the unit but leave it disabled and stopped so the operator can start it manually.
+sing_box_liveness_probe_enabled: false
+sing_box_liveness_probe_state: stopped
+
+# [sing-box-liveness-probe]
+# URL probed for liveness; the response status code must be in sing_box_liveness_probe_expected_status.
+sing_box_liveness_probe_url: "https://www.google.com/generate_204"
+# One or more acceptable HTTP status codes (passed as space-separated args to --expected-status).
+sing_box_liveness_probe_expected_status:
+  - 204
+
+# [sing-box-liveness-probe]
+# Probe timing: interval between checks and per-request timeout (seconds).
+sing_box_liveness_probe_interval: 60
+sing_box_liveness_probe_timeout: 30
+
+# [sing-box-liveness-probe]
+# Number of consecutive failures before triggering the action.
+sing_box_liveness_probe_failure_threshold: 5
+
+# [sing-box-liveness-probe]
+# Number of consecutive successes to log a recovery/healthy event (informational).
+sing_box_liveness_probe_success_threshold: 1
+
+# [sing-box-liveness-probe]
+# Command executed when the failure threshold is reached.
+# Rendered as space-separated arguments on the ExecStart line.
+sing_box_liveness_probe_action:
+  - systemctl
+  - restart
+  - sing-box.service
+
 # [general]
 # github proxy for ruleset.url
 # sing_box_github_proxy: "https://gh.ak1ra.xyz/"
