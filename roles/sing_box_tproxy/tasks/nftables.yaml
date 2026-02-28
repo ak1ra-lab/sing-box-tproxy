@@ -20,9 +20,6 @@
   notify:
     - systemctl daemon-reload
 
-- name: flush handlers to ensure daemon-reload completes
-  ansible.builtin.meta: flush_handlers
-
 - name: collect flow offload capable interfaces
   ansible.builtin.set_fact:
     sing_box_nftables_flow_offload_interfaces: >-
@@ -60,3 +57,4 @@
   ansible.builtin.systemd_service:
     name: nftables.service
     enabled: true
+    daemon_reload: true

@@ -55,14 +55,12 @@
   notify:
     - systemctl daemon-reload
 
-- name: flush handlers to ensure daemon-reload completes
-  ansible.builtin.meta: flush_handlers
-
 - name: ensure sing-box-config-updater.timer state
   ansible.builtin.systemd_service:
     name: sing-box-config-updater.timer
     state: "{{ sing_box_updater_timer_state }}"
     enabled: "{{ sing_box_updater_timer_enabled }}"
+    daemon_reload: true
 
 - name: force clash_api.external_ui (yacd) reinstall
   when: (sing_box_clash_api_external_ui_reinstall | ansible.builtin.bool)

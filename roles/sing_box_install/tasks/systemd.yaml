@@ -19,9 +19,6 @@
   notify:
     - systemctl daemon-reload
 
-- name: flush handlers to ensure daemon-reload completes
-  ansible.builtin.meta: flush_handlers
-
 - name: ensure sing-box-reload.path started and enabled
   ansible.builtin.systemd_service:
     name: sing-box-reload.path
