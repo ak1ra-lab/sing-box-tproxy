@@ -64,92 +64,105 @@ DNS 解析策略的核心在于区分**可信 DNS**(Remote DoT/DoH, 用于代理
 
 以下变量均定义在 `roles/sing_box_defaults/defaults/main.yaml` 中.
 
-| 变量名                                                 | 类型    | 默认值                           | 示例值                          | 描述                                                |
-| :----------------------------------------------------- | :------ | :------------------------------- | :------------------------------ | :-------------------------------------------------- |
-| `sing_box_mode`                                        | string  | `gateway`                        | `local`                         | sing-box 运行模式 (mixed, local, gateway)           |
-| `sing_box_mode_available`                              | list    | `["mixed", "local", "gateway"]`  | -                               | 支持的运行模式列表(常量)                            |
-| `sing_box_subscriptions`                               | dict    | `{}`                             | 见 `defaults/main.yaml`         | 订阅配置字典, 支持 remote, local, inline 等多种类型 |
-| `sing_box_validate_subscription_urls`                  | boolean | `false`                          | `true`                          | 是否在部署前检查订阅 URL 的连通性                   |
-| `sing_box_user`                                        | dict    | `{name: proxy, ...}`             | -                               | 运行 sing-box 的系统用户信息                        |
-| `sing_box_group`                                       | dict    | `{name: proxy, ...}`             | -                               | 运行 sing-box 的系统用户组信息                      |
-| `sing_box_etc_dir`                                     | string  | `/etc/sing-box`                  | -                               | 配置文件目录                                        |
-| `sing_box_log_dir`                                     | string  | `/var/log/sing-box`              | -                               | 日志文件目录                                        |
-| `sing_box_state_dir`                                   | string  | `/var/lib/sing-box`              | -                               | 状态/缓存文件目录                                   |
-| `sing_box_etc_config_file`                             | string  | `.../config.json`                | -                               | 主配置文件路径                                      |
-| `sing_box_state_venv_dir`                              | string  | `.../.venv`                      | -                               | Python 虚拟环境路径                                 |
-| `sing_box_state_config_dir`                            | string  | `.../config`                     | -                               | 生成的配置文件存放目录                              |
-| `sing_box_state_acme_dir`                              | string  | `.../acme`                       | -                               | ACME 证书目录                                       |
-| `sing_box_local_repo_root`                             | string  | `...`                            | -                               | 本地 Git 仓库根目录                                 |
-| `sing_box_local_config_dir`                            | string  | `.../config`                     | -                               | 本地配置生成目录                                    |
-| `sing_box_local_client_outbounds`                      | string  | `.../client_outbounds`           | -                               | 客户端配置输出目录                                  |
-| `sing_box_apt_key_url`                                 | string  | `https://sing-box.app/gpg.key`   | -                               | APT GPG Key URL                                     |
-| `sing_box_apt_keyrings_dest`                           | string  | `/etc/apt/keyrings/sagernet.asc` | -                               | Keyring 保存路径                                    |
-| `sing_box_apt_repo`                                    | string  | `sagernet`                       | -                               | APT 源名称                                          |
-| `sing_box_apt_repo_uris`                               | string  | `https://deb.sagernet.org/`      | -                               | APT 源地址                                          |
-| `sing_box_apt_packages_state`                          | string  | `present`                        | `latest`                        | 软件包状态                                          |
-| `sing_box_apt_packages`                                | list    | `[sing-box]`                     | -                               | 需要安装的软件包列表                                |
-| `sing_box_pip_install_source`                          | string  | `pypi`                           | `local`                         | Python 配置生成脚本的安装来源                       |
-| `sing_box_pip_extra_args`                              | dict    | `{...}`                          | -                               | pip 安装额外参数                                    |
-| `sing_box_updater_timer_enabled`                       | boolean | `true`                           | -                               | 是否启用自动更新 Timer                              |
-| `sing_box_updater_timer_interval`                      | string  | `1d`                             | -                               | 自动更新间隔                                        |
-| `sing_box_updater_timer_state`                         | string  | `started`                        | -                               | Timer 运行状态                                      |
-| `sing_box_updater_service_state`                       | string  | `started`                        | -                               | Service 运行状态                                    |
-| `sing_box_updater_service_active_state`                | list    | `["started", "restarted"]`       | -                               | 判定服务活跃的状态列表                              |
-| `sing_box_github_proxy`                                | string  | `""`                             | `https://ghproxy.com/`          | GitHub 代理前缀, 用于加速规则下载                   |
-| `sing_box_log_level`                                   | string  | `warn`                           | `info`                          | sing-box 日志等级                                   |
-| `sing_box_mixed_port`                                  | integer | `7890`                           | -                               | HTTP/SOCKS 混合代理端口                             |
-| `sing_box_tproxy_port`                                 | integer | `7895`                           | -                               | 透明代理端口                                        |
-| `sing_box_cache_file_enabled`                          | boolean | `true`                           | -                               | 是否启用缓存文件                                    |
-| `sing_box_cache_file_store_fakeip`                     | boolean | `true`                           | -                               | 是否缓存 FakeIP                                     |
-| `sing_box_cache_file_store_rdrc`                       | boolean | `true`                           | -                               | 是否缓存拒收响应                                    |
-| `sing_box_clash_api_secret`                            | string  | `""`                             | `Secret123`                     | Clash API 密钥                                      |
-| `sing_box_clash_api_external_controller`               | string  | `0.0.0.0:9090`                   | -                               | Clash API 监听地址                                  |
-| `sing_box_clash_api_external_ui`                       | string  | `yacd`                           | -                               | Clash API UI 目录名                                 |
-| `sing_box_clash_api_external_ui_download_url`          | string  | `...`                            | -                               | Clash UI 下载地址                                   |
-| `sing_box_clash_api_external_ui_reinstall`             | boolean | `false`                          | -                               | 是否强制重装 UI                                     |
-| `sing_box_proxy_route_table`                           | integer | `224`                            | -                               | 路由表 ID                                           |
-| `sing_box_proxy_mark`                                  | integer | `224`                            | -                               | fwmark 值                                           |
-| `sing_box_route_default_mark`                          | integer | `225`                            | -                               | 默认路由 mark 值                                    |
-| `sing_box_nftables_flow_offload`                       | boolean | `true`                           | -                               | 是否启用 nftables flow offloading                   |
-| `sing_box_tcp_bbr_enabled`                             | boolean | `true`                           | -                               | 是否启用 TCP BBR                                    |
-| `sing_box_sysctl_nf_conntrack`                         | boolean | `true`                           | -                               | 是否优化 conntrack 内核参数                         |
-| `sing_box_sysctl_nf_conntrack_buckets`                 | integer | `65536`                          | -                               | conntrack buckets 大小                              |
-| `sing_box_sysctl_nf_conntrack_max`                     | integer | `262144`                         | -                               | conntrack max 大小                                  |
-| `sing_box_sysctl_nf_conntrack_tcp_timeout_established` | integer | `86400`                          | -                               | TCP 建立连接超时时间                                |
-| `sing_box_dns_hosts_predefined`                        | dict    | `{...}`                          | 见 `defaults/main.yaml`         | 预定义的 hosts 记录                                 |
-| `sing_box_dns_public_dns_servers`                      | list    | `[...]`                          | 见 `defaults/main.yaml`         | 公共 DNS 服务器列表 (DoT/DoH)                       |
-| `sing_box_dns_internal_tag`                            | string  | `dns_internal`                   | -                               | 内网 DNS 服务器标签                                 |
-| `sing_box_dns_internal_servers`                        | list    | `[]`                             | `["192.168.1.1"]`               | 内网 DNS 服务器 IP 列表                             |
-| `sing_box_dns_final`                                   | string  | `dns_proxy`                      | -                               | 默认 DNS 出站 tag                                   |
-| `sing_box_dns_strategy`                                | string  | `prefer_ipv4`                    | -                               | DNS 解析策略                                        |
-| `sing_box_dns_disable_cache`                           | boolean | `false`                          | -                               | 禁用 DNS 缓存                                       |
-| `sing_box_dns_disable_expire`                          | boolean | `false`                          | -                               | 禁用 DNS 过期                                       |
-| `sing_box_dns_independent_cache`                       | boolean | `false`                          | -                               | 独立 DNS 缓存                                       |
-| `sing_box_dns_cache_capacity`                          | integer | `65535`                          | -                               | DNS 缓存容量                                        |
-| `sing_box_route_final`                                 | string  | `FINAL`                          | -                               | 路由兜底规则的 Outbound Tag                         |
-| `sing_box_route_default_domain_resolver`               | string  | `dns_direct`                     | -                               | 用于解析 Outbound 域名的解析器                      |
-| `sing_box_route_auto_detect_interface`                 | boolean | `true`                           | -                               | 自动检测接口                                        |
-| `sing_box_custom_rejected_rule_set`                    | string  | `custom-rejected-rule-set`       | -                               | 自定义拒绝规则集 Tag                                |
-| `sing_box_custom_rejected_rule_set_rules`              | list    | `[]`                             | `[{"domain_suffix": "ad.com"}]` | 自定义拒绝规则 (不含 IP)                            |
-| `sing_box_custom_rejected_ip4`                         | list    | `[]`                             | `["10.0.0.0/8"]`                | 自定义拒绝 IPv4 CIDR                                |
-| `sing_box_custom_rejected_ip6`                         | list    | `[]`                             | -                               | 自定义拒绝 IPv6 CIDR                                |
-| `sing_box_custom_internal_rule_set`                    | string  | `custom-internal-rule-set`       | -                               | 自定义内网规则集 Tag                                |
-| `sing_box_custom_internal_rule_set_dns`                | string  | `dns_internal`                   | -                               | 自定义内网规则集使用的 DNS                          |
-| `sing_box_custom_internal_rule_set_rules`              | list    | `[]`                             | `[{"domain_suffix": "lan"}]`    | 自定义内网规则                                      |
-| `sing_box_custom_bypassed_rule_set`                    | string  | `custom-bypassed-rule-set`       | -                               | 自定义放行规则集 Tag (Bypassed)                     |
-| `sing_box_custom_bypassed_rule_set_dns`                | string  | `dns_direct`                     | -                               | 自定义放行规则集使用的 DNS (Bypassed)               |
-| `sing_box_custom_bypassed_rule_set_rules`              | list    | `[]`                             | `[{"domain": "example.com"}]`   | 自定义放行规则 (不含 IP)                            |
-| `sing_box_custom_bypassed_ip4`                         | list    | `[]`                             | -                               | 自定义放行 IPv4 CIDR (Bypassed)                     |
-| `sing_box_custom_bypassed_ip6`                         | list    | `[]`                             | -                               | 自定义放行 IPv6 CIDR (Bypassed)                     |
-| `sing_box_remote_rule_set_url_prefix`                  | string  | `...`                            | -                               | 远程规则集下载 URL 前缀                             |
-| `sing_box_remote_rule_set_update_interval`             | string  | `30d`                            | -                               | 远程规则集更新间隔                                  |
-| `sing_box_remote_rule_sets`                            | list    | `[...]`                          | 见 `defaults/main.yaml`         | 启用的远程规则集列表                                |
-| `sing_box_basic_dns_rules`                             | list    | `[...]`                          | 见 `defaults/main.yaml`         | 基础 DNS 分流规则                                   |
-| `sing_box_basic_route_rules`                           | list    | `[...]`                          | 见 `defaults/main.yaml`         | 基础路由分流规则 (DNS 劫持等)                       |
-| `sing_box_filtering_route_rules`                       | list    | `[...]`                          | 见 `defaults/main.yaml`         | 应用层过滤/分流规则                                 |
-| `sing_box_proxy_groups`                                | list    | `[...]`                          | 见 `defaults/main.yaml`         | 这里定义 Proxy Groups (Selector 列表)               |
-| `sing_box_auto_groups`                                 | list    | `[...]`                          | 见 `defaults/main.yaml`         | 基于正则自动分组的配置                              |
-| `sing_box_selector_groups`                             | list    | `[...]`                          | 见 `defaults/main.yaml`         | 基于正则的手动选择分组配置                          |
+| 变量名                                                 | 类型    | 默认值                                   | 示例值                          | 描述                                                 |
+| :----------------------------------------------------- | :------ | :--------------------------------------- | :------------------------------ | :--------------------------------------------------- |
+| `sing_box_mode`                                        | string  | `gateway`                                | `local`                         | sing-box 运行模式 (mixed, local, gateway)            |
+| `sing_box_mode_available`                              | list    | `["mixed", "local", "gateway"]`          | -                               | 支持的运行模式列表(常量)                             |
+| `sing_box_subscriptions`                               | dict    | `{}`                                     | 见 `defaults/main.yaml`         | 订阅配置字典, 支持 remote, local, inline 等多种类型  |
+| `sing_box_validate_subscription_urls`                  | boolean | `false`                                  | `true`                          | 是否在部署前检查订阅 URL 的连通性                    |
+| `sing_box_user`                                        | dict    | `{name: proxy, ...}`                     | -                               | 运行 sing-box 的系统用户信息                         |
+| `sing_box_group`                                       | dict    | `{name: proxy, ...}`                     | -                               | 运行 sing-box 的系统用户组信息                       |
+| `sing_box_etc_dir`                                     | string  | `/etc/sing-box`                          | -                               | 配置文件目录                                         |
+| `sing_box_log_dir`                                     | string  | `/var/log/sing-box`                      | -                               | 日志文件目录                                         |
+| `sing_box_state_dir`                                   | string  | `/var/lib/sing-box`                      | -                               | 状态/缓存文件目录                                    |
+| `sing_box_etc_config_file`                             | string  | `.../config.json`                        | -                               | 主配置文件路径                                       |
+| `sing_box_state_venv_dir`                              | string  | `.../.venv`                              | -                               | Python 虚拟环境路径                                  |
+| `sing_box_state_config_dir`                            | string  | `.../config`                             | -                               | 生成的配置文件存放目录                               |
+| `sing_box_state_acme_dir`                              | string  | `.../acme`                               | -                               | ACME 证书目录                                        |
+| `sing_box_local_repo_root`                             | string  | `...`                                    | -                               | 本地 Git 仓库根目录                                  |
+| `sing_box_local_config_dir`                            | string  | `.../config`                             | -                               | 本地配置生成目录                                     |
+| `sing_box_local_client_outbounds`                      | string  | `.../client_outbounds`                   | -                               | 客户端配置输出目录                                   |
+| `sing_box_apt_key_url`                                 | string  | `https://sing-box.app/gpg.key`           | -                               | APT GPG Key URL                                      |
+| `sing_box_apt_keyrings_dest`                           | string  | `/etc/apt/keyrings/sagernet.asc`         | -                               | Keyring 保存路径                                     |
+| `sing_box_apt_repo`                                    | string  | `sagernet`                               | -                               | APT 源名称                                           |
+| `sing_box_apt_repo_uris`                               | string  | `https://deb.sagernet.org/`              | -                               | APT 源地址                                           |
+| `sing_box_apt_packages_state`                          | string  | `present`                                | `latest`                        | 软件包状态                                           |
+| `sing_box_apt_packages`                                | list    | `[sing-box]`                             | -                               | 需要安装的软件包列表                                 |
+| `sing_box_apt_repo_suites`                             | string  | `"*"`                                    | -                               | APT 源 suites 字段                                   |
+| `sing_box_apt_repo_components`                         | string  | `"*"`                                    | -                               | APT 源 components 字段                               |
+| `sing_box_pip_install_source`                          | string  | `pypi`                                   | `local`                         | Python 配置生成脚本的安装来源                        |
+| `sing_box_pip_extra_args`                              | dict    | `{...}`                                  | -                               | pip 安装额外参数                                     |
+| `sing_box_config_timer_enabled`                        | boolean | `true`                                   | -                               | 是否启用 sing-box-config.timer                       |
+| `sing_box_config_timer_interval`                       | string  | `1d`                                     | -                               | sing-box-config.timer 触发间隔                       |
+| `sing_box_config_timer_state`                          | string  | `started`                                | -                               | sing-box-config.timer 运行状态                       |
+| `sing_box_config_service_state`                        | string  | `started`                                | -                               | sing-box-config.service 运行状态                     |
+| `sing_box_config_service_active_state`                 | list    | `["started", "restarted"]`               | -                               | 判定服务活跃的状态列表                               |
+| `sing_box_liveness_probe_deploy`                       | boolean | `false`                                  | -                               | 是否在目标主机上部署 liveness probe systemd unit     |
+| `sing_box_liveness_probe_enabled`                      | boolean | `false`                                  | -                               | liveness probe 服务是否开机自启 (deploy=true 时有效) |
+| `sing_box_liveness_probe_state`                        | string  | `stopped`                                | `started`                       | liveness probe 服务期望状态 (deploy=true 时有效)     |
+| `sing_box_liveness_probe_url`                          | string  | `https://www.google.com/generate_204`    | -                               | 探活目标 URL                                         |
+| `sing_box_liveness_probe_expected_status`              | list    | `[204]`                                  | `[200]`                         | 探活成功的 HTTP 状态码列表                           |
+| `sing_box_liveness_probe_interval`                     | integer | `60`                                     | -                               | 探活间隔 (秒)                                        |
+| `sing_box_liveness_probe_timeout`                      | integer | `30`                                     | -                               | 单次探活超时 (秒)                                    |
+| `sing_box_liveness_probe_failure_threshold`            | integer | `5`                                      | -                               | 触发 action 所需连续失败次数                         |
+| `sing_box_liveness_probe_success_threshold`            | integer | `1`                                      | -                               | 记录恢复事件所需连续成功次数                         |
+| `sing_box_liveness_probe_action`                       | list    | `[systemctl, restart, sing-box.service]` | -                               | 达到 failure_threshold 时执行的命令                  |
+| `sing_box_liveness_probe_action_threshold`             | integer | `3`                                      | -                               | action 最大触发次数上限 (探活恢复后重置)             |
+| `sing_box_github_proxy`                                | string  | `""`                                     | `https://ghproxy.com/`          | GitHub 代理前缀, 用于加速规则下载                    |
+| `sing_box_log_level`                                   | string  | `warn`                                   | `info`                          | sing-box 日志等级                                    |
+| `sing_box_mixed_port`                                  | integer | `7890`                                   | -                               | HTTP/SOCKS 混合代理端口                              |
+| `sing_box_tproxy_port`                                 | integer | `7895`                                   | -                               | 透明代理端口                                         |
+| `sing_box_cache_file_enabled`                          | boolean | `true`                                   | -                               | 是否启用缓存文件                                     |
+| `sing_box_cache_file_store_fakeip`                     | boolean | `true`                                   | -                               | 是否缓存 FakeIP                                      |
+| `sing_box_cache_file_store_rdrc`                       | boolean | `true`                                   | -                               | 是否缓存拒收响应                                     |
+| `sing_box_clash_api_secret`                            | string  | `""`                                     | `Secret123`                     | Clash API 密钥                                       |
+| `sing_box_clash_api_external_controller`               | string  | `0.0.0.0:9090`                           | -                               | Clash API 监听地址                                   |
+| `sing_box_clash_api_external_ui`                       | string  | `yacd`                                   | -                               | Clash API UI 目录名                                  |
+| `sing_box_clash_api_external_ui_download_url`          | string  | `...`                                    | -                               | Clash UI 下载地址                                    |
+| `sing_box_clash_api_external_ui_reinstall`             | boolean | `false`                                  | -                               | 是否强制重装 UI                                      |
+| `sing_box_proxy_route_table`                           | integer | `224`                                    | -                               | 路由表 ID                                            |
+| `sing_box_proxy_mark`                                  | integer | `224`                                    | -                               | fwmark 值                                            |
+| `sing_box_route_default_mark`                          | integer | `225`                                    | -                               | 默认路由 mark 值                                     |
+| `sing_box_nftables_flow_offload`                       | boolean | `true`                                   | -                               | 是否启用 nftables flow offloading                    |
+| `sing_box_tcp_bbr_enabled`                             | boolean | `true`                                   | -                               | 是否启用 TCP BBR                                     |
+| `sing_box_sysctl_nf_conntrack`                         | boolean | `true`                                   | -                               | 是否优化 conntrack 内核参数                          |
+| `sing_box_sysctl_nf_conntrack_buckets`                 | integer | `65536`                                  | -                               | conntrack buckets 大小                               |
+| `sing_box_sysctl_nf_conntrack_max`                     | integer | `262144`                                 | -                               | conntrack max 大小                                   |
+| `sing_box_sysctl_nf_conntrack_tcp_timeout_established` | integer | `3600`                                   | -                               | TCP 建立连接超时时间                                 |
+| `sing_box_dns_hosts_predefined`                        | dict    | `{...}`                                  | 见 `defaults/main.yaml`         | 预定义的 hosts 记录                                  |
+| `sing_box_dns_public_dns_servers`                      | list    | `[...]`                                  | 见 `defaults/main.yaml`         | 公共 DNS 服务器列表 (DoT/DoH)                        |
+| `sing_box_dns_internal_tag`                            | string  | `dns_internal`                           | -                               | 内网 DNS 服务器标签                                  |
+| `sing_box_dns_internal_servers`                        | list    | `[]`                                     | `["192.168.1.1"]`               | 内网 DNS 服务器 IP 列表                              |
+| `sing_box_dns_final`                                   | string  | `dns_proxy`                              | -                               | 默认 DNS 出站 tag                                    |
+| `sing_box_dns_strategy`                                | string  | `prefer_ipv4`                            | -                               | DNS 解析策略                                         |
+| `sing_box_dns_disable_cache`                           | boolean | `false`                                  | -                               | 禁用 DNS 缓存                                        |
+| `sing_box_dns_disable_expire`                          | boolean | `false`                                  | -                               | 禁用 DNS 过期                                        |
+| `sing_box_dns_independent_cache`                       | boolean | `false`                                  | -                               | 独立 DNS 缓存                                        |
+| `sing_box_dns_cache_capacity`                          | integer | `65535`                                  | -                               | DNS 缓存容量                                         |
+| `sing_box_route_final`                                 | string  | `FINAL`                                  | -                               | 路由兜底规则的 Outbound Tag                          |
+| `sing_box_route_default_domain_resolver`               | string  | `dns_direct`                             | -                               | 用于解析 Outbound 域名的解析器                       |
+| `sing_box_route_auto_detect_interface`                 | boolean | `true`                                   | -                               | 自动检测接口                                         |
+| `sing_box_custom_rejected_rule_set`                    | string  | `custom-rejected-rule-set`               | -                               | 自定义拒绝规则集 Tag                                 |
+| `sing_box_custom_rejected_rule_set_rules`              | list    | `[]`                                     | `[{"domain_suffix": "ad.com"}]` | 自定义拒绝规则 (不含 IP)                             |
+| `sing_box_custom_rejected_ip4`                         | list    | `[]`                                     | `["10.0.0.0/8"]`                | 自定义拒绝 IPv4 CIDR                                 |
+| `sing_box_custom_rejected_ip6`                         | list    | `[]`                                     | -                               | 自定义拒绝 IPv6 CIDR                                 |
+| `sing_box_custom_internal_rule_set`                    | string  | `custom-internal-rule-set`               | -                               | 自定义内网规则集 Tag                                 |
+| `sing_box_custom_internal_rule_set_dns`                | string  | `dns_internal`                           | -                               | 自定义内网规则集使用的 DNS                           |
+| `sing_box_custom_internal_rule_set_rules`              | list    | `[]`                                     | `[{"domain_suffix": "lan"}]`    | 自定义内网规则                                       |
+| `sing_box_custom_bypassed_rule_set`                    | string  | `custom-bypassed-rule-set`               | -                               | 自定义放行规则集 Tag (Bypassed)                      |
+| `sing_box_custom_bypassed_rule_set_dns`                | string  | `dns_direct`                             | -                               | 自定义放行规则集使用的 DNS (Bypassed)                |
+| `sing_box_custom_bypassed_rule_set_rules`              | list    | `[]`                                     | `[{"domain": "example.com"}]`   | 自定义放行规则 (不含 IP)                             |
+| `sing_box_custom_bypassed_ip4`                         | list    | `[]`                                     | -                               | 自定义放行 IPv4 CIDR (Bypassed)                      |
+| `sing_box_custom_bypassed_ip6`                         | list    | `[]`                                     | -                               | 自定义放行 IPv6 CIDR (Bypassed)                      |
+| `sing_box_remote_rule_set_url_prefix`                  | string  | `...`                                    | -                               | 远程规则集下载 URL 前缀                              |
+| `sing_box_remote_rule_set_update_interval`             | string  | `30d`                                    | -                               | 远程规则集更新间隔                                   |
+| `sing_box_remote_rule_sets`                            | list    | `[...]`                                  | 见 `defaults/main.yaml`         | 启用的远程规则集列表                                 |
+| `sing_box_basic_dns_rules`                             | list    | `[...]`                                  | 见 `defaults/main.yaml`         | 基础 DNS 分流规则                                    |
+| `sing_box_basic_route_rules`                           | list    | `[...]`                                  | 见 `defaults/main.yaml`         | 基础路由分流规则 (DNS 劫持等)                        |
+| `sing_box_filtering_route_rules`                       | list    | `[...]`                                  | 见 `defaults/main.yaml`         | 应用层过滤/分流规则                                  |
+| `sing_box_proxy_groups`                                | list    | `[...]`                                  | 见 `defaults/main.yaml`         | 这里定义 Proxy Groups (Selector 列表)                |
+| `sing_box_auto_groups`                                 | list    | `[...]`                                  | 见 `defaults/main.yaml`         | 基于正则自动分组的配置                               |
+| `sing_box_selector_groups`                             | list    | `[...]`                                  | 见 `defaults/main.yaml`         | 基于正则的手动选择分组配置                           |
 
 ### 内部变量 (Template Internal)
 
