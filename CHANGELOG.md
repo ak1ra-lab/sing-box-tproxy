@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-03-01
+
+### Added
+
+- New `sing_box_reset` Ansible role and `playbooks/sing_box_reset.yaml` playbook
+  to cleanly undo a tproxy or server deployment (stop services, remove systemd
+  units, APT packages/repo, runtime directories, nftables rules, iproute2
+  routing table entry, and netplan config).
+- New `sing-box-liveness-probe` systemd service: periodically probes a URL and
+  executes a configurable action when the failure threshold is reached.
+- `sing_box_liveness_probe_action_threshold` variable to cap the number of
+  consecutive action triggers and prevent restart loops.
+- `group_vars.sh` helper script with `gen` and `sync` subcommands for generating
+  and re-applying group_vars patch files against upstream defaults.
+- `AGENTS.md` project guide for AI coding agents.
+- Configurable sing-box `cache_file` settings via `sing_box_cache_file_*`
+  variables.
+- Configurable sing-box DNS settings via `sing_box_dns_*` variables
+  (`sing_box_dns_disable_cache`, `sing_box_dns_independent_cache`,
+  `sing_box_dns_cache_capacity`, etc.).
+- Unified custom IP rejection/bypass variables: `sing_box_custom_rejected_ip4`,
+  `sing_box_custom_rejected_ip6`, `sing_box_custom_bypassed_ip4`,
+  `sing_box_custom_bypassed_ip6`.
+- `docs/ansible_vars.md` Ansible variable reference documentation.
+- `playbooks/cleanup_config_updater.yaml` one-off playbook to remove legacy
+  `sing-box-config-updater.{service,timer}` unit files from existing hosts.
+
+### Changed
+
+- Renamed systemd units from `sing-box-config-updater.{service,timer}` to
+  `sing-box-config.{service,timer}` to match the CLI entry-point name.
+- Renamed corresponding Ansible variables from `sing_box_updater_*` to
+  `sing_box_config_*`.
+- Refactored `roles/sing_box_defaults` with `_add_headless_rule_set` helper;
+  consolidated Ansible variables and centralized validation tasks.
+- `sing-box-config` CLI now supports `backup_output` when saving config.
+
+### Fixed
+
+- Split IP-based rule sets out of custom headless rule sets into dedicated
+  `sing_box_custom_*_ip4/6` variables.
+- Added missing `route.default_domain_resolver` to sing-box server `config.json`.
+- Reduced `nf_conntrack_tcp_timeout_established` default from 86400 to 3600.
+- Removed unnecessary `flush_handlers` calls; ensured `daemon_reload` is
+  triggered correctly in systemd service tasks.
+- Removed invalid "validate tuic bandwidth limits" task from server validation.
+
 ## [0.8.0] - 2026-01-22
 
 ### Added
