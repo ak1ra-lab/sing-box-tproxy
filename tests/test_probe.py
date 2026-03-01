@@ -4,7 +4,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 
-from sing_box_config.probe import liveness_loop, probe_http_get, run_action
+from sing_box_config.probe import (
+    _maybe_run_action,
+    liveness_loop,
+    probe_http_get,
+    run_action,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -115,6 +120,41 @@ def test_run_action_exception():
 
 
 # ---------------------------------------------------------------------------
+# _maybe_run_action
+# ---------------------------------------------------------------------------
+
+
+def test_maybe_run_action_executes_when_under_threshold():
+    """action_count < action_threshold → run_action is called and count incremented."""
+    with patch("sing_box_config.probe.run_action") as mock_run:
+        new_count = _maybe_run_action(
+            action=ACTION, action_count=0, action_threshold=3, url=URL
+        )
+    mock_run.assert_called_once_with(ACTION)
+    assert new_count == 1
+
+
+def test_maybe_run_action_suppresses_at_threshold():
+    """action_count == action_threshold → run_action is NOT called, count unchanged."""
+    with patch("sing_box_config.probe.run_action") as mock_run:
+        new_count = _maybe_run_action(
+            action=ACTION, action_count=3, action_threshold=3, url=URL
+        )
+    mock_run.assert_not_called()
+    assert new_count == 3
+
+
+def test_maybe_run_action_suppresses_above_threshold():
+    """action_count > action_threshold → run_action is NOT called, count unchanged."""
+    with patch("sing_box_config.probe.run_action") as mock_run:
+        new_count = _maybe_run_action(
+            action=ACTION, action_count=5, action_threshold=3, url=URL
+        )
+    mock_run.assert_not_called()
+    assert new_count == 5
+
+
+# ---------------------------------------------------------------------------
 # liveness_loop
 # ---------------------------------------------------------------------------
 
@@ -160,6 +200,7 @@ def test_liveness_loop_triggers_action_at_threshold():
                     failure_threshold=3,
                     success_threshold=1,
                     action=ACTION,
+                    action_threshold=3,
                     stop_event=stop_event,
                 )
             )
@@ -183,6 +224,7 @@ def test_liveness_loop_no_action_below_threshold():
                     failure_threshold=3,
                     success_threshold=1,
                     action=ACTION,
+                    action_threshold=3,
                     stop_event=stop_event,
                 )
             )
@@ -212,6 +254,7 @@ def test_liveness_loop_counter_resets_after_action():
                     failure_threshold=2,
                     success_threshold=1,
                     action=ACTION,
+                    action_threshold=3,
                     stop_event=stop_event,
                 )
             )
@@ -244,11 +287,77 @@ def test_liveness_loop_recovery_resets_failure_counter():
                     failure_threshold=3,
                     success_threshold=1,
                     action=ACTION,
+                    action_threshold=3,
                     stop_event=stop_event,
                 )
             )
 
     mock_action.assert_not_called()
+
+
+def test_liveness_loop_action_suppressed_after_action_threshold():
+    """
+    failure_threshold=2, action_threshold=1:
+    First 2 failures → action fires (action_count → 1).
+    Next 2 failures → action is suppressed (action_count already == threshold).
+    Total: run_action called exactly once.
+    """
+    stop_event = asyncio.Event()
+    # 4 failures: trigger at call 4
+    side_effect = _make_probe_side_effect(
+        [False, False, False, False], stop_event, trigger_after=4
+    )
+
+    with patch("sing_box_config.probe.probe_http_get", side_effect=side_effect):
+        with patch("sing_box_config.probe.run_action") as mock_action:
+            asyncio.run(
+                liveness_loop(
+                    url=URL,
+                    interval=0,
+                    timeout=5.0,
+                    expected_status=[204],
+                    failure_threshold=2,
+                    success_threshold=1,
+                    action=ACTION,
+                    action_threshold=1,
+                    stop_event=stop_event,
+                )
+            )
+
+    mock_action.assert_called_once_with(ACTION)
+
+
+def test_liveness_loop_action_count_resets_on_recovery():
+    """
+    failure_threshold=2, action_threshold=1:
+    2 failures → action fires.
+    1 success → action_count resets to 0.
+    2 more failures → action fires again.
+    Total: run_action called exactly twice.
+    """
+    stop_event = asyncio.Event()
+    # F F T F F  → stop after 5 calls
+    side_effect = _make_probe_side_effect(
+        [False, False, True, False, False], stop_event, trigger_after=5
+    )
+
+    with patch("sing_box_config.probe.probe_http_get", side_effect=side_effect):
+        with patch("sing_box_config.probe.run_action") as mock_action:
+            asyncio.run(
+                liveness_loop(
+                    url=URL,
+                    interval=0,
+                    timeout=5.0,
+                    expected_status=[204],
+                    failure_threshold=2,
+                    success_threshold=1,
+                    action=ACTION,
+                    action_threshold=1,
+                    stop_event=stop_event,
+                )
+            )
+
+    assert mock_action.call_count == 2
 
 
 def test_liveness_loop_stops_on_event():
@@ -266,6 +375,7 @@ def test_liveness_loop_stops_on_event():
                 failure_threshold=3,
                 success_threshold=1,
                 action=ACTION,
+                action_threshold=3,
                 stop_event=stop_event,
             )
         )

@@ -13,7 +13,8 @@ ExecStart={{ sing_box_state_venv_dir }}/bin/sing-box-liveness-probe \
     --expected-status {{ sing_box_liveness_probe_expected_status | join(' ') }} \
     --failure-threshold {{ sing_box_liveness_probe_failure_threshold }} \
     --success-threshold {{ sing_box_liveness_probe_success_threshold }} \
-    --action {{ sing_box_liveness_probe_action | join(' ') }}
+    --action {{ sing_box_liveness_probe_action | join(' ') }} \
+    --action-threshold {{ sing_box_liveness_probe_action_threshold }}
 Restart=on-failure
 RestartSec=10
 

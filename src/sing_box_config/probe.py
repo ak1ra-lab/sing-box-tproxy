@@ -62,6 +62,35 @@ async def probe_http_get(
         return False
 
 
+def _maybe_run_action(
+    action: list[str],
+    action_count: int,
+    action_threshold: int,
+    url: str,
+) -> int:
+    """
+    Run the action if the action count is still under the threshold.
+
+    Returns the updated action_count.  When the threshold has already been
+    reached only a warning is emitted and the counter is left unchanged,
+    preventing restart loops caused by a persistent node failure.
+    """
+    if action_count >= action_threshold:
+        logger.warning(
+            "action threshold reached, suppressing action",
+            extra={
+                "url": url,
+                "action": action,
+                "action_count": action_count,
+                "action_threshold": action_threshold,
+            },
+        )
+        return action_count
+    action_count += 1
+    run_action(action)
+    return action_count
+
+
 def run_action(action: list[str]) -> None:
     """Execute the configured failure action as a subprocess."""
     logger.info(
@@ -106,6 +135,7 @@ async def liveness_loop(
     failure_threshold: int,
     success_threshold: int,
     action: list[str],
+    action_threshold: int,
     stop_event: asyncio.Event,
 ) -> None:
     """
@@ -116,6 +146,10 @@ async def liveness_loop(
     so the connection pool is reused across successive probe calls.
     When consecutive failures reach failure_threshold, the action command
     is executed and the failure counter resets.
+    Once the action has been triggered action_threshold times without a
+    successful recovery in between, further action execution is suppressed
+    and only a warning is logged, preventing restart loops caused by a
+    persistent node failure.
 
     Args:
         url: URL to probe
@@ -125,10 +159,13 @@ async def liveness_loop(
         failure_threshold: Consecutive failures before triggering action
         success_threshold: Consecutive successes to log a recovery event
         action: Command (as list of args) to run on failure threshold
+        action_threshold: Maximum number of times action may be triggered
+            before it is suppressed; resets when the probe recovers
         stop_event: asyncio.Event that signals a graceful shutdown
     """
     consecutive_failures = 0
     consecutive_successes = 0
+    action_count = 0
 
     logger.info(
         "starting sing-box liveness probe",
@@ -140,6 +177,7 @@ async def liveness_loop(
             "failure_threshold": failure_threshold,
             "success_threshold": success_threshold,
             "action": action,
+            "action_threshold": action_threshold,
         },
     )
 
@@ -154,6 +192,7 @@ async def liveness_loop(
                         extra={"url": url, "previous_failures": consecutive_failures},
                     )
                 consecutive_failures = 0
+                action_count = 0
                 consecutive_successes += 1
                 if consecutive_successes == success_threshold:
                     logger.debug(
@@ -175,7 +214,12 @@ async def liveness_loop(
                     },
                 )
                 if consecutive_failures >= failure_threshold:
-                    run_action(action)
+                    action_count = _maybe_run_action(
+                        action=action,
+                        action_count=action_count,
+                        action_threshold=action_threshold,
+                        url=url,
+                    )
                     consecutive_failures = 0
 
             try:
@@ -210,6 +254,7 @@ async def run(args: Any) -> None:
             failure_threshold=args.failure_threshold,
             success_threshold=args.success_threshold,
             action=args.action,
+            action_threshold=args.action_threshold,
             stop_event=stop_event,
         )
     )
@@ -275,6 +320,14 @@ def main() -> None:
         default=["systemctl", "restart", "sing-box.service"],
         metavar="ARG",
         help="Command (and its arguments) to execute when failure threshold is reached",
+    )
+    parser.add_argument(
+        "--action-threshold",
+        type=int,
+        default=3,
+        metavar="N",
+        help="Maximum number of times the action may be triggered before being suppressed;"
+        " resets when the probe recovers",
     )
 
     argcomplete.autocomplete(parser)

@@ -157,6 +157,12 @@ sing_box_liveness_probe_action:
   - restart
   - sing-box.service
 
+# [sing-box-liveness-probe]
+# Maximum number of times the action may be triggered before being suppressed.
+# Resets when the probe recovers (consecutive successes reach success_threshold).
+# Prevents restart loops caused by a persistent node failure.
+sing_box_liveness_probe_action_threshold: 3
+
 # [general]
 # github proxy for ruleset.url
 # sing_box_github_proxy: "https://gh.ak1ra.xyz/"
