@@ -338,6 +338,7 @@ playbooks/group_vars/**/*.patch
 # General configuration file and examples folder
 examples/*
 config/*
+docs/sessions/*
 
 # sing-box
 **/credentials/*

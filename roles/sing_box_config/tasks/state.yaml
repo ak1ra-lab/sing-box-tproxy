@@ -48,18 +48,18 @@
     dest: "{{ ['/', template] | ansible.builtin.path_join | ansible.builtin.splitext | first }}"
     mode: "0644"
   loop:
-    - etc/systemd/system/sing-box-config-updater.service.j2
-    - etc/systemd/system/sing-box-config-updater.timer.j2
+    - etc/systemd/system/sing-box-config.service.j2
+    - etc/systemd/system/sing-box-config.timer.j2
   loop_control:
     loop_var: template
   notify:
     - systemctl daemon-reload
 
-- name: ensure sing-box-config-updater.timer state
+- name: ensure sing-box-config.timer state
   ansible.builtin.systemd_service:
-    name: sing-box-config-updater.timer
-    state: "{{ sing_box_updater_timer_state }}"
-    enabled: "{{ sing_box_updater_timer_enabled }}"
+    name: sing-box-config.timer
+    state: "{{ sing_box_config_timer_state }}"
+    enabled: "{{ sing_box_config_timer_enabled }}"
     daemon_reload: true
 
 - name: force clash_api.external_ui (yacd) reinstall
@@ -73,9 +73,9 @@
 # 是否手动执行 sing-box-config 生成/更新 /etc/sing-box/config.json
 # 这一步配置文件一旦有变更会被 sing-box-reload.path 监听到从而触发 reload, 所以不需要添加 notify restart
 - name: update /etc/sing-box/config.json if requested
-  when: sing_box_updater_service_state in sing_box_updater_service_active_state
+  when: sing_box_config_service_state in sing_box_config_service_active_state
   ansible.builtin.systemd_service:
-    name: sing-box-config-updater.service
+    name: sing-box-config.service
     state: started
 
 # sing-box 服务状态与 nftables 状态相对独立

@@ -109,12 +109,12 @@ sing_box_pip_extra_args:
   testpypi: "--index-url=https://test.pypi.org/simple/"
 
 # [sing-box-config]
-# sing-box-config-config-updater.service states
-sing_box_updater_timer_enabled: true
-sing_box_updater_timer_interval: 1d
-sing_box_updater_timer_state: started
-sing_box_updater_service_state: started
-sing_box_updater_service_active_state: ["started", "restarted"]
+# sing-box-config.service / sing-box-config.timer states
+sing_box_config_timer_enabled: true
+sing_box_config_timer_interval: 1d
+sing_box_config_timer_state: started
+sing_box_config_service_state: started
+sing_box_config_service_active_state: ["started", "restarted"]
 
 # [sing-box-liveness-probe]
 # Whether to deploy the sing-box-liveness-probe.service systemd unit.
@@ -124,7 +124,7 @@ sing_box_liveness_probe_deploy: false
 # [sing-box-liveness-probe]
 # Service enabled/state management (only effective when sing_box_liveness_probe_deploy is true).
 # enabled: whether to enable the service on boot
-# state: desired systemd service state (started | stopped)
+# state: desired systemd service state (started | stopped | restarted)
 # Default: deploy the unit but leave it disabled and stopped so the operator can start it manually.
 sing_box_liveness_probe_enabled: false
 sing_box_liveness_probe_state: stopped
