@@ -121,8 +121,7 @@ mkdir -p playbooks/host_vars/sing-box-server-node01
 ansible-playbook playbooks/sing_box_server.yaml -v
 ```
 
-playbooks/sing_box_tproxy.yaml 在执行时会尝试将 config/client_outbounds 目录复制到 sing-box-tproxy 主机的 /var/lib/sing-box 目录下,
-因此可以把当前刚部署好的 sing-box-server 的 静态客户端配置 添加到 `sing_box_subscriptions` 中,
+playbooks/sing_box_tproxy.yaml 在执行时会尝试将 config/client_outbounds 目录复制到 sing-box-tproxy 主机的 /var/lib/sing-box 目录下, 因此可以把当前刚部署好的 sing-box-server 的 静态客户端配置 添加到 `sing_box_subscriptions` 中,
 
 ```shell
 vim playbooks/group_vars/sing-box-tproxy/main.yaml
@@ -139,30 +138,65 @@ sing_box_subscriptions:
     path: "config/client_outbounds/sing-box-server-node01.outbounds.json"
 ```
 
-## 文档
+## 重置 (Reset) sing-box 部署
 
-详细文档请参考:
+`playbooks/sing_box_reset.yaml` 与 `roles/sing_box_reset` 用于撤销 `sing_box_tproxy` 或 `sing_box_server` playbook 所做的变更.
 
-- `docs/architecture.md`
-  - 架构设计, 透明代理原理, fwmark 机制, nftables 规则详解
+通过 `-e sing_box_reset_profile=<profile>` 指定要重置的部署类型 (`tproxy` 或 `server`):
+
+```shell
+# 重置透明代理节点 (tproxy)
+ansible-playbook playbooks/sing_box_reset.yaml \
+    -e sing_box_reset_profile=tproxy
+
+# 重置服务端节点 (server)
+ansible-playbook playbooks/sing_box_reset.yaml \
+    -e sing_box_reset_profile=server
+
+# 仅清理 systemd 单元与配置文件, 保留 APT 包
+ansible-playbook playbooks/sing_box_reset.yaml \
+    -e sing_box_reset_profile=tproxy \
+    -e sing_box_reset_remove_packages=false
+
+# 针对单台主机而不是整个 inventory 组
+ansible-playbook playbooks/sing_box_reset.yaml \
+    -e sing_box_reset_profile=tproxy \
+    -e playbook_hosts=sing-box-tproxy-node01
+```
+
+**tproxy 模式**会额外清理 `sing_box_config` 和 `sing_box_tproxy` 部署的内容:
+nftables 规则集、iproute2 策略路由表、netplan 配置、sing-box-config 定时器和 liveness-probe 服务单元.
+
+**server 模式**仅需清理 `sing_box_install` 部署的公共内容即可;
+远端的 `/etc/sing-box/config.json` 会随 `sing_box_etc_dir` 目录一起删除.
+本地 `config/client_outbounds/` 中已生成的客户端配置文件不会被删除.
 
 ## 项目结构
 
 ```
 sing-box-tproxy/
-├── src/sing_box_config/     # Python 配置生成工具
-├── playbooks/               # playbooks 目录
-│   ├── sing_box_tproxy.yaml # sing-box 透明代理 playbook
-│   └── sing_box_server.yaml # sing-box 服务端部署 playbook
+├── src/sing_box_config/     # Python 配置生成工具 (sing-box-config / sing-box-liveness-probe)
+├── playbooks/               # Ansible playbooks
+│   ├── group_vars/          # 各 inventory 组的公共变量
+│   ├── host_vars/           # 主机级别的变量覆盖
+│   ├── sing_box_tproxy.yaml # 部署 sing-box 透明代理
+│   ├── sing_box_server.yaml # 部署 sing-box 服务端
+│   └── sing_box_reset.yaml  # 重置 (撤销) sing-box 部署
 ├── roles/                   # Ansible 角色
-│   ├── sing_box_defaults/   # ansible vars 配置项
-│   ├── sing_box_validation/ # 校验 ansible vars 的 validation tasks
-│   ├── sing_box_install/    # 安装 sing-box
-│   ├── sing_box_config/     # 安装 Python 配置生成工具
-│   ├── sing_box_tproxy/     # 透明代理 (nftables/策略路由)
-│   └── sing_box_server/     # 创建 sing-box 服务端配置文件
+│   ├── sing_box_defaults/   # 所有变量的默认值 (单一数据源)
+│   ├── sing_box_validation/ # 校验 Ansible 变量的合法性
+│   ├── sing_box_install/    # 通过 SagerNet APT 仓库安装 sing-box
+│   ├── sing_box_config/     # 安装 sing-box-config 并配置定时更新
+│   ├── sing_box_tproxy/     # 配置 nftables 与路由策略 (透明代理)
+│   ├── sing_box_server/     # 生成服务端配置文件及客户端出站配置
+│   └── sing_box_reset/      # 撤销 tproxy / server 部署
+├── config/                  # 本地生成的配置文件
+│   └── client_outbounds/    # sing_box_server 生成的客户端出站文件
+├── inventory/               # Ansible inventory
+│   └── hosts.yaml           # 目标主机列表
 ├── docs/                    # 文档
-│   └── architecture.md      # 架构设计文档
+│   ├── architecture.md      # 架构设计, 透明代理原理, fwmark 与 nftables 详解
+│   └── ansible_vars.md      # 所有 Ansible 变量说明
 └── README.md                # 本文件
 ```
 

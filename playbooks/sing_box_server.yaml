@@ -1,4 +1,20 @@
 ---
+# Deploy a sing-box server (Shadowsocks, Trojan, Hysteria2, etc.) on the target host(s).
+#
+# Roles executed (in order):
+#   sing_box_validation  — validate required Ansible variables
+#   sing_box_install     — install sing-box via the SagerNet APT repository
+#   sing_box_server      — generate and deploy the server config.json; also writes
+#                          client outbound files to config/client_outbounds/ locally
+#
+# Optional overrides:
+#   playbook_hosts  (default: 'sing-box-server')  — inventory group or host pattern
+#
+# Examples:
+#
+#   ansible-playbook playbooks/sing_box_server.yaml -v
+#   ansible-playbook playbooks/sing_box_server.yaml -e playbook_hosts=sing-box-server-node01 -v
+
 - name: deploy sing-box server
   hosts: "{{ playbook_hosts | default('sing-box-server') }}"
   become: true

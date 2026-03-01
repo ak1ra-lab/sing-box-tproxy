@@ -1,4 +1,23 @@
 ---
+# Deploy sing-box as a transparent proxy (TPROXY) on the target host(s).
+#
+# Roles executed (in order):
+#   sing_box_validation  — validate required Ansible variables
+#   sing_box_install     — install sing-box via the SagerNet APT repository
+#   sing_box_config      — install the sing-box-config Python tool and enable the update timer
+#   sing_box_tproxy      — configure nftables, routing policy and netplan (local/gateway modes)
+#
+# sing_box_tproxy is skipped when sing_box_mode == 'mixed' (no transparent proxy needed).
+#
+# Optional overrides:
+#   playbook_hosts  (default: 'sing-box-tproxy')  — inventory group or host pattern
+#   sing_box_mode   (default: 'gateway')           — one of: mixed, local, gateway
+#
+# Examples:
+#
+#   ansible-playbook playbooks/sing_box_tproxy.yaml -v
+#   ansible-playbook playbooks/sing_box_tproxy.yaml -e playbook_hosts=sing-box-tproxy-node01 -v
+
 - name: deploy sing-box tproxy
   hosts: "{{ playbook_hosts | default('sing-box-tproxy') }}"
   become: true
