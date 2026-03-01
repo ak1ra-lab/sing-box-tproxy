@@ -52,6 +52,18 @@ cp roles/sing_box_defaults/defaults/main.yaml playbooks/group_vars/sing-box-tpro
 vim playbooks/group_vars/sing-box-tproxy/main.yaml
 ```
 
+完成变更后, 生成 group_vars 相对于默认配置的 patch 文件, 以便后续同步上游变更时复用:
+
+```shell
+./group_vars.sh gen tproxy
+```
+
+当 `roles/sing_box_defaults/defaults/main.yaml` 有上游变更需要同步时:
+
+```shell
+./group_vars.sh sync tproxy
+```
+
 执行 playbook 部署 sing-box-tproxy 透明代理,
 
 ```shell
@@ -82,11 +94,22 @@ ip route show table 224
 # 复制 roles/sing_box_server 中提供的默认配置作为 group_vars 模板
 mkdir -p playbooks/group_vars/sing-box-server
 cp roles/sing_box_server/defaults/main.yaml playbooks/group_vars/sing-box-server/main.yaml
+
 # 对 group_vars 做必要变更
 vim playbooks/group_vars/sing-box-server/main.yaml
+```
 
+完成变更后生成 patch 文件; 当上游默认值有变更时执行 sync 重新应用差异:
+
+```shell
+./group_vars.sh gen server   # 生成 / 刷新 patch
+./group_vars.sh sync server  # 同步上游变更后重新应用 patch
+```
+
+```shell
 # 创建 host_vars (如需覆盖通用配置)
 mkdir -p playbooks/host_vars/sing-box-server-node01
+
 # touch playbooks/host_vars/sing-box-server-node01/main.yaml
 # 对 host_vars 做必要变更
 # vim playbooks/host_vars/sing-box-server-node01/main.yaml
