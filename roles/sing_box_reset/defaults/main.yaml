@@ -1,0 +1,13 @@
+---
+# Reset profile: 'tproxy' or 'server'
+# Must be set by the calling playbook or overridden at runtime.
+sing_box_reset_profile: ""
+
+# When true, uninstall the sing-box APT package and remove the APT
+# repository, keyring, and pin-priority file.
+sing_box_reset_remove_packages: true
+
+# When true, delete the sing-box runtime directories:
+#   sing_box_etc_dir, sing_box_log_dir, sing_box_state_dir
+# Set to false if you want to keep config data while clearing systemd state only.
+sing_box_reset_remove_directories: true

@@ -1,0 +1,67 @@
+---
+# tasks/tproxy.yaml — undo what roles/sing_box_config + roles/sing_box_tproxy deployed
+
+# ── sing-box-config timer & liveness probe ────────────────────────────────────
+
+- name: reset | stop and disable sing-box-config.timer
+  ansible.builtin.systemd_service:
+    name: sing-box-config.timer
+    state: stopped
+    enabled: false
+  failed_when: false
+
+- name: reset | stop sing-box-config.service
+  ansible.builtin.systemd_service:
+    name: sing-box-config.service
+    state: stopped
+  failed_when: false
+
+- name: reset | stop and disable sing-box-liveness-probe.service
+  ansible.builtin.systemd_service:
+    name: sing-box-liveness-probe.service
+    state: stopped
+    enabled: false
+  failed_when: false
+
+- name: reset | remove sing-box-config / liveness-probe systemd unit files
+  ansible.builtin.file:
+    path: "{{ unit }}"
+    state: absent
+  loop:
+    - /etc/systemd/system/sing-box-config.service
+    - /etc/systemd/system/sing-box-config.timer
+    - /etc/systemd/system/sing-box-liveness-probe.service
+  loop_control:
+    loop_var: unit
+  notify:
+    - systemctl daemon-reload
+
+# ── nftables ──────────────────────────────────────────────────────────────────
+# Only remove the sing-box-tproxy specific ruleset file and let nftables reload.
+# /etc/nftables.conf is a system-wide config and must not be touched.
+# nftables.service itself stays enabled — it may serve other purposes on the host.
+
+- name: reset | remove sing_box_tproxy nftables ruleset file
+  ansible.builtin.file:
+    path: /etc/nftables.d/sing_box_tproxy.nft
+    state: absent
+  notify:
+    - systemctl restart nftables.service
+
+# ── iproute2 routing table ────────────────────────────────────────────────────
+
+- name: reset | remove iproute2 sing_box_tproxy routing table entry
+  ansible.builtin.file:
+    path: /etc/iproute2/rt_tables.d/sing_box_tproxy.conf
+    state: absent
+
+# ── netplan (routing policy / ip rule / ip route) ────────────────────────────
+# file: state=absent returns 'ok' (not 'changed') when the file does not exist,
+# so the handler is only notified when the file was actually present.
+
+- name: reset | remove sing_box_tproxy netplan config
+  ansible.builtin.file:
+    path: /etc/netplan/99-sing_box_tproxy.yaml
+    state: absent
+  notify:
+    - netplan apply

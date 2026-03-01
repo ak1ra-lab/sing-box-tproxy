@@ -1,0 +1,34 @@
+---
+# Reset (undo) a sing-box deployment.
+#
+# Required variable:
+#   sing_box_reset_profile  — either 'tproxy' or 'server'
+#
+# Optional overrides (role defaults shown):
+#   sing_box_reset_remove_packages    (default: true)  — uninstall sing-box APT package & repo
+#   sing_box_reset_remove_directories (default: true)  — remove /etc/sing-box, /var/lib/sing-box, etc.
+#
+# Examples:
+#
+#   # Reset a tproxy node (uses the inventory group as target):
+#   ansible-playbook playbooks/sing_box_reset.yaml \
+#       -e sing_box_reset_profile=tproxy
+#
+#   # Reset a server node and keep the APT package installed:
+#   ansible-playbook playbooks/sing_box_reset.yaml \
+#       -e sing_box_reset_profile=server \
+#       -e sing_box_reset_remove_packages=false
+#
+#   # Target a specific host:
+#   ansible-playbook playbooks/sing_box_reset.yaml \
+#       -e sing_box_reset_profile=tproxy \
+#       -e playbook_hosts=sing-box-tproxy-node01
+
+- name: reset sing-box deployment
+  hosts: "{{ playbook_hosts | default('sing-box-' + (sing_box_reset_profile | default('tproxy'))) }}"
+  become: true
+
+  tasks:
+    - name: reset sing-box deployment
+      ansible.builtin.import_role:
+        name: sing_box_reset

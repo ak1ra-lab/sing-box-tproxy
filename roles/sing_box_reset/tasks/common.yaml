@@ -1,0 +1,80 @@
+---
+# tasks/common.yaml — cleanup shared by both tproxy and server profiles
+# Reverses what roles/sing_box_install/tasks/ deploys.
+
+# ── systemd services (sing-box core) ─────────────────────────────────────────
+
+- name: reset | stop and disable sing-box.service
+  ansible.builtin.systemd_service:
+    name: sing-box.service
+    state: stopped
+    enabled: false
+  failed_when: false
+
+- name: reset | stop and disable sing-box-reload.path
+  ansible.builtin.systemd_service:
+    name: sing-box-reload.path
+    state: stopped
+    enabled: false
+  failed_when: false
+
+- name: reset | stop sing-box-reload.service
+  ansible.builtin.systemd_service:
+    name: sing-box-reload.service
+    state: stopped
+  failed_when: false
+
+- name: reset | remove sing-box core systemd unit files
+  ansible.builtin.file:
+    path: "{{ unit }}"
+    state: absent
+  loop:
+    - /etc/systemd/system/sing-box.service
+    - /etc/systemd/system/sing-box-reload.path
+    - /etc/systemd/system/sing-box-reload.service
+  loop_control:
+    loop_var: unit
+  notify:
+    - systemctl daemon-reload
+
+# ── APT package & repository ──────────────────────────────────────────────────
+
+- name: reset | uninstall sing-box package
+  when: sing_box_reset_remove_packages | ansible.builtin.bool
+  ansible.builtin.apt:
+    name: "{{ sing_box_apt_packages }}"
+    state: absent
+    purge: true
+    autoremove: true
+
+- name: reset | remove APT repository file
+  when: sing_box_reset_remove_packages | ansible.builtin.bool
+  ansible.builtin.file:
+    path: "/etc/apt/sources.list.d/{{ sing_box_apt_repo }}.sources"
+    state: absent
+
+- name: reset | remove APT keyring file
+  when: sing_box_reset_remove_packages | ansible.builtin.bool
+  ansible.builtin.file:
+    path: "{{ sing_box_apt_keyrings_dest }}"
+    state: absent
+
+- name: reset | remove APT pin-priority file
+  when: sing_box_reset_remove_packages | ansible.builtin.bool
+  ansible.builtin.file:
+    path: "/etc/apt/preferences.d/99{{ sing_box_apt_repo }}"
+    state: absent
+
+# ── runtime directories ───────────────────────────────────────────────────────
+
+- name: reset | remove sing-box runtime directories
+  when: sing_box_reset_remove_directories | ansible.builtin.bool
+  ansible.builtin.file:
+    path: "{{ directory }}"
+    state: absent
+  loop:
+    - "{{ sing_box_etc_dir }}"
+    - "{{ sing_box_log_dir }}"
+    - "{{ sing_box_state_dir }}"
+  loop_control:
+    loop_var: directory

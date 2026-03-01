@@ -1,0 +1,11 @@
+---
+# tasks/server.yaml — undo what roles/sing_box_server deployed
+#
+# sing_box_server only writes config.json to sing_box_etc_config_file on the
+# remote host (and generates local client_outbounds files). The remote file
+# lives inside sing_box_etc_dir, which is removed by common.yaml when
+# sing_box_reset_remove_directories is true, so no additional cleanup is
+# needed here beyond what common.yaml already handles.
+#
+# The locally generated files in config/client_outbounds/ are intentionally
+# left in place so that existing tproxy nodes can continue to reference them.
