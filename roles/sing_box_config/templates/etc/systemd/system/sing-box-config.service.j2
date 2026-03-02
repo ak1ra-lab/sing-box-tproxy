@@ -1,9 +1,17 @@
 [Unit]
 Description=sing-box-config updater
+After=network-online.target sing-box.service
+Wants=network-online.target
 
 [Service]
 Type=oneshot
 User={{ sing_box_user.name }}
 Group={{ sing_box_group.name }}
 WorkingDirectory={{ sing_box_state_dir }}
-ExecStart={{ sing_box_state_venv_dir }}/bin/sing-box-config --base {{ base_dest }} --subscriptions {{ subscriptions_dest }} --output {{ sing_box_etc_config_file }}
+ExecStart={{ sing_box_state_venv_dir }}/bin/sing-box-config \
+    --base {{ base_dest }} \
+    --subscriptions {{ subscriptions_dest }} \
+    --output {{ sing_box_etc_config_file }}
+
+[Install]
+WantedBy=multi-user.target

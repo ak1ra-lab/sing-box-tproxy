@@ -6,6 +6,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=root
+WorkingDirectory={{ sing_box_state_dir }}
 ExecStart={{ sing_box_state_venv_dir }}/bin/sing-box-liveness-probe \
     --url {{ sing_box_liveness_probe_url }} \
     --interval {{ sing_box_liveness_probe_interval }} \
