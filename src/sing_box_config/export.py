@@ -120,14 +120,16 @@ def get_proxies_from_subscriptions(
 
     # Filter proxies
     exclude_patterns = subscription.get("exclude", [])
-    if exclude_patterns:
-        filtered_proxies = []
-        for proxy in proxies:
-            if any(re.search(p, proxy["tag"], re.IGNORECASE) for p in exclude_patterns):
-                logger.debug("Excluding proxy: %s", proxy["tag"])
-                continue
-            filtered_proxies.append(proxy)
-        proxies = filtered_proxies
+    if not exclude_patterns:
+        return proxies
+
+    filtered_proxies = []
+    for proxy in proxies:
+        if any(re.search(p, proxy["tag"], re.IGNORECASE) for p in exclude_patterns):
+            logger.debug("Excluding proxy: %s", proxy["tag"])
+            continue
+        filtered_proxies.append(proxy)
+    proxies = filtered_proxies
 
     return proxies
 
@@ -143,7 +145,7 @@ def filter_valid_proxies(
         proxies: List of available proxy configurations
     """
     for outbound in outbounds:
-        if "exclude" not in outbound and "filter" not in outbound:
+        if all(key not in outbound for key in ["exclude", "filter"]):
             continue
 
         exclude_patterns = outbound.pop("exclude", [])
@@ -197,6 +199,39 @@ def remove_invalid_outbounds(outbounds: list[dict[str, Any]]) -> None:
             ]
 
 
+def duplicate_selfhost_detour(
+    selfhost_proxies: list[dict[str, Any]],
+    selfhost_detour: dict[str, str],
+) -> list[dict[str, Any]]:
+    """
+    Duplicate self-hosted proxies with detour chaining.
+
+    For each selfhost proxy, creates a copy whose tag gets a ``-detour`` suffix
+    and whose ``detour`` field is set to the upstream selector for that region.
+    The region is determined by matching the proxy tag against each key in
+    *selfhost_detour* (a regex pattern → detour-tag mapping).
+
+    Args:
+        selfhost_proxies: Self-hosted proxy configs to duplicate.
+        selfhost_detour: Mapping of region regex pattern → upstream outbound tag
+            (e.g. ``{"SG|Singapore|...": "🇸🇬 狮城节点"}``).  Comes from
+            ``_selfhost_detour`` embedded in base.json by Ansible.
+
+    Returns:
+        List of new detour proxy copies (caller should extend the main proxy list).
+    """
+    detour_proxies = []
+    for proxy in selfhost_proxies:
+        for region_filter, detour_tag in selfhost_detour.items():
+            if re.search(region_filter, proxy["tag"], re.IGNORECASE):
+                detour_proxy = proxy.copy()
+                detour_proxy["tag"] = f"{proxy['tag']}-detour"
+                detour_proxy["detour"] = detour_tag
+                detour_proxies.append(detour_proxy)
+                break
+    return detour_proxies
+
+
 def save_config_from_subscriptions(
     base_config: dict[str, Any],
     subscriptions_config: dict[str, Any],
@@ -235,7 +270,12 @@ def save_config_from_subscriptions(
 
     if not proxies:
         for name, subscription in subscriptions_config.items():
-            proxies.extend(get_proxies_from_subscriptions(name, subscription))
+            proxies.extend(
+                get_proxies_from_subscriptions(
+                    name=name,
+                    subscription=subscription,
+                )
+            )
 
         if proxies_path:
             proxies_path.parent.mkdir(parents=True, exist_ok=True)
@@ -245,7 +285,19 @@ def save_config_from_subscriptions(
     if not proxies:
         logger.warning("No proxies found from subscriptions")
 
+    # Pop _selfhost_detour before outbounds so it never leaks into the final config.
+    selfhost_detour: dict[str, str] = base_config.pop("_selfhost_detour", {})
+
     outbounds = base_config.pop("outbounds")
+
+    if selfhost_detour:
+        selfhost_pattern = re.compile(r"selfhost|自建", re.IGNORECASE)
+        selfhost_proxies = [p for p in proxies if re.search(selfhost_pattern, p["tag"])]
+        logger.debug(
+            "Processing selfhost_detour for selfhost_proxies: %s",
+            [p["tag"] for p in selfhost_proxies],
+        )
+        proxies.extend(duplicate_selfhost_detour(selfhost_proxies, selfhost_detour))
 
     # Modify outbounds directly
     filter_valid_proxies(outbounds, proxies)

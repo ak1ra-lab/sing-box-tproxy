@@ -15,4 +15,14 @@
     "experimental": experimental_lib.get_experimental_config() | ansible.builtin.from_json
 } -%}
 
+{# Embed selfhost detour mapping for sing-box-config to consume.
+   Python pops this key before writing the final sing-box config. #}
+{%- if sing_box_selfhost_detour_enabled | ansible.builtin.bool -%}
+{%- set ns = namespace(selfhost_detour={}) -%}
+{%- for group in sing_box_selfhost_groups -%}
+{%- set ns.selfhost_detour = ns.selfhost_detour | ansible.builtin.combine({group.filter: group.detour}) -%}
+{%- endfor -%}
+{%- set _ = config.update({"_selfhost_detour": ns.selfhost_detour}) -%}
+{%- endif -%}
+
 {{ config | ansible.builtin.to_json(indent=4, ensure_ascii=false, sort_keys=false) }}

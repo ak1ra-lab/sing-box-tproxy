@@ -13,7 +13,8 @@
         "tag": group.tag,
         "type": "urltest",
         "outbounds": [],
-        "filter": [group.filter]
+        "filter": [group.filter],
+        "exclude": [group.exclude]
     }) -%}
 {%- endfor -%}
 
@@ -23,7 +24,21 @@
         "tag": group.tag,
         "type": "selector",
         "outbounds": [],
-        "filter": [group.filter]
+        "filter": [group.filter],
+        "exclude": [group.exclude]
+    }) -%}
+{%- endfor -%}
+
+{# Add Selfhost Groups to Config #}
+{# Combined filter: matches proxies that are BOTH selfhost AND in the target region.
+   Uses two zero-width lookaheads so order of terms in the tag does not matter. #}
+{%- for group in sing_box_selfhost_groups -%}
+    {%- set combined_filter = "(?=.*(?:selfhost|自建))(?=.*(?:" + group.filter + "))" -%}
+    {%- set _ = outbounds_config.append({
+        "tag": group.tag,
+        "type": "selector",
+        "outbounds": [],
+        "filter": [combined_filter]
     }) -%}
 {%- endfor -%}
 
@@ -36,6 +51,9 @@
     {%- endfor -%}
     {%- for selector_group in sing_box_selector_groups -%}
         {%- set _ = _group_outbounds.append(selector_group.tag) -%}
+    {%- endfor -%}
+    {%- for selfhost_group in sing_box_selfhost_groups -%}
+        {%- set _ = _group_outbounds.append(selfhost_group.tag) -%}
     {%- endfor -%}
 
     {%- set _ = outbounds_config.append({
