@@ -1,7 +1,5 @@
 ---
-# =============================================================================
-# General project settings (User/Group/Dirs)
-# =============================================================================
+# General project settings
 
 # [general]
 # sing-box installation mode: [mixed, local, gateway]
@@ -9,7 +7,6 @@
 # local: Local transparent proxy, does not proxy traffic for other hosts in the LAN
 # gateway: Transparent proxy gateway, this is the default behavior
 sing_box_mode: gateway
-sing_box_mode_available: ["mixed", "local", "gateway"]
 
 # [general]
 # sing-box outbounds proxy subscription URLs
@@ -57,46 +54,12 @@ sing_box_subscriptions: {}
 #       Mzg4I0V4YW1wbGUxCnNzOi8vWTJoaFkyaGhNakF0YVdWMFppMXdiMng1TVRNd05UcHdZWE56ZDI5
 #       eVpBQDEuMi4zLjQ6ODQ4OCNFeGFtcGxlMgo=
 
+# [general]
 # Whether to check subscription URL accessibility before execution to avoid deployment failure
 sing_box_validate_subscription_urls: false
 
-# [general]
-# https://wiki.debian.org/SystemGroups#Groups_with_an_associated_user
-# proxy:x:13:13:proxy:/bin:/usr/sbin/nologin
-sing_box_user:
-  name: proxy
-  uid: 13
-  home: /bin
-  shell: /usr/sbin/nologin
-sing_box_group:
-  name: proxy
-  gid: 13
-
-# [general]
-sing_box_etc_dir: /etc/sing-box
-sing_box_log_dir: /var/log/sing-box
-sing_box_state_dir: /var/lib/sing-box
-sing_box_etc_config_file: "{{ sing_box_etc_dir }}/config.json"
-sing_box_state_venv_dir: "{{ sing_box_state_dir }}/.venv"
-sing_box_state_config_dir: "{{ sing_box_state_dir }}/config"
-sing_box_state_acme_dir: "{{ sing_box_state_dir }}/acme"
-
-# [general]
-# git repo root dir
-sing_box_local_repo_root: "{{ playbook_dir | ansible.builtin.dirname }}"
-sing_box_local_config_dir: "{{ sing_box_local_repo_root }}/config"
-sing_box_local_client_outbounds: "{{ sing_box_local_config_dir }}/client_outbounds"
-
-# [general]
-# Apt Repository / Installation Source
-sing_box_apt_key_url: https://sing-box.app/gpg.key
-sing_box_apt_keyrings_dest: /etc/apt/keyrings/sagernet.asc
-sing_box_apt_repo: sagernet
-sing_box_apt_repo_uris: https://deb.sagernet.org/
-sing_box_apt_repo_suites: "*"
-sing_box_apt_repo_components: "*"
-# one of [present, latest]
-# 'latest' ensures that the latest version is installed
+# [apt]
+# Apt package: one of [present, latest] — 'latest' ensures the newest version is installed
 sing_box_apt_packages_state: present
 # one of [sing-box, sing-box-beta]
 sing_box_apt_packages: [sing-box]
@@ -104,9 +67,6 @@ sing_box_apt_packages: [sing-box]
 # [sing-box-config]
 # Install source: [local, pypi, testpypi] (for src/sing_box_config generator script)
 sing_box_pip_install_source: pypi
-sing_box_pip_extra_args:
-  pypi: ""
-  testpypi: "--index-url=https://test.pypi.org/simple/"
 
 # [sing-box-config]
 # sing-box-config.service / sing-box-config.timer states
@@ -114,7 +74,6 @@ sing_box_config_timer_enabled: true
 sing_box_config_timer_interval: 1d
 sing_box_config_timer_state: started
 sing_box_config_service_state: started
-sing_box_config_service_active_state: ["started", "restarted"]
 
 # [sing-box-liveness-probe]
 # Whether to deploy the sing-box-liveness-probe.service systemd unit.
@@ -164,328 +123,57 @@ sing_box_liveness_probe_action:
 sing_box_liveness_probe_action_threshold: 3
 
 # [general]
-# github proxy for ruleset.url
+# GitHub proxy prefix prepended to remote URLs (ruleset downloads, yacd archive).
+# Example: "https://gh.example.com/"  Leave empty to use GitHub directly.
 # sing_box_github_proxy: "https://gh.ak1ra.xyz/"
 sing_box_github_proxy: ""
 
 # [sing-box]
 sing_box_log_level: warn
-# sing-box inbounds for mixed type (http/socks)
-sing_box_mixed_port: 7890
-# sing-box inbounds for tproxy type
-sing_box_tproxy_port: 7895
 
 # [sing-box]
-# https://sing-box.sagernet.org/configuration/experimental/
-# sing-box experimental.cache_file
-sing_box_cache_file_enabled: true
-sing_box_cache_file_store_fakeip: true
-sing_box_cache_file_store_rdrc: true
-# sing-box experimental.clash_api
+# Clash API authentication secret (leave empty to disable)
 sing_box_clash_api_secret: ""
-sing_box_clash_api_external_controller: "0.0.0.0:9090"
-sing_box_clash_api_external_ui: yacd
-sing_box_clash_api_external_ui_download_url: "{{ sing_box_github_proxy ~ 'https://github.com/MetaCubeX/Yacd-meta/archive/gh-pages.zip' }}"
+# Force reinstall of the clash_api.external_ui (yacd) archive on next run
 sing_box_clash_api_external_ui_reinstall: false
 
-# =============================================================================
-# System & Network Integration
-# =============================================================================
-
-# [iproute, nftables]
-sing_box_proxy_route_table: 224
-sing_box_proxy_mark: 224
-sing_box_route_default_mark: 225
-
-# [nftables]
-# Whether to enable nftables flow offloading (flowtable)
-# https://docs.kernel.org/networking/nf_flowtable.html
-sing_box_nftables_flow_offload: true
-
-# [sysctl]
-# Enable TCP BBR congestion control algorithm
-sing_box_tcp_bbr_enabled: true
-
-# [sysctl, nftables conntrack]
-# Whether to configure /proc/sys/net/netfilter/nf_conntrack_*
-sing_box_sysctl_nf_conntrack: true
-# nf_conntrack_buckets
-sing_box_sysctl_nf_conntrack_buckets: 65536
-# nf_conntrack_max
-sing_box_sysctl_nf_conntrack_max: 262144
-# nf_conntrack_tcp_timeout_established
-sing_box_sysctl_nf_conntrack_tcp_timeout_established: 3600
-
-# =============================================================================
 # DNS servers
-# =============================================================================
 
-# [sing-box dns.servers[dns_hosts]]
-# https://sing-box.sagernet.org/configuration/dns/server/hosts/
-# Predefined hosts will be inserted into dns.servers[dns_hosts].predefined
-# dns.servers[dns_hosts] is used by dns.servers[dns_direct, dns_proxy].domain_resolver
-sing_box_dns_hosts_predefined:
-  "dns.alidns.com": ["223.5.5.5", "223.6.6.6"]
-  "one.one.one.one": ["1.1.1.1", "1.0.0.1"]
-
-# [sing-box dns.servers[dns_direct, dns_proxy, dns_fakeip]]
-# DoT/DoH DNS servers configuration
-sing_box_dns_public_dns_servers:
-  - tag: dns_direct
-    type: tls
-    server: dns.alidns.com
-    server_port: 853
-    domain_resolver: dns_hosts
-  - tag: dns_proxy
-    type: tls
-    server: one.one.one.one
-    server_port: 853
-    domain_resolver: dns_hosts
-    detour: PROXY
-  - tag: dns_fakeip
-    type: fakeip
-    inet4_range: 198.18.0.0/15
-    inet6_range: fc00::/18
-
-# [sing-box dns.servers[dns_internal]]
-# Internal DNS server (for custom-internal-rule-set)
-sing_box_dns_internal_tag: dns_internal
-# fixed type: UDP, server_port: 53
+# [dns]
+# IP addresses of internal DNS resolvers (used by custom-internal-rule-set).
+# Leave empty if you have no internal domains.
 sing_box_dns_internal_servers: []
 
-# [sing-box]
-# dns.final should match route.final (which usually goes to PROXY)
+# [dns]
+# Default DNS server for unmatched queries — should point at the proxy-routed resolver.
 sing_box_dns_final: dns_proxy
-sing_box_dns_strategy: prefer_ipv4
-sing_box_dns_disable_cache: false
-sing_box_dns_disable_expire: false
-sing_box_dns_independent_cache: false
-sing_box_dns_cache_capacity: 65535
 
-# =============================================================================
-# Route rules
-# =============================================================================
+# Route rules — custom rule sets
 
-sing_box_route_final: FINAL
-# https://sing-box.sagernet.org/configuration/shared/dial/#domain_resolver
-# route.default_domain_resolver and outbound.domain_resolver cannot use PROXY, we have to use dns_direct here
-sing_box_route_default_domain_resolver: dns_direct
-sing_box_route_auto_detect_interface: true
-
-# [sing-box route.rules and route.rule_set]
-# Custom headless rules in sing-box route.rule_set
-# https://sing-box.sagernet.org/configuration/rule-set/headless-rule/
-# custom-rejected-rule-set (LANs, Ads, Malicious etc.)
+# [sing-box route.rule_set] custom-rejected-rule-set (LANs, Ads, Malicious etc.)
 # NOTE: defined rules will be merged with ip_cidr from sing_box_custom_rejected_ip4/6
-sing_box_custom_rejected_rule_set: custom-rejected-rule-set
 sing_box_custom_rejected_rule_set_rules: []
 
-# [sing-box, nftables]
-# Custom rejected IP CIDRs (Also used in nftables)
+# [sing-box, nftables] Custom rejected IP CIDRs (also applied in nftables)
 sing_box_custom_rejected_ip4: []
 sing_box_custom_rejected_ip6: []
 
-# custom-internal-rule-set (Intranet domains)
-# Use dns_internal for DNS resolution and DIRECT outbound
-sing_box_custom_internal_rule_set: custom-internal-rule-set
-sing_box_custom_internal_rule_set_dns: dns_internal
+# [sing-box route.rule_set] custom-internal-rule-set (intranet domains → DIRECT + dns_internal)
 sing_box_custom_internal_rule_set_rules: []
 
-# custom-bypassed-rule-set (Force Direct domains)
-# Use dns_direct for DNS resolution and DIRECT outbound
+# [sing-box route.rule_set] custom-bypassed-rule-set (force-direct domains)
 # NOTE: defined rules will be merged with ip_cidr from sing_box_custom_bypassed_ip4/6
-sing_box_custom_bypassed_rule_set: custom-bypassed-rule-set
-sing_box_custom_bypassed_rule_set_dns: dns_direct
 sing_box_custom_bypassed_rule_set_rules: []
 
-# [sing-box, nftables]
-# Custom bypassed IP CIDRs (Also used in nftables)
+# [sing-box, nftables] Custom bypassed IP CIDRs (also applied in nftables)
 sing_box_custom_bypassed_ip4: []
 sing_box_custom_bypassed_ip6: []
 
-# =============================================================================
-# Route rule sets
-# =============================================================================
-
-# [sing-box]
-# https://github.com/MetaCubeX/meta-rules-dat/tree/sing
-sing_box_remote_rule_set_url_prefix: "{{ sing_box_github_proxy ~ 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/' }}"
-sing_box_remote_rule_set_update_interval: 30d
-
-# [sing-box]
-sing_box_remote_rule_sets:
-  - path: geoip/cn.srs
-  - path: geoip/private.srs
-  - path: geoip/telegram.srs
-  - path: geosite/category-ai-!cn.srs
-  - path: geosite/category-entertainment.srs
-  - path: geosite/cn.srs
-  - path: geosite/gfw.srs
-  - path: geosite/github.srs
-  - path: geosite/google.srs
-  - path: geosite/private.srs
-  - path: geosite/telegram.srs
-
-# [sing-box]
-# General DNS Routing Rules
-sing_box_basic_dns_rules:
-  - action: route
-    rule_set:
-      - geosite-cn
-      - geosite-private
-    server: dns_direct
-  - action: route
-    query_type: [A, AAAA]
-    rule_set:
-      - geosite-category-ai-!cn
-      - geosite-category-entertainment
-      - geosite-gfw
-      - geosite-github
-      - geosite-google
-      - geosite-telegram
-    server: dns_fakeip
-
-# [sing-box]
-sing_box_basic_route_rules:
-  - action: hijack-dns
-    port: 53
-  - action: hijack-dns
-    protocol: dns
-  - action: route
-    port: 22
-    outbound: SSH
-
-# [sing-box]
-sing_box_filtering_route_rules:
-  - action: route
-    rule_set: [geoip-private, geosite-private]
-    outbound: DIRECT
-  - action: route
-    rule_set: [geoip-cn, geosite-cn]
-    outbound: DIRECT
-  - action: route
-    rule_set: [geosite-category-ai-!cn]
-    outbound: AI
-  - action: route
-    rule_set: [geosite-category-entertainment]
-    outbound: Entertainment
-  - action: route
-    rule_set: [geoip-telegram, geosite-telegram]
-    outbound: TELEGRAM
-  - action: route
-    rule_set: [geosite-gfw, geosite-github, geosite-google]
-    outbound: PROXY
-
-# =============================================================================
 # Outbounds & proxy groups
-# =============================================================================
 
 # [sing-box outbounds[]]
-sing_box_proxy_groups:
-  - tag: PROXY
-    type: selector
-    outbounds: []
-  - tag: FINAL
-    type: selector
-    outbounds: [PROXY, DIRECT]
-  - tag: AI
-    type: selector
-    outbounds: [PROXY, DIRECT]
-  - tag: Entertainment
-    type: selector
-    outbounds: [PROXY, DIRECT]
-  - tag: TELEGRAM
-    type: selector
-    outbounds: [PROXY, DIRECT]
-  - tag: SSH
-    type: selector
-    outbounds: [DIRECT, PROXY]
-
-# [sing-box outbounds[]]
-sing_box_auto_groups:
-  - tag: "🇸🇬 狮城节点 - AUTO"
-    filter: "{{ sing_box_region_regex['SG'] }}"
-    exclude: "selfhost|自建"
-  - tag: "🇭🇰 香港节点 - AUTO"
-    filter: "{{ sing_box_region_regex['HK'] }}"
-    exclude: "selfhost|自建"
-  - tag: "🇯🇵 日本节点 - AUTO"
-    filter: "{{ sing_box_region_regex['JP'] }}"
-    exclude: "selfhost|自建"
-  - tag: "🇹🇼 台湾节点 - AUTO"
-    filter: "{{ sing_box_region_regex['TW'] }}"
-    exclude: "selfhost|自建"
-  - tag: "🇺🇸 美国节点 - AUTO"
-    filter: "{{ sing_box_region_regex['US'] }}"
-    exclude: "selfhost|自建"
-  - tag: "🏰 欧洲节点 - AUTO"
-    filter: "{{ sing_box_region_regex['EU'] }}"
-    exclude: "selfhost|自建"
-  - tag: "🇰🇷 韩国节点 - AUTO"
-    filter: "{{ sing_box_region_regex['KR'] }}"
-    exclude: "selfhost|自建"
-
-# [sing-box outbounds[]]
-sing_box_selector_groups:
-  - tag: "🇸🇬 狮城节点"
-    filter: "{{ sing_box_region_regex['SG'] }}"
-    exclude: "selfhost|自建"
-  - tag: "🇭🇰 香港节点"
-    filter: "{{ sing_box_region_regex['HK'] }}"
-    exclude: "selfhost|自建"
-  - tag: "🇯🇵 日本节点"
-    filter: "{{ sing_box_region_regex['JP'] }}"
-    exclude: "selfhost|自建"
-  - tag: "🇹🇼 台湾节点"
-    filter: "{{ sing_box_region_regex['TW'] }}"
-    exclude: "selfhost|自建"
-  - tag: "🇺🇸 美国节点"
-    filter: "{{ sing_box_region_regex['US'] }}"
-    exclude: "selfhost|自建"
-  - tag: "🏰 欧洲节点"
-    filter: "{{ sing_box_region_regex['EU'] }}"
-    exclude: "selfhost|自建"
-  - tag: "🇰🇷 韩国节点"
-    filter: "{{ sing_box_region_regex['KR'] }}"
-    exclude: "selfhost|自建"
-
-# [sing-box outbounds[]]
-sing_box_selfhost_groups:
-  - tag: "🇸🇬 狮城节点 - 自建"
-    filter: "{{ sing_box_region_regex['SG'] }}"
-    detour: "🇸🇬 狮城节点"
-  - tag: "🇭🇰 香港节点 - 自建"
-    filter: "{{ sing_box_region_regex['HK'] }}"
-    detour: "🇭🇰 香港节点"
-  - tag: "🇯🇵 日本节点 - 自建"
-    filter: "{{ sing_box_region_regex['JP'] }}"
-    detour: "🇯🇵 日本节点"
-  - tag: "🇹🇼 台湾节点 - 自建"
-    filter: "{{ sing_box_region_regex['TW'] }}"
-    detour: "🇹🇼 台湾节点"
-  - tag: "🇺🇸 美国节点 - 自建"
-    filter: "{{ sing_box_region_regex['US'] }}"
-    detour: "🇺🇸 美国节点"
-  - tag: "🏰 欧洲节点 - 自建"
-    filter: "{{ sing_box_region_regex['EU'] }}"
-    detour: "🏰 欧洲节点"
-  - tag: "🇰🇷 韩国节点 - 自建"
-    filter: "{{ sing_box_region_regex['KR'] }}"
-    detour: "🇰🇷 韩国节点"
-
-# [sing-box outbounds[]]
-# Whether to duplicate self-hosted nodes with detour enabled.
-# When enabled, each self-hosted node will have a corresponding detour enabled outbound with "- detour" suffix.
+# When true, each self-hosted proxy gets a `-detour` copy whose `detour` field
+# points at the matching regional provider selector, enabling chained proxying:
+#   client → provider-<region> (selector) → selfhost-*-detour → internet
+# Requires sing_box_selfhost_groups to be populated with matching detour values.
 sing_box_selfhost_detour_enabled: false
-
-# =============================================================================
-# Internal Templates Variables
-# =============================================================================
-
-# [internal]
-# Auto-calculated feature flags based on mode (Internal use, do not modify manually)
-_sing_box_enable_tproxy: "{{ sing_box_mode in ['local', 'gateway'] }}"
-_sing_box_enable_nftables: "{{ sing_box_mode in ['local', 'gateway'] }}"
-_sing_box_enable_ip_forward: "{{ sing_box_mode == 'gateway' }}"
-_sing_box_enable_netplan_routing: "{{ sing_box_mode in ['local', 'gateway'] }}"
-_sing_box_enable_ipv6: "{{ ansible_default_ipv6 is defined and ansible_default_ipv6.interface is defined }}"

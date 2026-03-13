@@ -2,9 +2,7 @@
 # Sing-box Server Role - Simplified Configuration
 # Auto-generates passwords and client configs if not provided
 
-# =============================================================================
 # Required Settings
-# =============================================================================
 
 # Server hostname (for TLS certificates)
 sing_box_server_hostname: "{{ ansible_fqdn }}"
@@ -31,9 +29,7 @@ sing_box_server_user_names:
   - iris
   - jack
 
-# =============================================================================
 # Protocol Enable/Disable
-# =============================================================================
 
 sing_box_server_enable_shadowsocks: true
 sing_box_server_enable_trojan: true
@@ -41,9 +37,7 @@ sing_box_server_enable_hysteria2: true
 sing_box_server_enable_vless: false
 sing_box_server_enable_tuic: false
 
-# =============================================================================
 # Basic Protocol Configuration
-# =============================================================================
 
 # Ports
 sing_box_server_shadowsocks_port: 8388
@@ -56,9 +50,7 @@ sing_box_server_tuic_port: 8846
 sing_box_server_hysteria2_up_mbps: 1000
 sing_box_server_hysteria2_down_mbps: 1000
 
-# =============================================================================
 # Authentication (auto-generated if empty)
-# =============================================================================
 
 # Shadowsocks password (base64, auto-generated if empty)
 sing_box_server_shadowsocks_password: ""
@@ -77,9 +69,7 @@ sing_box_server_vless_users: []
 # Tuic users: leave empty to auto-generate based on user_count
 sing_box_server_tuic_users: []
 
-# =============================================================================
 # TLS Configuration
-# =============================================================================
 
 # TLS mode: [acme, manual]
 sing_box_server_tls_mode: acme
@@ -108,9 +98,7 @@ sing_box_server_acme_eab_hmac_key: ""
 sing_box_server_tls_certificate_path: ""
 sing_box_server_tls_key_path: ""
 
-# =============================================================================
 # Advanced Options (rarely need to change)
-# =============================================================================
 
 sing_box_server_listen: "0.0.0.0"
 sing_box_server_shadowsocks_method: "2022-blake3-aes-128-gcm"
@@ -132,9 +120,7 @@ sing_box_server_hysteria2_masquerade_enabled: true
 sing_box_server_hysteria2_masquerade_url: "https://www.bing.com"
 sing_box_server_tuic_congestion_control: bbr
 
-# =============================================================================
 # Internal Variables (do not modify)
-# =============================================================================
 
 _sing_box_server_tls_alpn: [h3, h2, http/1.1]
 _sing_box_server_tls_min_version: "1.2"
