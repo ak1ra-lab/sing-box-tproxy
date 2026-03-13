@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from sing_box_config.export import (
     duplicate_selfhost_detour,
+    filter_valid_proxies,
     get_proxies_from_subscriptions,
 )
 
@@ -68,9 +69,7 @@ def test_exclude_filter():
     assert proxies[0]["tag"] == "KeepMe"
 
 
-# ---------------------------------------------------------------------------
 # duplicate_selfhost_detour
-# ---------------------------------------------------------------------------
 
 SELFHOST_DETOUR_MAP = {
     "SG|Singapore|狮城": "🇸🇬 狮城节点",
@@ -118,4 +117,49 @@ def test_duplicate_selfhost_detour_no_region_match():
 
 def test_duplicate_selfhost_detour_empty_inputs():
     assert duplicate_selfhost_detour([], SELFHOST_DETOUR_MAP) == []
+    assert duplicate_selfhost_detour([{"tag": "selfhost-sg-01"}], {}) == []
+
+
+# filter_valid_proxies
+def _make_outbound(tag: str, filter_pat: str = None, exclude_pat: str = None) -> dict:
+    ob: dict = {"tag": tag, "type": "selector", "outbounds": []}
+    if filter_pat is not None:
+        ob["filter"] = filter_pat
+    if exclude_pat is not None:
+        ob["exclude"] = exclude_pat
+    return ob
+
+
+PROXIES = [
+    {"tag": "sg-provider-01", "type": "shadowsocks"},
+    {"tag": "us-provider-02", "type": "shadowsocks"},
+    {"tag": "selfhost-sg-01", "type": "shadowsocks"},
+]
+
+
+def test_filter_valid_proxies_filter_only():
+    outbound = _make_outbound("SG nodes", filter_pat="sg")
+    filter_valid_proxies([outbound], PROXIES)
+    assert outbound["outbounds"] == ["sg-provider-01", "selfhost-sg-01"]
+
+
+def test_filter_valid_proxies_exclude():
+    outbound = _make_outbound("SG provider", filter_pat="sg", exclude_pat="selfhost")
+    filter_valid_proxies([outbound], PROXIES)
+    assert outbound["outbounds"] == ["sg-provider-01"]
+
+
+def test_filter_valid_proxies_no_filter_no_exclude():
+    """Outbounds without filter/exclude keys are left untouched."""
+    outbound = {"tag": "PROXY", "type": "selector", "outbounds": []}
+    filter_valid_proxies([outbound], PROXIES)
+    assert outbound["outbounds"] == []
+
+
+def test_filter_valid_proxies_pops_keys():
+    """filter and exclude keys must be removed from the outbound dict."""
+    outbound = _make_outbound("test", filter_pat="sg", exclude_pat="selfhost")
+    filter_valid_proxies([outbound], PROXIES)
+    assert "filter" not in outbound
+    assert "exclude" not in outbound
     assert duplicate_selfhost_detour([{"tag": "selfhost-sg-01"}], {}) == []

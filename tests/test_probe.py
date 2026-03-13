@@ -11,10 +11,7 @@ from sing_box_config.probe import (
     run_action,
 )
 
-# ---------------------------------------------------------------------------
 # Helpers
-# ---------------------------------------------------------------------------
-
 URL = "https://www.google.com/generate_204"
 ACTION = ["systemctl", "restart", "sing-box.service"]
 
@@ -25,11 +22,7 @@ def _mock_response(status_code: int) -> MagicMock:
     return resp
 
 
-# ---------------------------------------------------------------------------
 # probe_http_get
-# ---------------------------------------------------------------------------
-
-
 def test_probe_http_get_healthy_single_status():
     mock_client = AsyncMock(spec=httpx.AsyncClient)
     mock_client.get.return_value = _mock_response(204)
@@ -88,11 +81,7 @@ def test_probe_http_get_generic_exception():
     assert result is False
 
 
-# ---------------------------------------------------------------------------
 # run_action
-# ---------------------------------------------------------------------------
-
-
 def test_run_action_success():
     with patch("subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(returncode=0, stderr="")
@@ -119,11 +108,7 @@ def test_run_action_exception():
         run_action(ACTION)  # must not raise
 
 
-# ---------------------------------------------------------------------------
 # _maybe_run_action
-# ---------------------------------------------------------------------------
-
-
 def test_maybe_run_action_executes_when_under_threshold():
     """action_count < action_threshold → run_action is called and count incremented."""
     with patch("sing_box_config.probe.run_action") as mock_run:
@@ -154,11 +139,7 @@ def test_maybe_run_action_suppresses_above_threshold():
     assert new_count == 5
 
 
-# ---------------------------------------------------------------------------
 # liveness_loop
-# ---------------------------------------------------------------------------
-
-
 def _make_probe_side_effect(
     results: list[bool], stop_event: asyncio.Event, trigger_after: int
 ):
