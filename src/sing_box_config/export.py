@@ -140,6 +140,8 @@ def filter_valid_proxies(
     """
     Filter proxies and populate outbound groups based on filter/exclude patterns.
 
+    Both ``filter`` and ``exclude`` now are single regex strings (not lists).
+
     Args:
         outbounds: List of outbound group configurations (modified in-place)
         proxies: List of available proxy configurations
@@ -148,14 +150,17 @@ def filter_valid_proxies(
         if all(key not in outbound for key in ["exclude", "filter"]):
             continue
 
-        exclude_patterns = outbound.pop("exclude", [])
-        filter_patterns = outbound.pop("filter", [])
+        exclude_pattern: str | None = outbound.pop("exclude", None)
+        filter_pattern: str | None = outbound.pop("filter", None)
 
         for proxy in proxies:
-            if any(re.search(p, proxy["tag"], re.IGNORECASE) for p in exclude_patterns):
+            if exclude_pattern and re.search(
+                exclude_pattern, proxy["tag"], re.IGNORECASE
+            ):
                 continue
-
-            if any(re.search(p, proxy["tag"], re.IGNORECASE) for p in filter_patterns):
+            if filter_pattern and re.search(
+                filter_pattern, proxy["tag"], re.IGNORECASE
+            ):
                 outbound["outbounds"].append(proxy["tag"])
 
 
@@ -285,14 +290,17 @@ def save_config_from_subscriptions(
     if not proxies:
         logger.warning("No proxies found from subscriptions")
 
-    # Pop _selfhost_detour before outbounds so it never leaks into the final config.
+    # Pop internal metadata keys before outbounds — they must never reach sing-box.
+    selfhost_tag_pattern: str = base_config.pop(
+        "_selfhost_tag_pattern", r"selfhost|自建"
+    )
     selfhost_detour: dict[str, str] = base_config.pop("_selfhost_detour", {})
 
     outbounds = base_config.pop("outbounds")
 
     if selfhost_detour:
-        selfhost_pattern = re.compile(r"selfhost|自建", re.IGNORECASE)
-        selfhost_proxies = [p for p in proxies if re.search(selfhost_pattern, p["tag"])]
+        selfhost_re = re.compile(selfhost_tag_pattern, re.IGNORECASE)
+        selfhost_proxies = [p for p in proxies if re.search(selfhost_re, p["tag"])]
         logger.debug(
             "Processing selfhost_detour for selfhost_proxies: %s",
             [p["tag"] for p in selfhost_proxies],
