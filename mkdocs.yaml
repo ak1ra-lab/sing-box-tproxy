@@ -58,7 +58,12 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Architecture: architecture.md
+  - 快速开始:
+      - 透明代理 (tproxy): deploy-tproxy.md
+      - 服务端 (server): deploy-server.md
+      - 重置部署: reset.md
+  - 架构设计: architecture.md
+  - Ansible 变量说明: ansible_vars.md
 
 plugins:
   - search:

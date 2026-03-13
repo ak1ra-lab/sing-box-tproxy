@@ -9,167 +9,45 @@
 
 ## 特性
 
-- 🚀 支持三种 sing-box 客户端部署模式
-- 🔄 支持节点订阅与更新
-- 🔨 支持 sing-box 服务端部署
+- 支持三种客户端部署模式: `gateway` (旁路网关), `local` (本机代理), `mixed` (混合代理)
+- 支持多种订阅格式: sing-box 原生格式, SIP002 (Shadowsocks)
+- 支持 sing-box 服务端部署: Shadowsocks, Trojan, Hysteria2, VLESS, TUIC
+- 内置 `sing-box-liveness-probe`: 定期探活, 超过阈值后自动重启服务
 
-## 快速开始
-
-### 前置要求
+## 前置要求
 
 - 目标主机: Debian/Ubuntu Linux
 - Ansible core >= 2.18
 
-### sing-box-tproxy 旁路网关部署 (sidecar gateway)
-
-在安装了 Ansible 的主机上 git clone 本仓库,
+## 快速开始
 
 ```shell
 git clone https://github.com/ak1ra-lab/sing-box-tproxy.git
 cd sing-box-tproxy/
-```
 
-参考示例 Ansible inventory 编辑适用于自己环境的 inventory,
-
-```shell
-# 复制示例 Ansible inventory
+# 复制并编辑 inventory
 cp inventory/hosts.example.yaml inventory/hosts.yaml
-
-# 对示例 Ansible inventory 做必要变更
 vim inventory/hosts.yaml
-```
 
-为 sing-box-tproxy 创建 group_vars,
-与具体服务器无关的 公共配置项 可定义在 group_vars 中, 如节点订阅信息 (`sing_box_subscriptions: {}`),
-而服务器特有的 私有配置项 则需要定义在 host_vars 中, sing-box-tproxy 场景中可能不需要 host_vars,
-
-```shell
-# 复制 roles/sing_box_defaults 中提供的默认配置作为 group_vars 模板
+# 创建并编辑 group_vars
 mkdir -p playbooks/group_vars/sing-box-tproxy
 cp roles/sing_box_defaults/defaults/main.yaml playbooks/group_vars/sing-box-tproxy/main.yaml
-
-# 对 group_vars 做必要变更 (可根据需要删除保持默认值的配置项)
 vim playbooks/group_vars/sing-box-tproxy/main.yaml
-```
 
-完成变更后, 生成 group_vars 相对于默认配置的 patch 文件, 以便后续同步上游变更时复用:
-
-```shell
+# 生成 group_vars patch 文件
 ./group_vars.sh gen tproxy
-```
 
-当 `roles/sing_box_defaults/defaults/main.yaml` 有上游变更需要同步时:
-
-```shell
-./group_vars.sh sync tproxy
-```
-
-执行 playbook 部署 sing-box-tproxy 透明代理,
-
-```shell
+# 部署
 ansible-playbook playbooks/sing_box_tproxy.yaml -v
 ```
 
-登录 sing-box-tproxy node 验证服务状态,
-重点关注 sing-box 各 systemd service 状态, nftables ruleset, ip rule 与 ip route 等,
+详细部署指南:
 
-```shell
-ssh sing-box-tproxy-node01
-
-systemctl status sing-box*
-nft list ruleset
-ip rule
-ip route show table 224
-```
-
-## sing-box-server 服务端部署
-
-本项目也提供了快速部署 sing-box 服务端的功能 (Shadowsocks, Trojan, Hysteria2 等).
-
-参考示例 Ansible inventory 编辑适用于自己环境的 inventory, 与上面步骤一致不再赘述;
-
-为 sing-box-server 创建 group_vars, 与具体服务器无关的 公共配置项 可定义在 group_vars 中, 而服务器特有的 私有配置项 如 region 和 hostname 则需要定义在 host_vars 中,
-
-```shell
-# 复制 roles/sing_box_server 中提供的默认配置作为 group_vars 模板
-mkdir -p playbooks/group_vars/sing-box-server
-cp roles/sing_box_server/defaults/main.yaml playbooks/group_vars/sing-box-server/main.yaml
-
-# 对 group_vars 做必要变更
-vim playbooks/group_vars/sing-box-server/main.yaml
-```
-
-完成变更后生成 patch 文件; 当上游默认值有变更时执行 sync 重新应用差异:
-
-```shell
-./group_vars.sh gen server   # 生成 / 刷新 patch
-./group_vars.sh sync server  # 同步上游变更后重新应用 patch
-```
-
-```shell
-# 创建 host_vars (如需覆盖通用配置)
-mkdir -p playbooks/host_vars/sing-box-server-node01
-
-# touch playbooks/host_vars/sing-box-server-node01/main.yaml
-# 对 host_vars 做必要变更
-# vim playbooks/host_vars/sing-box-server-node01/main.yaml
-```
-
-执行 playbook, playbooks/sing_box_server.yaml 会在 config/client_outbounds 目录下生成客户端配置文件,
-
-```shell
-ansible-playbook playbooks/sing_box_server.yaml -v
-```
-
-playbooks/sing_box_tproxy.yaml 在执行时会尝试将 config/client_outbounds 目录复制到 sing-box-tproxy 主机的 /var/lib/sing-box 目录下, 因此可以把当前刚部署好的 sing-box-server 的 静态客户端配置 添加到 `sing_box_subscriptions` 中,
-
-```shell
-vim playbooks/group_vars/sing-box-tproxy/main.yaml
-```
-
-如下, 路径相对于 sing-box 的 WorkingDirectory 即 /var/lib/sing-box,
-
-```yaml
-sing_box_subscriptions:
-  sing-box-server-node01:
-    type: local
-    format: sing-box
-    enabled: true
-    path: "config/client_outbounds/sing-box-server-node01.outbounds.json"
-```
-
-## 重置 (Reset) sing-box 部署
-
-`playbooks/sing_box_reset.yaml` 与 `roles/sing_box_reset` 用于撤销 `sing_box_tproxy` 或 `sing_box_server` playbook 所做的变更.
-
-通过 `-e sing_box_reset_profile=<profile>` 指定要重置的部署类型 (`tproxy` 或 `server`):
-
-```shell
-# 重置透明代理节点 (tproxy)
-ansible-playbook playbooks/sing_box_reset.yaml \
-    -e sing_box_reset_profile=tproxy
-
-# 重置服务端节点 (server)
-ansible-playbook playbooks/sing_box_reset.yaml \
-    -e sing_box_reset_profile=server
-
-# 仅清理 systemd 单元与配置文件, 保留 APT 包
-ansible-playbook playbooks/sing_box_reset.yaml \
-    -e sing_box_reset_profile=tproxy \
-    -e sing_box_reset_remove_packages=false
-
-# 针对单台主机而不是整个 inventory 组
-ansible-playbook playbooks/sing_box_reset.yaml \
-    -e sing_box_reset_profile=tproxy \
-    -e playbook_hosts=sing-box-tproxy-node01
-```
-
-**tproxy 模式**会额外清理 `sing_box_config` 和 `sing_box_tproxy` 部署的内容:
-nftables 规则集、iproute2 策略路由表、netplan 配置、sing-box-config 定时器和 liveness-probe 服务单元.
-
-**server 模式**仅需清理 `sing_box_install` 部署的公共内容即可;
-远端的 `/etc/sing-box/config.json` 会随 `sing_box_etc_dir` 目录一起删除.
-本地 `config/client_outbounds/` 中已生成的客户端配置文件不会被删除.
+- [透明代理 (tproxy) 部署](docs/deploy-tproxy.md)
+- [服务端 (server) 部署](docs/deploy-server.md)
+- [重置 sing-box 部署](docs/reset.md)
+- [Ansible 变量说明](docs/ansible_vars.md)
+- [架构设计与透明代理原理](docs/architecture.md)
 
 ## 项目结构
 
@@ -194,10 +72,12 @@ sing-box-tproxy/
 │   └── client_outbounds/    # sing_box_server 生成的客户端出站文件
 ├── inventory/               # Ansible inventory
 │   └── hosts.yaml           # 目标主机列表
-├── docs/                    # 文档
-│   ├── architecture.md      # 架构设计, 透明代理原理, fwmark 与 nftables 详解
-│   └── ansible_vars.md      # 所有 Ansible 变量说明
-└── README.md                # 本文件
+└── docs/                    # 文档
+    ├── deploy-tproxy.md     # 透明代理 (tproxy) 部署指南
+    ├── deploy-server.md     # 服务端 (server) 部署指南
+    ├── reset.md             # 重置 sing-box 部署
+    ├── architecture.md      # 架构设计, 透明代理原理, fwmark 与 nftables 详解
+    └── ansible_vars.md      # 所有 Ansible 变量说明
 ```
 
 ## License
