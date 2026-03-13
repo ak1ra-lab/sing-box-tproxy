@@ -32,7 +32,7 @@ group_patch() {
 # ── helpers ──────────────────────────────────────────────────────────────────
 gen_patch() {
     local group="${1}"
-    local src tgt patch
+    local src tgt patch ts
     src="$(group_src "${group}")"
     tgt="$(group_tgt "${group}")"
     patch="$(group_patch "${group}")"
@@ -42,6 +42,8 @@ gen_patch() {
         return
     fi
 
+    ts="$(date +%Y%m%d%H%M%S)"
+    cp -v "${patch}" "${patch%.patch}.${ts}.patch" 2>/dev/null || true
     # diff exits 1 when files differ; that is expected and not an error here
     diff "${src}" "${tgt}" >"${patch}" || true
     echo "GEN  ${patch}"
@@ -49,7 +51,7 @@ gen_patch() {
 
 sync_patch() {
     local group="${1}"
-    local src tgt patch
+    local src tgt patch ts
     src="$(group_src "${group}")"
     tgt="$(group_tgt "${group}")"
     patch="$(group_patch "${group}")"
@@ -59,6 +61,8 @@ sync_patch() {
         return
     fi
 
+    ts="$(date +%Y%m%d%H%M%S)"
+    cp -v "${tgt}" "${tgt%.yaml}.${ts}.yaml" || true
     cp -v "${src}" "${tgt}"
     patch -p1 "${tgt}" <"${patch}"
 }
