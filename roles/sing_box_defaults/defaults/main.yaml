@@ -17,8 +17,7 @@ sing_box_subscriptions: {}
 #     format: sip002
 #     enabled: true
 #     url: "https://sub.example.com/api/v1/client/subscribe?token=YOUR_TOKEN_HERE"
-#     exclude:
-#       - "过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"
+#     exclude: "过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"
 #
 #   # Example 2: Remote subscription with sing-box native format (default format)
 #   provider_remote_singbox:
