@@ -5,45 +5,19 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-import httpx
-import tenacity
 from chaos_utils.text_utils import read_json, save_json
 
 from sing_box_config.parser import SUPPORTED_FORMATS, get_parser
+from sing_box_config.subscription import get_source
 
 logger = logging.getLogger(__name__)
-
-
-@tenacity.retry(
-    stop=tenacity.stop_after_attempt(5),
-    wait=tenacity.wait_exponential_jitter(initial=1, max=30),
-    before_sleep=tenacity.before_sleep_log(logger, logging.WARNING),
-    reraise=True,
-)
-def fetch_url_with_retries(url: str, **kwargs: Any) -> httpx.Response:
-    """
-    Fetch URL with exponential backoff retry strategy.
-
-    Args:
-        url: The URL to fetch
-        **kwargs: Additional arguments to pass to httpx.get()
-
-    Returns:
-        httpx.Response object
-
-    Raises:
-        httpx.HTTPError: If all retry attempts fail
-    """
-    resp = httpx.get(url, **kwargs)
-    resp.raise_for_status()
-    return resp
 
 
 def get_proxies_from_subscriptions(
     name: str, subscription: dict[str, Any]
 ) -> list[dict[str, Any]]:
     """
-    Parse subscription URL and extract proxy configurations.
+    Parse subscription and extract proxy configurations.
 
     Args:
         name: Subscription name for proxy tag prefix
@@ -52,101 +26,96 @@ def get_proxies_from_subscriptions(
     Returns:
         List of proxy configuration dicts
     """
-    proxies = []
     if not subscription.get("enabled", True):
-        return proxies
+        return []
 
     sub_type = subscription.get("type", "").lower()
-    # Default format is sing-box if not specified
     sub_format = subscription.get("format", "sing-box").lower()
 
-    content = ""
-
-    if sub_type not in ["inline", "local", "remote"]:
+    source = get_source(sub_type)
+    if source is None:
         logger.warning("Unsupported subscription type: %s", sub_type)
+        return []
+
+    try:
+        content = source.fetch(subscription)
+    except Exception as e:
+        logger.error("Failed to fetch subscription %s: %s", name, e)
+        return []
+
+    parser = get_parser(sub_format)
+    if parser is None:
+        logger.warning(
+            "Unsupported subscription format: %s (supported: %s)",
+            sub_format,
+            ", ".join(SUPPORTED_FORMATS.keys()),
+        )
+        return []
+
+    proxies = parser.parse(content)
+
+    if sub_format != "sing-box":
+        for proxy in proxies:
+            proxy["tag"] = f"{name} - {proxy['tag']}"
+
+    exclude_pattern = subscription.get("exclude", "")
+    if not exclude_pattern:
         return proxies
 
-    if sub_type == "inline":
-        if sub_format == "sing-box" and "outbounds" in subscription:
-            proxies = subscription["outbounds"]
-        elif "content" in subscription:
-            content = subscription["content"]
-        else:
-            logger.warning(
-                "Inline subscription %s missing 'outbounds' or 'content'", name
-            )
-            return []
-
-    elif sub_type == "local":
-        path = Path(subscription["path"])
-        if not path.exists():
-            logger.error("Local subscription file not found: %s", path)
-            return []
-        try:
-            content = path.read_text(encoding="utf-8")
-        except Exception as e:
-            logger.error("Failed to read local subscription %s: %s", name, e)
-            return []
-
-    elif sub_type == "remote":
-        url = subscription.get("url")
-        if not url:
-            logger.error("Remote subscription %s missing 'url'", name)
-            return []
-        try:
-            resp = fetch_url_with_retries(url, follow_redirects=True)
-            content = resp.text
-            logger.debug("resp.text = %s", resp.text[:100])
-        except httpx.HTTPError as err:
-            logger.error("Failed to fetch subscription %s: %s", name, err)
-            return []
-
-    if not proxies and content:
-        parser = get_parser(sub_format)
-        if parser:
-            proxies = parser.parse(content)
-            # Prefix tags for non-native formats or if requested?
-            # Replicating old behavior: non sing-box sub_format gets prefixed.
-            if sub_format != "sing-box":
-                for proxy in proxies:
-                    proxy["tag"] = f"{name} - {proxy['tag']}"
-        else:
-            logger.warning(
-                "Unsupported subscription format: %s (supported: %s)",
-                sub_format,
-                ", ".join(SUPPORTED_FORMATS.keys()),
-            )
-            return []
-
-    # Filter proxies
-    exclude_patterns = subscription.get("exclude", [])
-    if not exclude_patterns:
-        return proxies
-
-    filtered_proxies = []
-    for proxy in proxies:
-        if any(re.search(p, proxy["tag"], re.IGNORECASE) for p in exclude_patterns):
-            logger.debug("Excluding proxy: %s", proxy["tag"])
-            continue
-        filtered_proxies.append(proxy)
-    proxies = filtered_proxies
-
-    return proxies
+    return [
+        p for p in proxies if not re.search(exclude_pattern, p["tag"], re.IGNORECASE)
+    ]
 
 
-def filter_valid_proxies(
+def build_selfhost_detours(
+    selfhost_proxies: list[dict[str, Any]],
+    selfhost_detour: dict[str, str],
+) -> list[dict[str, Any]]:
+    """
+    Duplicate self-hosted proxies with detour chaining.
+
+    For each selfhost proxy, creates a copy whose tag gets a ``-detour`` suffix
+    and whose ``detour`` field is set to the upstream selector for that region.
+    The region is determined by matching the proxy tag against each key in
+    *selfhost_detour* (a regex pattern → detour-tag mapping).
+
+    Args:
+        selfhost_proxies: Self-hosted proxy configs to duplicate.
+        selfhost_detour: Mapping of region regex pattern → upstream outbound tag
+            (e.g. ``{"SG|Singapore|...": "🇸🇬 狮城节点"}``).  Comes from
+            ``_selfhost_detour`` embedded in base.json by Ansible.
+
+    Returns:
+        List of new detour proxy copies (caller should extend the main proxy list).
+    """
+    detour_proxies = []
+    for proxy in selfhost_proxies:
+        for region_filter, detour_tag in selfhost_detour.items():
+            if not re.search(region_filter, proxy["tag"], re.IGNORECASE):
+                continue
+            detour_proxy = proxy.copy()
+            detour_proxy["tag"] = f"{proxy['tag']}-detour"
+            detour_proxy["detour"] = detour_tag
+            detour_proxies.append(detour_proxy)
+            break
+    return detour_proxies
+
+
+def build_outbound_groups(
     outbounds: list[dict[str, Any]], proxies: list[dict[str, Any]]
 ) -> None:
     """
-    Filter proxies and populate outbound groups based on filter/exclude patterns.
+    Populate outbound groups with matching proxies based on filter/exclude patterns.
 
-    Both ``filter`` and ``exclude`` now are single regex strings (not lists).
+    Both ``filter`` and ``exclude`` are single regex strings.
 
     Args:
         outbounds: List of outbound group configurations (modified in-place)
         proxies: List of available proxy configurations
     """
     for outbound in outbounds:
+        if not isinstance(outbound.get("outbounds"), list):
+            continue
         if all(key not in outbound for key in ["exclude", "filter"]):
             continue
 
@@ -173,15 +142,9 @@ def remove_invalid_outbounds(outbounds: list[dict[str, Any]]) -> None:
     """
     while True:
         invalid_tags = set()
-        # Use copy to avoid modifying list during iteration
         for proxy_group in outbounds[:]:
-            # Keep real proxy server, only processing proxy_group
-            if "outbounds" not in proxy_group:
+            if not isinstance(proxy_group.get("outbounds"), list):
                 continue
-            if not isinstance(proxy_group["outbounds"], list):
-                continue
-
-            # Remove proxy_group without "outbounds", also mark tag as invalid
             if len(proxy_group["outbounds"]) == 0:
                 logger.info("removing outbound = %s", proxy_group)
                 outbounds.remove(proxy_group)
@@ -191,50 +154,45 @@ def remove_invalid_outbounds(outbounds: list[dict[str, Any]]) -> None:
         if not invalid_tags:
             break
 
-        # Remove invalid tags from all outbounds' "outbounds" lists
         for proxy_group in outbounds:
-            # Keep real proxy server, only processing proxy_group
-            if "outbounds" not in proxy_group:
+            if not isinstance(proxy_group.get("outbounds"), list):
                 continue
-            if not isinstance(proxy_group["outbounds"], list):
-                continue
-
             proxy_group["outbounds"] = [
                 tag for tag in proxy_group["outbounds"] if tag not in invalid_tags
             ]
 
 
-def duplicate_selfhost_detour(
-    selfhost_proxies: list[dict[str, Any]],
-    selfhost_detour: dict[str, str],
+def load_proxies(
+    subscriptions_config: dict[str, Any],
+    proxies_path: Path,
+    use_cache: bool,
 ) -> list[dict[str, Any]]:
-    """
-    Duplicate self-hosted proxies with detour chaining.
+    if use_cache and proxies_path and proxies_path.exists():
+        try:
+            proxies = read_json(proxies_path)
+            if isinstance(proxies, list):
+                logger.info(
+                    "Loaded %d proxies from cache: %s", len(proxies), proxies_path
+                )
+                return proxies
+            logger.warning("Cached proxies file content is not a list, ignoring cache")
+        except Exception as e:
+            logger.warning("Failed to load proxies from cache: %s", e)
 
-    For each selfhost proxy, creates a copy whose tag gets a ``-detour`` suffix
-    and whose ``detour`` field is set to the upstream selector for that region.
-    The region is determined by matching the proxy tag against each key in
-    *selfhost_detour* (a regex pattern → detour-tag mapping).
+    proxies = [
+        proxy
+        for name, subscription in subscriptions_config.items()
+        for proxy in get_proxies_from_subscriptions(
+            name=name, subscription=subscription
+        )
+    ]
 
-    Args:
-        selfhost_proxies: Self-hosted proxy configs to duplicate.
-        selfhost_detour: Mapping of region regex pattern → upstream outbound tag
-            (e.g. ``{"SG|Singapore|...": "🇸🇬 狮城节点"}``).  Comes from
-            ``_selfhost_detour`` embedded in base.json by Ansible.
+    if proxies_path:
+        proxies_path.parent.mkdir(parents=True, exist_ok=True)
+        save_json(proxies_path, proxies)
+        logger.info("Saved %d proxies to cache: %s", len(proxies), proxies_path)
 
-    Returns:
-        List of new detour proxy copies (caller should extend the main proxy list).
-    """
-    detour_proxies = []
-    for proxy in selfhost_proxies:
-        for region_filter, detour_tag in selfhost_detour.items():
-            if re.search(region_filter, proxy["tag"], re.IGNORECASE):
-                detour_proxy = proxy.copy()
-                detour_proxy["tag"] = f"{proxy['tag']}-detour"
-                detour_proxy["detour"] = detour_tag
-                detour_proxies.append(detour_proxy)
-                break
-    return detour_proxies
+    return proxies
 
 
 def save_config_from_subscriptions(
@@ -256,37 +214,7 @@ def save_config_from_subscriptions(
         use_cache: Whether to use cached proxies if available
         backup_output: Whether to backup existing output file before overwriting
     """
-    proxies = []
-
-    if use_cache and proxies_path and proxies_path.exists():
-        try:
-            proxies = read_json(proxies_path)
-            if not isinstance(proxies, list):
-                logger.warning(
-                    "Cached proxies file content is not a list, ignoring cache"
-                )
-                proxies = []
-            else:
-                logger.info(
-                    "Loaded %d proxies from cache: %s", len(proxies), proxies_path
-                )
-        except Exception as e:
-            logger.warning("Failed to load proxies from cache: %s", e)
-
-    if not proxies:
-        for name, subscription in subscriptions_config.items():
-            proxies.extend(
-                get_proxies_from_subscriptions(
-                    name=name,
-                    subscription=subscription,
-                )
-            )
-
-        if proxies_path:
-            proxies_path.parent.mkdir(parents=True, exist_ok=True)
-            save_json(proxies_path, proxies)
-            logger.info("Saved %d proxies to cache: %s", len(proxies), proxies_path)
-
+    proxies = load_proxies(subscriptions_config, proxies_path, use_cache)
     if not proxies:
         logger.warning("No proxies found from subscriptions")
 
@@ -295,27 +223,23 @@ def save_config_from_subscriptions(
         "_selfhost_tag_pattern", r"selfhost|自建"
     )
     selfhost_detour: dict[str, str] = base_config.pop("_selfhost_detour", {})
-
     outbounds = base_config.pop("outbounds")
 
     if selfhost_detour:
         selfhost_re = re.compile(selfhost_tag_pattern, re.IGNORECASE)
-        selfhost_proxies = [p for p in proxies if re.search(selfhost_re, p["tag"])]
+        selfhost_proxies = [p for p in proxies if selfhost_re.search(p["tag"])]
         logger.debug(
             "Processing selfhost_detour for selfhost_proxies: %s",
             [p["tag"] for p in selfhost_proxies],
         )
-        proxies.extend(duplicate_selfhost_detour(selfhost_proxies, selfhost_detour))
+        proxies.extend(build_selfhost_detours(selfhost_proxies, selfhost_detour))
 
-    # Modify outbounds directly
-    filter_valid_proxies(outbounds, proxies)
+    build_outbound_groups(outbounds, proxies)
     remove_invalid_outbounds(outbounds)
-
     outbounds += proxies
     base_config["outbounds"] = outbounds
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-
     if backup_output and output_path.exists():
         now = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_suffix = f".{now}{output_path.suffix}"
