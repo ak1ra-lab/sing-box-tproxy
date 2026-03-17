@@ -3,9 +3,10 @@ import json
 from unittest.mock import MagicMock, patch
 
 from sing_box_config.export import (
-    build_outbound_groups,
     build_selfhost_detours,
     get_proxies_from_subscriptions,
+    populate_outbound_groups,
+    remove_invalid_outbounds,
 )
 
 
@@ -71,10 +72,10 @@ def test_exclude_filter():
 
 # duplicate_selfhost_detour
 
-SELFHOST_DETOUR_MAP = {
-    "SG|Singapore|狮城": "🇸🇬 狮城节点",
-    "US|United States|美国": "🇺🇸 美国节点",
-}
+SELFHOST_DETOUR_MAP = [
+    {"filter": "SG|Singapore|狮城", "detour": "🇸🇬 狮城节点"},
+    {"filter": "US|United States|美国", "detour": "🇺🇸 美国节点"},
+]
 
 
 def test_build_selfhost_detours_basic():
@@ -117,7 +118,28 @@ def test_build_selfhost_detours_no_region_match():
 
 def test_build_selfhost_detours_empty_inputs():
     assert build_selfhost_detours([], SELFHOST_DETOUR_MAP) == []
-    assert build_selfhost_detours([{"tag": "selfhost-sg-01"}], {}) == []
+    assert build_selfhost_detours([{"tag": "selfhost-sg-01"}], []) == []
+
+
+# remove_invalid_outbounds
+
+
+def test_remove_invalid_outbounds_empty_selfhost_groups():
+    """Empty selfhost group and its orphan reference in parent group are both cleaned up."""
+    outbounds = [
+        {"tag": "🇸🇬 狮城节点 - 自建", "type": "selector", "outbounds": []},
+        {
+            "tag": "PROXY",
+            "type": "selector",
+            "outbounds": ["🇸🇬 狮城节点 - 自建", "DIRECT"],
+        },
+    ]
+    remove_invalid_outbounds(outbounds)
+    tags = [o["tag"] for o in outbounds]
+    assert "🇸🇬 狮城节点 - 自建" not in tags
+    proxy_group = next(o for o in outbounds if o["tag"] == "PROXY")
+    assert "🇸🇬 狮城节点 - 自建" not in proxy_group["outbounds"]
+    assert "DIRECT" in proxy_group["outbounds"]
 
 
 # filter_valid_proxies
@@ -137,29 +159,29 @@ PROXIES = [
 ]
 
 
-def test_build_outbound_groups_filter_only():
+def test_populate_outbound_groups_filter_only():
     outbound = _make_outbound("SG nodes", filter_pat="sg")
-    build_outbound_groups([outbound], PROXIES)
+    populate_outbound_groups([outbound], PROXIES)
     assert outbound["outbounds"] == ["sg-provider-01", "selfhost-sg-01"]
 
 
-def test_build_outbound_groups_exclude():
+def test_populate_outbound_groups_exclude():
     outbound = _make_outbound("SG provider", filter_pat="sg", exclude_pat="selfhost")
-    build_outbound_groups([outbound], PROXIES)
+    populate_outbound_groups([outbound], PROXIES)
     assert outbound["outbounds"] == ["sg-provider-01"]
 
 
-def test_build_outbound_groups_no_filter_no_exclude():
+def test_populate_outbound_groups_no_filter_no_exclude():
     """Outbounds without filter/exclude keys are left untouched."""
     outbound = {"tag": "PROXY", "type": "selector", "outbounds": []}
-    build_outbound_groups([outbound], PROXIES)
+    populate_outbound_groups([outbound], PROXIES)
     assert outbound["outbounds"] == []
 
 
-def test_build_outbound_groups_pops_keys():
+def test_populate_outbound_groups_pops_keys():
     """filter and exclude keys must be removed from the outbound dict."""
     outbound = _make_outbound("test", filter_pat="sg", exclude_pat="selfhost")
-    build_outbound_groups([outbound], PROXIES)
+    populate_outbound_groups([outbound], PROXIES)
     assert "filter" not in outbound
     assert "exclude" not in outbound
     assert build_selfhost_detours([{"tag": "selfhost-sg-01"}], {}) == []

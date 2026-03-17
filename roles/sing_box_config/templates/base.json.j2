@@ -18,9 +18,10 @@
 {# Embed selfhost metadata for sing-box-config to consume.
    Python pops both keys before writing the final sing-box config. #}
 {%- if sing_box_selfhost_detour_enabled | ansible.builtin.bool -%}
-{%- set ns = namespace(selfhost_detour={}) -%}
-{%- for group in sing_box_selfhost_groups -%}
-{%- set ns.selfhost_detour = ns.selfhost_detour | ansible.builtin.combine({group.filter: group.detour}) -%}
+{%- set ns = namespace(selfhost_detour=[]) -%}
+{%- for item in sing_box_region_groups | ansible.builtin.dict2items -%}
+{%- set detour_tag = item.value.tag ~ (sing_box_auto_group_suffix if sing_box_selfhost_detour_group == 'auto' else sing_box_selector_group_suffix) -%}
+{%- set ns.selfhost_detour = ns.selfhost_detour + [{"filter": item.value.regex, "detour": detour_tag}] -%}
 {%- endfor -%}
 {%- set _ = config.update({
     "_selfhost_tag_pattern": sing_box_selfhost_tag_pattern,

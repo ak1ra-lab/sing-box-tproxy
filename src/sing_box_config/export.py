@@ -69,39 +69,38 @@ def get_proxies_from_subscriptions(
 
 def build_selfhost_detours(
     selfhost_proxies: list[dict[str, Any]],
-    selfhost_detour: dict[str, str],
+    selfhost_detour: list[dict[str, str]],
 ) -> list[dict[str, Any]]:
     """
     Duplicate self-hosted proxies with detour chaining.
 
     For each selfhost proxy, creates a copy whose tag gets a ``-detour`` suffix
     and whose ``detour`` field is set to the upstream selector for that region.
-    The region is determined by matching the proxy tag against each key in
-    *selfhost_detour* (a regex pattern → detour-tag mapping).
+    The region is determined by matching the proxy tag against each ``filter``
+    regex in *selfhost_detour*.
 
     Args:
         selfhost_proxies: Self-hosted proxy configs to duplicate.
-        selfhost_detour: Mapping of region regex pattern → upstream outbound tag
-            (e.g. ``{"SG|Singapore|...": "🇸🇬 狮城节点"}``).  Comes from
-            ``_selfhost_detour`` embedded in base.json by Ansible.
+        selfhost_detour: List of ``{filter: <regex>, detour: <tag>}`` mappings.
+            Comes from ``_selfhost_detour`` embedded in base.json by Ansible.
 
     Returns:
         List of new detour proxy copies (caller should extend the main proxy list).
     """
     detour_proxies = []
     for proxy in selfhost_proxies:
-        for region_filter, detour_tag in selfhost_detour.items():
-            if not re.search(region_filter, proxy["tag"], re.IGNORECASE):
+        for item in selfhost_detour:
+            if not re.search(item["filter"], proxy["tag"], re.IGNORECASE):
                 continue
             detour_proxy = proxy.copy()
             detour_proxy["tag"] = f"{proxy['tag']}-detour"
-            detour_proxy["detour"] = detour_tag
+            detour_proxy["detour"] = item["detour"]
             detour_proxies.append(detour_proxy)
             break
     return detour_proxies
 
 
-def build_outbound_groups(
+def populate_outbound_groups(
     outbounds: list[dict[str, Any]], proxies: list[dict[str, Any]]
 ) -> None:
     """
@@ -222,19 +221,25 @@ def save_config_from_subscriptions(
     selfhost_tag_pattern: str = base_config.pop(
         "_selfhost_tag_pattern", r"selfhost|自建"
     )
-    selfhost_detour: dict[str, str] = base_config.pop("_selfhost_detour", {})
+    selfhost_detour: list[dict[str, str]] = base_config.pop("_selfhost_detour", [])
     outbounds = base_config.pop("outbounds")
 
     if selfhost_detour:
         selfhost_re = re.compile(selfhost_tag_pattern, re.IGNORECASE)
         selfhost_proxies = [p for p in proxies if selfhost_re.search(p["tag"])]
+        if not selfhost_proxies:
+            logger.warning(
+                "sing_box_selfhost_detour is configured but no selfhost proxies found "
+                "(tag pattern: %r); selfhost groups will be empty and removed",
+                selfhost_tag_pattern,
+            )
         logger.debug(
             "Processing selfhost_detour for selfhost_proxies: %s",
             [p["tag"] for p in selfhost_proxies],
         )
         proxies.extend(build_selfhost_detours(selfhost_proxies, selfhost_detour))
 
-    build_outbound_groups(outbounds, proxies)
+    populate_outbound_groups(outbounds, proxies)
     remove_invalid_outbounds(outbounds)
     outbounds += proxies
     base_config["outbounds"] = outbounds

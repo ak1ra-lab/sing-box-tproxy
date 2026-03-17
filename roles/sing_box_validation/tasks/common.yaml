@@ -8,6 +8,13 @@
     fail_msg: "sing_box_user must be defined with name and uid."
     quiet: true
 
+- name: validate sing_box_selfhost_detour_group
+  ansible.builtin.assert:
+    that:
+      - sing_box_selfhost_detour_group in ['selector', 'auto']
+    fail_msg: "sing_box_selfhost_detour_group must be 'selector' or 'auto'."
+    quiet: true
+
 - name: validate sing_box_group
   ansible.builtin.assert:
     that:

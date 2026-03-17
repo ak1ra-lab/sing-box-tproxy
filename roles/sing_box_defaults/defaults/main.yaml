@@ -171,8 +171,14 @@ sing_box_custom_bypassed_ip6: []
 # Outbounds & proxy groups
 
 # [sing-box outbounds[]]
+# Which regional group type to chain selfhost -detour copies through.
+# "selector": chain through sing_box_selector_groups (manual selection)
+# "auto":     chain through sing_box_auto_groups    (urltest / latency-based)
+sing_box_selfhost_detour_group: "selector"
+
+# [sing-box outbounds[]]
 # When true, each self-hosted proxy gets a `-detour` copy whose `detour` field
-# points at the matching regional provider selector, enabling chained proxying:
-#   client → provider-<region> (selector) → selfhost-*-detour → internet
-# Requires sing_box_selfhost_groups to be populated with matching detour values.
+# points at the matching regional group (controlled by sing_box_selfhost_detour_group),
+# enabling chained proxying:
+#   client → provider-<region> (selector/auto) → selfhost-*-detour → internet
 sing_box_selfhost_detour_enabled: false

@@ -148,7 +148,4 @@ DNS 解析策略的核心在于区分**可信 DNS**(Remote DoT/DoH, 用于代理
 | `sing_box_filtering_route_rules`                       | list    | `[...]`                        | 应用层过滤/分流规则 (geoip/geosite → DIRECT/PROXY/AI 等)    |
 | `sing_box_proxy_groups`                                | list    | `[PROXY, FINAL, AI, ...]`      | 顶层 Proxy Group (Selector) 列表                            |
 | `sing_box_selfhost_tag_pattern`                        | string  | `selfhost\|自建`               | 识别自建节点 tag 的正则模式                                 |
-| `sing_box_region_regex`                                | dict    | `{SG: ..., HK: ..., ...}`      | 各地区节点 tag 匹配正则 (SG/HK/JP/TW/US/EU/KR)              |
-| `sing_box_auto_groups`                                 | list    | `[...]`                        | URL-Test 自动分组配置 (按地区, 排除自建节点)                |
-| `sing_box_selector_groups`                             | list    | `[...]`                        | 手动 Selector 分组配置 (按地区, 排除自建节点)               |
-| `sing_box_selfhost_groups`                             | list    | `[...]`                        | 自建节点分组配置 (按地区, 可配置 detour 链式代理)           |
+| `sing_box_region_groups`                               | dict    | `{SG: {tag, regex}, ...}`      | 各地区组配置 (tag/regex); 模板直接由此生成 auto/selector/selfhost 三套分组 (SG/HK/JP/TW/US/EU/KR) |
