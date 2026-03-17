@@ -7,6 +7,39 @@
     {"tag": "REJECT", "type": "block"}
 ]) -%}
 
+{# Add Proxy Groups to Config and populate their outbounds #}
+{%- for group in sing_box_proxy_groups -%}
+    {%- set _group_outbounds = group.outbounds -%}
+    {%- for item in sing_box_region_groups | ansible.builtin.dict2items -%}
+        {%- set _ = _group_outbounds.append(item.value.tag ~ sing_box_selfhost_group_suffix) -%}
+    {%- endfor -%}
+    {%- for item in sing_box_region_groups | ansible.builtin.dict2items -%}
+        {%- set _ = _group_outbounds.append(item.value.tag ~ sing_box_auto_group_suffix) -%}
+    {%- endfor -%}
+    {%- for item in sing_box_region_groups | ansible.builtin.dict2items -%}
+        {%- set _ = _group_outbounds.append(item.value.tag ~ sing_box_selector_group_suffix) -%}
+    {%- endfor -%}
+
+    {%- set _ = outbounds_config.append({
+        "tag": group.tag,
+        "type": group.type,
+        "outbounds": _group_outbounds
+    }) -%}
+{%- endfor -%}
+
+{# Add Selfhost Groups to Config (selector, selfhost nodes only) #}
+{# Combined filter: matches proxies that are BOTH selfhost AND in the target region.
+   Uses two zero-width lookaheads so order of terms in the tag does not matter. #}
+{%- for item in sing_box_region_groups | ansible.builtin.dict2items -%}
+    {%- set combined_filter = "(?=.*(?:" + sing_box_selfhost_tag_pattern + "))(?=.*(?:" + item.value.regex + "))" -%}
+    {%- set _ = outbounds_config.append({
+        "tag": item.value.tag ~ sing_box_selfhost_group_suffix,
+        "type": "selector",
+        "outbounds": [],
+        "filter": combined_filter
+    }) -%}
+{%- endfor -%}
+
 {# Add Auto Groups to Config (urltest, excludes selfhost nodes) #}
 {%- for item in sing_box_region_groups | ansible.builtin.dict2items -%}
     {%- set _ = outbounds_config.append({
@@ -29,37 +62,5 @@
     }) -%}
 {%- endfor -%}
 
-{# Add Selfhost Groups to Config (selector, selfhost nodes only) #}
-{# Combined filter: matches proxies that are BOTH selfhost AND in the target region.
-   Uses two zero-width lookaheads so order of terms in the tag does not matter. #}
-{%- for item in sing_box_region_groups | ansible.builtin.dict2items -%}
-    {%- set combined_filter = "(?=.*(?:" + sing_box_selfhost_tag_pattern + "))(?=.*(?:" + item.value.regex + "))" -%}
-    {%- set _ = outbounds_config.append({
-        "tag": item.value.tag ~ sing_box_selfhost_group_suffix,
-        "type": "selector",
-        "outbounds": [],
-        "filter": combined_filter
-    }) -%}
-{%- endfor -%}
-
-{# Add Proxy Groups to Config and populate their outbounds #}
-{%- for group in sing_box_proxy_groups -%}
-    {%- set _group_outbounds = group.outbounds -%}
-    {%- for item in sing_box_region_groups | ansible.builtin.dict2items -%}
-        {%- set _ = _group_outbounds.append(item.value.tag ~ sing_box_auto_group_suffix) -%}
-    {%- endfor -%}
-    {%- for item in sing_box_region_groups | ansible.builtin.dict2items -%}
-        {%- set _ = _group_outbounds.append(item.value.tag ~ sing_box_selector_group_suffix) -%}
-    {%- endfor -%}
-    {%- for item in sing_box_region_groups | ansible.builtin.dict2items -%}
-        {%- set _ = _group_outbounds.append(item.value.tag ~ sing_box_selfhost_group_suffix) -%}
-    {%- endfor -%}
-
-    {%- set _ = outbounds_config.append({
-        "tag": group.tag,
-        "type": group.type,
-        "outbounds": _group_outbounds
-    }) -%}
-{%- endfor -%}
 {{ outbounds_config | ansible.builtin.to_json }}
 {%- endmacro -%}
