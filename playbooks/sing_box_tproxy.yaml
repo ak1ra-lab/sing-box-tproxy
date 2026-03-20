@@ -5,7 +5,7 @@
 #   sing_box_validation  — validate required Ansible variables
 #   sing_box_install     — install sing-box via the SagerNet APT repository
 #   sing_box_config      — install the sing-box-config Python tool and enable the update timer
-#   sing_box_tproxy      — configure nftables, routing policy and netplan (local/gateway modes)
+#   sing_box_tproxy      — configure nftables and routing policy via systemd service (local/gateway modes)
 #
 # sing_box_tproxy is skipped when sing_box_mode == 'mixed' (no transparent proxy needed).
 #

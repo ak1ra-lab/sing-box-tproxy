@@ -55,13 +55,18 @@
     path: /etc/iproute2/rt_tables.d/sing_box_tproxy.conf
     state: absent
 
-# ── netplan (routing policy / ip rule / ip route) ────────────────────────────
-# file: state=absent returns 'ok' (not 'changed') when the file does not exist,
-# so the handler is only notified when the file was actually present.
+# ── routing service (ip rule / ip route) ─────────────────────────────────────
 
-- name: reset | remove sing_box_tproxy netplan config
+- name: reset | stop and disable sing-box-tproxy-routing.service
+  ansible.builtin.systemd_service:
+    name: sing-box-tproxy-routing.service
+    state: stopped
+    enabled: false
+  failed_when: false
+
+- name: reset | remove sing-box-tproxy-routing.service unit file
   ansible.builtin.file:
-    path: /etc/netplan/99-sing_box_tproxy.yaml
+    path: /etc/systemd/system/sing-box-tproxy-routing.service
     state: absent
   notify:
-    - netplan apply
+    - systemctl daemon-reload

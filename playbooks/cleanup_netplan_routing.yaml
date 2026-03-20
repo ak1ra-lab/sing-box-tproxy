@@ -1,0 +1,22 @@
+---
+# One-off cleanup playbook: remove legacy netplan routing config
+# (/etc/netplan/99-sing_box_tproxy.yaml) that was deployed before the switch
+# to sing-box-tproxy-routing.service (systemd oneshot).
+#
+# Usage:
+#   ansible-playbook playbooks/cleanup_netplan_routing.yaml -v
+- name: cleanup legacy netplan routing config
+  hosts: "{{ playbook_hosts | default('sing-box-tproxy') }}"
+  become: true
+
+  tasks:
+    - name: remove /etc/netplan/99-sing_box_tproxy.yaml
+      ansible.builtin.file:
+        path: /etc/netplan/99-sing_box_tproxy.yaml
+        state: absent
+      notify: netplan apply
+
+  handlers:
+    - name: netplan apply
+      ansible.builtin.command: netplan apply
+      changed_when: true

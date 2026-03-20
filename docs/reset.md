@@ -40,7 +40,7 @@ ansible-playbook playbooks/sing_box_reset.yaml \
 - 清理 sing-box-config 定时器和 liveness-probe 服务单元
 - 移除 nftables 规则集
 - 移除 iproute2 策略路由表
-- 删除 netplan 配置文件
+- 停止并移除 `sing-box-tproxy-routing.service` 单元
 - 删除 APT 软件包和 APT 源 (除非 `sing_box_reset_remove_packages=false`)
 - 删除运行时目录 (`sing_box_etc_dir`, `sing_box_state_dir`, `sing_box_log_dir`)
 

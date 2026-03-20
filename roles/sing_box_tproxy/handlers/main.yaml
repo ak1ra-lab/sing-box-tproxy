@@ -1,7 +1,7 @@
 ---
 # handlers file for sing_box_tproxy
 - name: systemctl daemon-reload
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     daemon_reload: true
 
 - name: systemctl restart nftables.service
@@ -9,5 +9,7 @@
     name: nftables.service
     state: restarted
 
-- name: netplan apply
-  ansible.builtin.command: netplan apply
+- name: restart sing-box-tproxy-routing.service
+  ansible.builtin.systemd_service:
+    name: sing-box-tproxy-routing.service
+    state: restarted

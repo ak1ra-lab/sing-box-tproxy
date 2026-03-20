@@ -5,7 +5,6 @@
       - bash
       - curl
       - iproute2
-      - netplan.io
       - nftables
     state: present
 
@@ -28,7 +27,6 @@
     mode: "0755"
   loop:
     - /etc/iproute2/rt_tables.d
-    - /etc/netplan
   loop_control:
     loop_var: directory
 
@@ -39,15 +37,24 @@
     dest: /etc/iproute2/rt_tables.d/sing_box_tproxy.conf
     mode: "0644"
 
-# netplan 包含 routing policy (ip rule) 和 routes (ip route)
-- name: template netplan config on remote (gateway mode only)
-  when: (_sing_box_enable_netplan_routing | ansible.builtin.bool)
+# systemd oneshot service: 添加 ip rule (policy routing) 和 ip route (local default)
+- name: template sing-box-tproxy-routing.service on remote
+  when: (_sing_box_enable_routing | ansible.builtin.bool)
   ansible.builtin.template:
-    src: etc/netplan/99-sing_box_tproxy.yaml.j2
-    dest: /etc/netplan/99-sing_box_tproxy.yaml
-    mode: "0600"
+    src: etc/systemd/system/sing-box-tproxy-routing.service.j2
+    dest: /etc/systemd/system/sing-box-tproxy-routing.service
+    mode: "0644"
   notify:
-    - netplan apply
+    - systemctl daemon-reload
+    - restart sing-box-tproxy-routing.service
+
+- name: enable and start sing-box-tproxy-routing.service
+  when: (_sing_box_enable_routing | ansible.builtin.bool)
+  ansible.builtin.systemd_service:
+    name: sing-box-tproxy-routing.service
+    enabled: true
+    state: started
+    daemon_reload: true
 
 # nftables 才是一切的关键, 为 packet 打 fwmark
 - name: ensure /etc/nftables.conf

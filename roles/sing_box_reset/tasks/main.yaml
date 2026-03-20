@@ -6,9 +6,7 @@
     that:
       - sing_box_reset_profile is defined
       - sing_box_reset_profile in ['tproxy', 'server']
-    fail_msg: >-
-      sing_box_reset_profile must be set to either 'tproxy' or 'server'.
-      Pass it via -e sing_box_reset_profile=<profile> or define it in group_vars.
+    fail_msg: sing_box_reset_profile must be set to either 'tproxy' or 'server'. Pass it via -e sing_box_reset_profile=<profile> or define it in group_vars.
 
 - name: reset | tproxy-specific cleanup
   when: sing_box_reset_profile == 'tproxy'

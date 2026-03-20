@@ -127,13 +127,13 @@ graph TB
 
 ### 策略路由 (Policy Routing)
 
-配置位于 `/etc/netplan/99-sing_box_tproxy.yaml`.
+由 `sing-box-tproxy-routing.service` (oneshot systemd service) 负责添加和移除.
 
-```yaml
-routing-policy:
-  - from: 0.0.0.0/0
-    mark: 224
-    table: 224
+等价命令:
+
+```shell
+ip -4 rule add fwmark 224 lookup 224
+ip -4 route add local default dev eth0 table 224
 ```
 
 路由表 224:
