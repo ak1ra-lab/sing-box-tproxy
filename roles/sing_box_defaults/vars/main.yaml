@@ -215,20 +215,25 @@ sing_box_proxy_groups:
 
 # [sing-box outbounds[]]
 sing_box_region_groups:
-  - tag: "🇸🇬 狮城节点"
-    regex: "新加坡|坡|狮城|SG|Singapore"
+  - tag: "🇸🇬 新加坡节点"
+    regex: '(?i:\bSG[P]?\d*\b|Singapore|新加坡|狮城)'
   - tag: "🇭🇰 香港节点"
-    regex: "港|HK|Hong Kong"
-  - tag: "🇯🇵 日本节点"
-    regex: "日本|川日|东京|大阪|泉日|埼玉|沪日|深日|JP|Japan"
+    regex: '(?i:\bHK[G]?\d*\b|Hong.*?Kong|\bHKT\b|\bHKBN\b|\bHGC\b|\bWTT\b|\bCMI\b|香港)'
   - tag: "🇹🇼 台湾节点"
-    regex: "台|新北|彰化|TW|Taiwan"
+    regex: '(?i:\bTW[N]?\d*\b|Taiwan|新北|彰化|\bCHT\b|台湾|[^-]台|\bHINET\b)'
+  - tag: "🇯🇵 日本节点"
+    regex: '(?i:\bJP[N]?\d*\b|Japan|Tokyo|Osaka|Saitama|日本|东京|大阪|埼玉)'
   - tag: "🇰🇷 韩国节点"
-    regex: "KR|Korea|KOR|首尔|韩|韓"
+    regex: '(?i:(?<!North\s)(\bK[O]?R\d*\b|Korea|首尔|韩|韓))'
   - tag: "🇺🇸 美国节点"
-    regex: "美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States"
-  - tag: "🏰 欧洲节点"
-    regex: '(Belgium|比利时)|(Finland|Helsinki|芬兰|赫尔辛基)|\bDE[U]?\b|Germany|法兰克福|德(国|意志)|中德|^德$|\bD[N]?K\b|Denmark|丹麦|\bES[P]?\b|Spain|西班牙|\bFR[A]?\b|France|Paris|法国|巴黎|\bIS[L]?\b|Iceland|冰岛|\bNL[D]?\b|Netherlands|荷兰|阿姆斯特丹|\bUK\b|\bGB[R]?\b|England|United.*?Kingdom|London|英国|[^-]英|伦敦|(Ireland|Dublin|爱尔兰|都柏林)|(Italy|Milan|意大利|米兰)|(Switzerland|Zurich|瑞士|苏黎世)|(希腊|Greece)|(挪威|Norway)'
+    regex: '(?i:\bUS[A]?\d*\b|America|United.*?States|美国|[^-]美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥)'
+
+  # Besides the UK (which has left the EU), Norway and Switzerland are not EU members. The other countries (France, Germany, Italy, Spain, Belgium, Luxembourg, Netherlands, Denmark, Sweden, and Finland) are all EU members.
+  - tag: "🇪🇺 欧洲节点"
+    regex: '(?i:\bUK\d*\b|\bGB[R]?\d*\b|England|United.*?Kingdom|London|英国|[^-]英|伦敦)|(?i:\bFR[A]?\d*\b|France|Paris|法国|巴黎)|(?i:\bDE[U]?\d*\b|Germany|法兰克福|德(国|意志)|中德|^德$)|(Italy|Italia|Milan|意大利|米兰)|(?i:\bES[P]?\d*\b|Spain|西班牙)|(Belgium|比利时)|(卢森堡|Luxemburg|Luxembourg)|(Switzerland|Zurich|瑞士|苏黎世)|(?i:\bNL[D]?\d*\b|Netherlands|荷兰|阿姆斯特丹)|(?i:\bD[N]?K\b|Denmark|丹麦)|(挪威|Norway)|(Sweden|瑞典)|(Finland|Helsinki|芬兰|赫尔辛基)'
+
+  - tag: "🚀 所有节点"
+    regex: ".+"
 
 sing_box_selector_group_suffix: ""
 sing_box_auto_group_suffix: " - AUTO"
