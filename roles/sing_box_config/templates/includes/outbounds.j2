@@ -10,14 +10,14 @@
 {# Add Proxy Groups to Config and populate their outbounds #}
 {%- for group in sing_box_proxy_groups -%}
     {%- set _group_outbounds = group.outbounds -%}
-    {%- for item in sing_box_region_groups | ansible.builtin.dict2items -%}
-        {%- set _ = _group_outbounds.append(item.value.tag ~ sing_box_selfhost_group_suffix) -%}
+    {%- for item in sing_box_region_groups -%}
+        {%- set _ = _group_outbounds.append(item.tag ~ sing_box_selfhost_group_suffix) -%}
     {%- endfor -%}
-    {%- for item in sing_box_region_groups | ansible.builtin.dict2items -%}
-        {%- set _ = _group_outbounds.append(item.value.tag ~ sing_box_auto_group_suffix) -%}
+    {%- for item in sing_box_region_groups -%}
+        {%- set _ = _group_outbounds.append(item.tag ~ sing_box_auto_group_suffix) -%}
     {%- endfor -%}
-    {%- for item in sing_box_region_groups | ansible.builtin.dict2items -%}
-        {%- set _ = _group_outbounds.append(item.value.tag ~ sing_box_selector_group_suffix) -%}
+    {%- for item in sing_box_region_groups -%}
+        {%- set _ = _group_outbounds.append(item.tag ~ sing_box_selector_group_suffix) -%}
     {%- endfor -%}
 
     {%- set _ = outbounds_config.append({
@@ -30,10 +30,10 @@
 {# Add Selfhost Groups to Config (selector, selfhost nodes only) #}
 {# Combined filter: matches proxies that are BOTH selfhost AND in the target region.
    Uses two zero-width lookaheads so order of terms in the tag does not matter. #}
-{%- for item in sing_box_region_groups | ansible.builtin.dict2items -%}
-    {%- set combined_filter = "(?=.*(?:" + sing_box_selfhost_tag_pattern + "))(?=.*(?:" + item.value.regex + "))" -%}
+{%- for item in sing_box_region_groups -%}
+    {%- set combined_filter = "(?=.*(?:" + sing_box_selfhost_tag_pattern + "))(?=.*(?:" + item.regex + "))" -%}
     {%- set _ = outbounds_config.append({
-        "tag": item.value.tag ~ sing_box_selfhost_group_suffix,
+        "tag": item.tag ~ sing_box_selfhost_group_suffix,
         "type": "selector",
         "outbounds": [],
         "filter": combined_filter
@@ -41,23 +41,23 @@
 {%- endfor -%}
 
 {# Add Auto Groups to Config (urltest, excludes selfhost nodes) #}
-{%- for item in sing_box_region_groups | ansible.builtin.dict2items -%}
+{%- for item in sing_box_region_groups -%}
     {%- set _ = outbounds_config.append({
-        "tag": item.value.tag ~ sing_box_auto_group_suffix,
+        "tag": item.tag ~ sing_box_auto_group_suffix,
         "type": "urltest",
         "outbounds": [],
-        "filter": item.value.regex,
+        "filter": item.regex,
         "exclude": sing_box_selfhost_tag_pattern
     }) -%}
 {%- endfor -%}
 
 {# Add Selector Groups to Config (selector, excludes selfhost nodes) #}
-{%- for item in sing_box_region_groups | ansible.builtin.dict2items -%}
+{%- for item in sing_box_region_groups -%}
     {%- set _ = outbounds_config.append({
-        "tag": item.value.tag ~ sing_box_selector_group_suffix,
+        "tag": item.tag ~ sing_box_selector_group_suffix,
         "type": "selector",
         "outbounds": [],
-        "filter": item.value.regex,
+        "filter": item.regex,
         "exclude": sing_box_selfhost_tag_pattern
     }) -%}
 {%- endfor -%}
