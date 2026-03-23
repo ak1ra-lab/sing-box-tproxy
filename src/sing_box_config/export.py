@@ -13,6 +13,43 @@ from sing_box_config.subscription import get_source
 logger = logging.getLogger(__name__)
 
 
+def patch_intra_subscription_detours(proxies: list[dict[str, Any]], name: str) -> None:
+    """
+    Update ``detour`` fields that reference other proxies within this subscription.
+
+    This is only meaningful for sing-box format subscriptions, where individual
+    proxy nodes may chain through another node in the same subscription via the
+    ``detour`` field (e.g. a relay node pointing at an entry node).  Must be
+    called *before* ``apply_name_prefix`` so comparisons still work against the
+    original tags.
+
+    Args:
+        proxies: Proxy list as returned by the parser (modified in-place).
+        name: Subscription name — the same prefix that will be applied to tags.
+    """
+    original_tags = {p["tag"] for p in proxies}
+    for proxy in proxies:
+        if "detour" in proxy and proxy["detour"] in original_tags:
+            proxy["detour"] = f"{name} - {proxy['detour']}"
+
+
+def apply_name_prefix(proxies: list[dict[str, Any]], name: str) -> None:
+    """
+    Prepend ``"{name} - "`` to the ``tag`` of every proxy.
+
+    Mutates the list in-place; group-type filtering is the responsibility of each
+    ``SubscriptionParser``.  For sing-box subscriptions that may use intra-
+    subscription ``detour`` references, call ``patch_intra_subscription_detours``
+    first.
+
+    Args:
+        proxies: Proxy list to rename (modified in-place).
+        name: Subscription name used as the tag prefix.
+    """
+    for proxy in proxies:
+        proxy["tag"] = f"{name} - {proxy['tag']}"
+
+
 def get_proxies_from_subscriptions(
     name: str, subscription: dict[str, Any]
 ) -> list[dict[str, Any]]:
@@ -53,10 +90,9 @@ def get_proxies_from_subscriptions(
         return []
 
     proxies = parser.parse(content)
-
-    if sub_format != "sing-box":
-        for proxy in proxies:
-            proxy["tag"] = f"{name} - {proxy['tag']}"
+    if sub_format == "sing-box":
+        patch_intra_subscription_detours(proxies, name)
+    apply_name_prefix(proxies, name)
 
     exclude_pattern = subscription.get("exclude", "")
     if not exclude_pattern:

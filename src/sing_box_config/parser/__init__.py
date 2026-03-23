@@ -1,8 +1,10 @@
 from sing_box_config.parser.base import SubscriptionParser
+from sing_box_config.parser.clash import ClashSubscriptionParser
 from sing_box_config.parser.shadowsocks import SIP002SubscriptionParser
 from sing_box_config.parser.sing_box import SingBoxSubscriptionParser
 
 SUPPORTED_FORMATS = {
+    "clash": ClashSubscriptionParser,
     "sip002": SIP002SubscriptionParser,
     "sing-box": SingBoxSubscriptionParser,
 }
