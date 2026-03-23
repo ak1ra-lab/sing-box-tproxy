@@ -35,9 +35,11 @@
         src: "{{ dist_wheel }}"
         dest: "{{ dist_wheel_dest }}"
 
+    # The forcereinstall option is only available in Ansible 2.1 and above.
     - name: install dist_wheel on remote venv
       ansible.builtin.pip:
         name: "file://{{ dist_wheel_dest }}"
+        state: forcereinstall
         virtualenv: "{{ sing_box_state_dir }}/.venv"
         virtualenv_command: python3 -m venv
       notify:
