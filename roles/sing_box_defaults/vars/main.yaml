@@ -46,6 +46,9 @@ sing_box_pip_extra_args:
 # Internal: service states that trigger a sing-box-config run
 sing_box_config_service_active_state: ["started", "restarted"]
 
+sing_box_config_subscription_types: ["inline", "local", "remote"]
+sing_box_config_subscription_formats: ["sing-box", "sip002", "clash"]
+
 # System & Network Integration
 
 # sing-box inbounds
