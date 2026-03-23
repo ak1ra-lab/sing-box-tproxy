@@ -3,8 +3,10 @@ import json
 from unittest.mock import MagicMock, patch
 
 from sing_box_config.export import (
+    apply_name_prefix,
     build_selfhost_detours,
     get_proxies_from_subscriptions,
+    patch_intra_subscription_detours,
     populate_outbound_groups,
     remove_invalid_outbounds,
 )
@@ -18,7 +20,7 @@ def test_inline_singbox():
     }
     proxies = get_proxies_from_subscriptions("test", sub)
     assert len(proxies) == 1
-    assert proxies[0]["tag"] == "proxy1"
+    assert proxies[0]["tag"] == "test - proxy1"
 
 
 def test_inline_sip002():
@@ -40,7 +42,7 @@ def test_local_singbox(mock_read, mock_exists):
     sub = {"type": "local", "format": "sing-box", "path": "/tmp/proxies.json"}
     proxies = get_proxies_from_subscriptions("test", sub)
     assert len(proxies) == 1
-    assert proxies[0]["tag"] == "proxy1"
+    assert proxies[0]["tag"] == "test - proxy1"
 
 
 @patch("sing_box_config.subscription.remote.fetch_url_with_retries")
@@ -52,7 +54,7 @@ def test_remote_singbox(mock_fetch):
     sub = {"type": "remote", "format": "sing-box", "url": "http://example.com/sub"}
     proxies = get_proxies_from_subscriptions("test", sub)
     assert len(proxies) == 1
-    assert proxies[0]["tag"] == "proxy1"
+    assert proxies[0]["tag"] == "test - proxy1"
 
 
 def test_exclude_filter():
@@ -67,7 +69,41 @@ def test_exclude_filter():
     }
     proxies = get_proxies_from_subscriptions("test", sub)
     assert len(proxies) == 1
-    assert proxies[0]["tag"] == "KeepMe"
+    assert proxies[0]["tag"] == "test - KeepMe"
+
+
+# apply_name_prefix
+
+
+def test_apply_name_prefix_renames_tags():
+    proxies = [
+        {"tag": "node-01", "type": "shadowsocks"},
+        {"tag": "node-02", "type": "vmess"},
+    ]
+    apply_name_prefix(proxies, "myprovider")
+    assert proxies[0]["tag"] == "myprovider - node-01"
+    assert proxies[1]["tag"] == "myprovider - node-02"
+
+
+# patch_intra_subscription_detours
+
+
+def test_patch_intra_subscription_detours_updates_detour_reference():
+    """detour pointing at another proxy in the same subscription gets the prefix."""
+    proxies = [
+        {"tag": "relay-01", "type": "vless", "detour": "entry-01"},
+        {"tag": "entry-01", "type": "shadowsocks"},
+    ]
+    patch_intra_subscription_detours(proxies, "myprovider")
+    relay = next(p for p in proxies if p["tag"] == "relay-01")
+    assert relay["detour"] == "myprovider - entry-01"
+
+
+def test_patch_intra_subscription_detours_ignores_external_detour():
+    """detour referencing a tag not in this subscription is left unchanged."""
+    proxies = [{"tag": "node-01", "type": "vless", "detour": "warp"}]
+    patch_intra_subscription_detours(proxies, "myprovider")
+    assert proxies[0]["detour"] == "warp"
 
 
 # duplicate_selfhost_detour
