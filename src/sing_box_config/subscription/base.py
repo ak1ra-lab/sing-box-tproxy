@@ -6,15 +6,18 @@ class SubscriptionSource(ABC):
     """Base class for subscription content fetchers."""
 
     @abstractmethod
-    def fetch(self, config: dict[str, Any]) -> str:
+    def fetch(self, config: dict[str, Any]) -> list[str]:
         """
-        Fetch subscription content and return it as a raw string.
+        Fetch subscription content and return it as a list of raw strings.
+
+        Each element corresponds to one source (path, URL, or inline content).
+        Callers should iterate over the list and parse each item independently.
 
         Args:
             config: Subscription configuration dict.
 
         Returns:
-            Raw subscription content as a string.
+            List of raw subscription content strings.
 
         Raises:
             ValueError: If required config fields are missing or invalid.

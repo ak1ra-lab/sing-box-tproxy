@@ -45,6 +45,26 @@ def test_local_singbox(mock_read, mock_exists):
     assert proxies[0]["tag"] == "test - proxy1"
 
 
+@patch("pathlib.Path.exists")
+@patch("pathlib.Path.read_text")
+def test_local_singbox_paths(mock_read, mock_exists):
+    mock_exists.return_value = True
+    mock_read.side_effect = [
+        json.dumps([{"tag": "proxy1", "type": "shadowsocks"}]),
+        json.dumps([{"tag": "proxy2", "type": "shadowsocks"}]),
+    ]
+
+    sub = {
+        "type": "local",
+        "format": "sing-box",
+        "paths": ["/tmp/proxies1.json", "/tmp/proxies2.json"],
+    }
+    proxies = get_proxies_from_subscriptions("test", sub)
+    assert len(proxies) == 2
+    assert proxies[0]["tag"] == "test - proxy1"
+    assert proxies[1]["tag"] == "test - proxy2"
+
+
 @patch("sing_box_config.subscription.remote.fetch_url_with_retries")
 def test_remote_singbox(mock_fetch):
     mock_resp = MagicMock()
@@ -55,6 +75,68 @@ def test_remote_singbox(mock_fetch):
     proxies = get_proxies_from_subscriptions("test", sub)
     assert len(proxies) == 1
     assert proxies[0]["tag"] == "test - proxy1"
+
+
+@patch("sing_box_config.subscription.remote.fetch_url_with_retries")
+def test_remote_singbox_urls(mock_fetch):
+    resp1, resp2 = MagicMock(), MagicMock()
+    resp1.text = json.dumps([{"tag": "proxy1", "type": "shadowsocks"}])
+    resp2.text = json.dumps([{"tag": "proxy2", "type": "shadowsocks"}])
+    mock_fetch.side_effect = [resp1, resp2]
+
+    sub = {
+        "type": "remote",
+        "format": "sing-box",
+        "urls": ["http://example.com/sub1", "http://example.com/sub2"],
+    }
+    proxies = get_proxies_from_subscriptions("test", sub)
+    assert len(proxies) == 2
+    assert proxies[0]["tag"] == "test - proxy1"
+    assert proxies[1]["tag"] == "test - proxy2"
+
+
+@patch("pathlib.Path.exists")
+@patch("pathlib.Path.read_text")
+def test_local_singbox_path_and_paths_merged_deduplicated(mock_read, mock_exists):
+    """path + paths together: union in order, duplicates removed."""
+    mock_exists.return_value = True
+    mock_read.side_effect = [
+        json.dumps([{"tag": "proxy1", "type": "shadowsocks"}]),
+        json.dumps([{"tag": "proxy2", "type": "shadowsocks"}]),
+    ]
+
+    sub = {
+        "type": "local",
+        "format": "sing-box",
+        # paths lists proxy1 and proxy2; path duplicates proxy1 — should be ignored
+        "paths": ["/tmp/proxies1.json", "/tmp/proxies2.json"],
+        "path": "/tmp/proxies1.json",
+    }
+    proxies = get_proxies_from_subscriptions("test", sub)
+    assert len(proxies) == 2
+    assert proxies[0]["tag"] == "test - proxy1"
+    assert proxies[1]["tag"] == "test - proxy2"
+
+
+@patch("sing_box_config.subscription.remote.fetch_url_with_retries")
+def test_remote_singbox_url_and_urls_merged_deduplicated(mock_fetch):
+    """url + urls together: union in order, duplicates removed."""
+    resp1, resp2 = MagicMock(), MagicMock()
+    resp1.text = json.dumps([{"tag": "proxy1", "type": "shadowsocks"}])
+    resp2.text = json.dumps([{"tag": "proxy2", "type": "shadowsocks"}])
+    mock_fetch.side_effect = [resp1, resp2]
+
+    sub = {
+        "type": "remote",
+        "format": "sing-box",
+        # urls lists sub1 and sub2; url duplicates sub1 — should be ignored
+        "urls": ["http://example.com/sub1", "http://example.com/sub2"],
+        "url": "http://example.com/sub1",
+    }
+    proxies = get_proxies_from_subscriptions("test", sub)
+    assert len(proxies) == 2
+    assert proxies[0]["tag"] == "test - proxy1"
+    assert proxies[1]["tag"] == "test - proxy2"
 
 
 def test_exclude_filter():

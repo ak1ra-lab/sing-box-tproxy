@@ -22,10 +22,18 @@ def fetch_url_with_retries(url: str, **kwargs: Any) -> httpx.Response:
 
 
 class RemoteSubscriptionSource(SubscriptionSource):
-    def fetch(self, config: dict[str, Any]) -> str:
-        url = config.get("url")
-        if not url:
-            raise ValueError("Remote subscription missing 'url'")
-        resp = fetch_url_with_retries(url, follow_redirects=True)
-        logger.debug("resp.text = %s", resp.text[:100])
-        return resp.text
+    def fetch(self, config: dict[str, Any]) -> list[str]:
+        raw: list[str] = list(config.get("urls", []))
+        if "url" in config:
+            raw.append(config["url"])
+        # deduplicate while preserving order
+        urls = list(dict.fromkeys(raw))
+        if not urls:
+            raise ValueError("Remote subscription missing 'url' or 'urls'")
+
+        results = []
+        for url in urls:
+            resp = fetch_url_with_retries(url, follow_redirects=True)
+            logger.debug("resp.text = %s", resp.text[:100])
+            results.append(resp.text)
+        return results

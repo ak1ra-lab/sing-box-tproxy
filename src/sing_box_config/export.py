@@ -75,7 +75,7 @@ def get_proxies_from_subscriptions(
         return []
 
     try:
-        content = source.fetch(subscription)
+        contents = source.fetch(subscription)
     except Exception as e:
         logger.error("Failed to fetch subscription %s: %s", name, e)
         return []
@@ -89,7 +89,9 @@ def get_proxies_from_subscriptions(
         )
         return []
 
-    proxies = parser.parse(content)
+    proxies = []
+    for content in contents:
+        proxies.extend(parser.parse(content))
     if sub_format == "sing-box":
         patch_intra_subscription_detours(proxies, name)
     apply_name_prefix(proxies, name)
