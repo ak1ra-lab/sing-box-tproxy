@@ -126,7 +126,6 @@ sing_box_custom_rejected_rule_set: custom-rejected-rule-set
 sing_box_custom_internal_rule_set: custom-internal-rule-set
 sing_box_custom_internal_rule_set_dns: dns_internal
 sing_box_custom_bypassed_rule_set: custom-bypassed-rule-set
-sing_box_custom_bypassed_rule_set_dns: dns_direct
 
 # https://github.com/MetaCubeX/meta-rules-dat/tree/sing
 # sing_box_github_proxy resolved lazily from defaults
@@ -146,13 +145,15 @@ sing_box_remote_rule_sets:
   - path: geosite/private.srs
   - path: geosite/telegram.srs
 
+# Rule-set tags whose DNS queries are resolved via dns_direct.
+# The template merges these with the custom-bypassed rule-set into a single
+# dns_direct DNS rule, parallel to sing_box_direct_route_rule_sets.
+sing_box_direct_dns_rule_sets:
+  - geosite-cn
+  - geosite-private
+
 # General DNS routing rules
 sing_box_basic_dns_rules:
-  - action: route
-    rule_set:
-      - geosite-cn
-      - geosite-private
-    server: dns_direct
   - action: route
     query_type: [A, AAAA]
     rule_set:
@@ -179,9 +180,16 @@ sing_box_basic_route_rules:
       - port: 22
       - protocol: ssh
     outbound: SSH
-  - action: route
-    rule_set: [geoip-private, geosite-private, geoip-cn, geosite-cn]
-    outbound: DIRECT
+
+# Rule-set tags routed to the DIRECT outbound.
+# The template merges these with the custom-internal and custom-bypassed
+# rule-sets into a single DIRECT route rule, which is more efficient than
+# having multiple separate rules.
+sing_box_direct_route_rule_sets:
+  - geoip-private
+  - geosite-private
+  - geoip-cn
+  - geosite-cn
 
 sing_box_filtering_route_rules:
   - action: route

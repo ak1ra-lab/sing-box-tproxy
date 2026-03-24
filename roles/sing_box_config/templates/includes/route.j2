@@ -106,19 +106,17 @@
 {# Basic Rules #}
 {%- set _ = route_rules.extend(sing_box_basic_route_rules | default([], true)) -%}
 
-{# Custom Rules #}
+{# Direct Rules — custom-internal, custom-bypassed, and geo direct rule_sets merged into one rule #}
+{%- set _direct_rule_sets = [] -%}
 {%- if (_internal_rs_json | default('', true)) | length > 0 -%}
-    {%- set _ = route_rules.append({
-        "action": "route",
-        "rule_set": [sing_box_custom_internal_rule_set],
-        "outbound": "DIRECT"
-    }) -%}
+    {%- set _ = _direct_rule_sets.append(sing_box_custom_internal_rule_set) -%}
 {%- endif -%}
-
-{%- if (_bypassed_rule_sets | default([], true)) | length > 0 -%}
+{%- set _ = _direct_rule_sets.extend(_bypassed_rule_sets) -%}
+{%- set _ = _direct_rule_sets.extend(sing_box_direct_route_rule_sets | default([], true)) -%}
+{%- if _direct_rule_sets | length > 0 -%}
     {%- set _ = route_rules.append({
         "action": "route",
-        "rule_set": _bypassed_rule_sets,
+        "rule_set": _direct_rule_sets,
         "outbound": "DIRECT"
     }) -%}
 {%- endif -%}
