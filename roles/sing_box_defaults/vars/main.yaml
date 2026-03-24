@@ -165,21 +165,25 @@ sing_box_basic_dns_rules:
     server: dns_fakeip
 
 sing_box_basic_route_rules:
+  - action: sniff
   - action: hijack-dns
-    port: 53
-  - action: hijack-dns
-    protocol: dns
+    type: logical
+    mode: or
+    rules:
+      - port: 53
+      - protocol: dns
   - action: route
-    port: 22
+    type: logical
+    mode: or
+    rules:
+      - port: 22
+      - protocol: ssh
     outbound: SSH
+  - action: route
+    rule_set: [geoip-private, geosite-private, geoip-cn, geosite-cn]
+    outbound: DIRECT
 
 sing_box_filtering_route_rules:
-  - action: route
-    rule_set: [geoip-private, geosite-private]
-    outbound: DIRECT
-  - action: route
-    rule_set: [geoip-cn, geosite-cn]
-    outbound: DIRECT
   - action: route
     rule_set: [geosite-category-ai-!cn]
     outbound: AI
