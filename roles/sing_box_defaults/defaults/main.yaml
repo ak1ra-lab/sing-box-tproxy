@@ -16,24 +16,27 @@ sing_box_subscriptions: {}
 #     type: remote
 #     format: sip002
 #     enabled: true
-#     url: "https://sub.example.com/api/v1/client/subscribe?token=YOUR_TOKEN_HERE"
-#     exclude: "过期|Expire|\\d+(\\.\\d+)? ?GB|流量|Traffic|QQ群|官网|Premium"
+#     exclude: '过期|到期|Expire|\d+(\.\d+)? ?GB|流量|Traffic|QQ群|官网|网址|套餐|直连'
+#     urls:
+#       - "https://sub.example.com/api/v1/client/subscribe?token=YOUR_TOKEN_HERE"
 #
 #   # Example 2: Remote subscription with sing-box native format (default format)
 #   provider_remote_singbox:
 #     type: remote
 #     format: sing-box
 #     enabled: true
-#     url: "https://sub.example.net/sing-box-config"
+#     urls:
+#       - "https://sub.example.net/sing-box-config"
 #
 #   # Example 3: Local file subscription (sing-box format)
-#   provider_local_file:
+#   selfhost_local_singbox:
 #     type: local
 #     format: sing-box
-#     path: "/var/lib/sing-box/config/local-proxies.json"
+#     paths:
+#       - "/var/lib/sing-box/config/local-proxies.json"
 #
 #   # Example 4: Inline subscription (sing-box format)
-#   provider_inline_singbox:
+#   selfhost_inline_singbox:
 #     type: inline
 #     format: sing-box
 #     outbounds:
@@ -45,7 +48,7 @@ sing_box_subscriptions: {}
 #         password: "password"
 #
 #   # Example 5: Inline subscription (SIP002 format)
-#   provider_inline_sip002:
+#   selfhost_inline_sip002:
 #     type: inline
 #     format: sip002
 #     content: |
@@ -124,7 +127,6 @@ sing_box_liveness_probe_action_threshold: 3
 # [general]
 # GitHub proxy prefix prepended to remote URLs (ruleset downloads, yacd archive).
 # Example: "https://gh.example.com/"  Leave empty to use GitHub directly.
-# sing_box_github_proxy: "https://gh.ak1ra.xyz/"
 sing_box_github_proxy: ""
 
 # [sing-box]
@@ -171,14 +173,14 @@ sing_box_custom_bypassed_ip6: []
 # Outbounds & proxy groups
 
 # [sing-box outbounds[]]
-# Which regional group type to chain selfhost -detour copies through.
-# "selector": chain through sing_box_selector_groups (manual selection)
-# "auto":     chain through sing_box_auto_groups    (urltest / latency-based)
-sing_box_selfhost_detour_group: "selector"
-
-# [sing-box outbounds[]]
 # When true, each self-hosted proxy gets a `-detour` copy whose `detour` field
 # points at the matching regional group (controlled by sing_box_selfhost_detour_group),
 # enabling chained proxying:
 #   client → provider-<region> (selector/auto) → selfhost-*-detour → internet
 sing_box_selfhost_detour_enabled: false
+
+# [sing-box outbounds[]]
+# Which regional group type to chain selfhost -detour copies through.
+# "selector": chain through sing_box_selector_groups (manual selection)
+# "auto":     chain through sing_box_auto_groups    (urltest / latency-based)
+sing_box_selfhost_detour_group: "selector"
