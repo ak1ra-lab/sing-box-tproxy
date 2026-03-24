@@ -145,7 +145,7 @@ table inet sing_box_tproxy {
 		type filter hook prerouting priority mangle; policy accept;
 
 		# DNS Transparent Proxy
-		meta l4proto { tcp, udp } th dport 53 tproxy to :$TPROXY_PORT accept comment "DNS Transparent Proxy"
+		meta l4proto { tcp, udp } th dport 53 tproxy to :$TPROXY_PORT meta mark set $PROXY_MARK accept comment "DNS Transparent Proxy"
 
 		# Reject direct access to tproxy port to prevent loops
 		fib daddr type local meta l4proto { tcp, udp } \
