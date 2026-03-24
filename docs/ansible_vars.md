@@ -40,9 +40,8 @@ DNS 解析策略的核心在于区分**可信 DNS**(Remote DoT/DoH, 用于代理
 - **路由优先级**:
   1.  **Hijack DNS**: 拦截所有 DNS 流量(`port: 53` 或 `protocol: dns`)送入内置 DNS 服务器.
   2.  **Reject Rules**: 拒绝 `custom-rejected-rule-set` 中的目标.
-  3.  **Direct Rules**: 放行 `custom-internal-rule-set` 和 `custom-bypassed-rule-set` 中的目标.
+  3.  **Direct Rules**: 所有 `outbound: DIRECT` 的规则集合并为单条规则, 包含 `custom-internal-rule-set`、`custom-bypassed-rule-set` 以及 `sing_box_direct_route_rule_sets` 中的条目 (默认含 `geoip-private`, `geosite-private`, `geoip-cn`, `geosite-cn`). DNS 侧同理, `custom-bypassed-rule-set` 与 `sing_box_direct_dns_rule_sets` 合并为单条 `server: dns_direct` 规则.
   4.  **Filtering Rules**: 基于 Geosite/GeoIP 进行分流.
-      - `geosite-private`, `geosite-cn` -> `DIRECT`
       - `geosite-gfw`, `geosite-google` 等 -> `PROXY`
 - **Default Domain Resolver**:
   - `route.default_domain_resolver` 设置为 `dns_direct`.
@@ -139,11 +138,12 @@ DNS 解析策略的核心在于区分**可信 DNS**(Remote DoT/DoH, 用于代理
 | `sing_box_custom_internal_rule_set`                    | string  | `custom-internal-rule-set`     | 自定义内网规则集的 tag 名                                   |
 | `sing_box_custom_internal_rule_set_dns`                | string  | `dns_internal`                 | 内网规则集使用的 DNS tag                                    |
 | `sing_box_custom_bypassed_rule_set`                    | string  | `custom-bypassed-rule-set`     | 自定义放行规则集的 tag 名                                   |
-| `sing_box_custom_bypassed_rule_set_dns`                | string  | `dns_direct`                   | 放行规则集使用的 DNS tag                                    |
 | `sing_box_remote_rule_set_url_prefix`                  | string  | `...github.com/.../sing/geo/`  | 远程规则集 URL 前缀 (受 `sing_box_github_proxy` 影响)       |
 | `sing_box_remote_rule_set_update_interval`             | string  | `30d`                          | 远程规则集更新间隔                                          |
 | `sing_box_remote_rule_sets`                            | list    | `[geoip-cn, geosite-gfw, ...]` | 启用的远程规则集列表                                        |
-| `sing_box_basic_dns_rules`                             | list    | `[...]`                        | 基础 DNS 分流规则 (cn/private 直连, gfw/google 等走 fakeip) |
+| `sing_box_direct_dns_rule_sets`                        | list    | `[geosite-cn, geosite-private]` | 合并进单条 `server: dns_direct` DNS 规则的规则集 tag 列表; 模板还会将 `custom-bypassed-rule-set` 前置加入 |
+| `sing_box_basic_dns_rules`                             | list    | `[...]`                        | 基础 DNS 分流规则 (gfw/google 等走 fakeip)                  |
+| `sing_box_direct_route_rule_sets`                      | list    | `[geoip-private, geosite-private, geoip-cn, geosite-cn]` | 合并进单条 `outbound: DIRECT` 路由规则的规则集 tag 列表; 模板还会将 custom-internal / custom-bypassed 前置加入 |
 | `sing_box_basic_route_rules`                           | list    | `[...]`                        | 基础路由规则 (DNS 劫持, SSH 直连等)                         |
 | `sing_box_filtering_route_rules`                       | list    | `[...]`                        | 应用层过滤/分流规则 (geoip/geosite → DIRECT/PROXY/AI 等)    |
 | `sing_box_proxy_groups`                                | list    | `[PROXY, FINAL, AI, ...]`      | 顶层 Proxy Group (Selector) 列表                            |
