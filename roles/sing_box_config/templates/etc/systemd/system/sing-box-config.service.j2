@@ -1,7 +1,7 @@
 [Unit]
 Description=sing-box-config updater
+Wants=network-online.target sing-box.service
 After=network-online.target sing-box.service
-Wants=network-online.target
 
 [Service]
 Type=oneshot
