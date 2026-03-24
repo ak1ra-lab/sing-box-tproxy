@@ -15,7 +15,8 @@
 [Unit]
 Description=sing-box TPROXY routing rules (ip rule + ip route)
 Documentation=https://github.com/ak1ra-lab/sing-box-tproxy
-After=network.target
+Wants=network-online.target
+After=network-online.target
 Before=nftables.service sing-box.service
 
 [Service]
