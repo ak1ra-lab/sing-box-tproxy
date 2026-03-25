@@ -6,9 +6,7 @@
     "tag": "MIXED-IN",
     "type": "mixed",
     "listen": "0.0.0.0" if sing_box_mode == 'gateway' else "127.0.0.1",
-    "listen_port": sing_box_mixed_port | int,
-    "udp_timeout": 180,
-    "sniff": true
+    "listen_port": sing_box_mixed_port | int
 } -%}
 {%- set _ = inbounds_config.append(_mixed_inbound) -%}
 
@@ -18,9 +16,7 @@
         "tag": "TPROXY-IN",
         "type": "tproxy",
         "listen": "0.0.0.0" if sing_box_mode == 'gateway' else "127.0.0.1",
-        "listen_port": sing_box_tproxy_port | int,
-        "udp_timeout": 180,
-        "sniff": true
+        "listen_port": sing_box_tproxy_port | int
     } -%}
     {%- set _ = inbounds_config.append(_tproxy_inbound) -%}
 {%- endif -%}
