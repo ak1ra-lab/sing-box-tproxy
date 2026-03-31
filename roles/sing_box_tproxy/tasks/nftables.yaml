@@ -45,6 +45,23 @@
   notify:
     - systemctl restart nftables.service
 
+- name: template sing_box_offload.nft on remote
+  ansible.builtin.template:
+    src: etc/nftables.d/sing_box_offload.nft.j2
+    dest: /etc/nftables.d/sing_box_offload.nft
+    mode: "0644"
+  when: sing_box_nftables_flow_offload | ansible.builtin.bool
+  notify:
+    - systemctl restart nftables.service
+
+- name: remove sing_box_offload.nft when flow offload is disabled
+  ansible.builtin.file:
+    path: /etc/nftables.d/sing_box_offload.nft
+    state: absent
+  when: not (sing_box_nftables_flow_offload | ansible.builtin.bool)
+  notify:
+    - systemctl restart nftables.service
+
 - name: template nftables.conf on remote
   ansible.builtin.template:
     src: etc/nftables.conf.j2

@@ -168,23 +168,6 @@ table inet sing_box_tproxy {
 		meta l4proto { tcp, udp } counter tproxy to :$TPROXY_PORT meta mark set $PROXY_MARK comment "Redirect the remaining packets to the TPROXY_PORT"
 	}
 
-{% if sing_box_nftables_flow_offload %}
-	flowtable bypassed_flowtable {
-		hook ingress priority 0
-		devices = { {{ sing_box_nftables_flow_offload_interfaces | join(', ') }} }
-	}
-
-	chain forward_flowtable {
-		type filter hook forward priority 0; policy accept;
-		counter
-
-		# Flow Offloading - Offload all forwarded TCP/UDP traffic.
-		# Tproxy'd traffic is diverted in prerouting and never reaches this hook,
-		# so every packet here has already been classified as bypass-proxy traffic.
-		meta l4proto { tcp, udp } ct state new flow offload @bypassed_flowtable comment "flowtable offload for forwarded traffic"
-	}
-
-{% endif %}
 	chain output_tproxy {
 		type route hook output priority mangle; policy accept;
 
