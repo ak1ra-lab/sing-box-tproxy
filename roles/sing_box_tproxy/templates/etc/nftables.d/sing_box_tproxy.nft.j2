@@ -126,17 +126,17 @@ table inet sing_box_tproxy {
 
 		# Reject direct access to tproxy port to prevent loops
 		fib daddr type local meta l4proto { tcp, udp } \
-			th dport $TPROXY_PORT reject with icmpx type host-unreachable comment "Reject direct access to tproxy port to prevent loops"
+			th dport $TPROXY_PORT log prefix "sing-box tproxy-loop: " level warn reject with icmpx type host-unreachable comment "Reject direct access to tproxy port to prevent loops"
 
 {% if sing_box_custom_rejected_ip4 | default([], true) | length > 0 %}
 		# Reject custom addresses
-		ip daddr @custom_rejected_ip4 reject with icmpx type host-unreachable comment "Reject custom addresses"
+		ip daddr @custom_rejected_ip4 log prefix "sing-box reject: " level warn reject with icmpx type host-unreachable comment "Reject custom addresses"
 
 {% endif %}
 {% if _sing_box_enable_ipv6 %}
 {% if sing_box_custom_rejected_ip6 | default([], true) | length > 0 %}
 		# Reject custom addresses (IPv6)
-		ip6 daddr @custom_rejected_ip6 reject with icmpx type no-route comment "Reject custom addresses (IPv6)"
+		ip6 daddr @custom_rejected_ip6 log prefix "sing-box reject: " level warn reject with icmpx type no-route comment "Reject custom addresses (IPv6)"
 
 {% endif %}
 {% endif %}
@@ -188,13 +188,13 @@ table inet sing_box_tproxy {
 
 {% if sing_box_custom_rejected_ip4 | default([], true) | length > 0 %}
 		# Reject custom addresses
-		ip daddr @custom_rejected_ip4 reject with icmpx type host-unreachable comment "Reject custom addresses"
+		ip daddr @custom_rejected_ip4 log prefix "sing-box reject: " level warn reject with icmpx type host-unreachable comment "Reject custom addresses"
 
 {% endif %}
 {% if _sing_box_enable_ipv6 %}
 {% if sing_box_custom_rejected_ip6 | default([], true) | length > 0 %}
 		# Reject custom addresses (IPv6)
-		ip6 daddr @custom_rejected_ip6 reject with icmpx type no-route comment "Reject custom addresses (IPv6)"
+		ip6 daddr @custom_rejected_ip6 log prefix "sing-box reject: " level warn reject with icmpx type no-route comment "Reject custom addresses (IPv6)"
 
 {% endif %}
 {% endif %}

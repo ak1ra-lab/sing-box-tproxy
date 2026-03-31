@@ -184,3 +184,73 @@ sing_box_selfhost_detour_enabled: false
 # "selector": chain through sing_box_selector_groups (manual selection)
 # "auto":     chain through sing_box_auto_groups    (urltest / latency-based)
 sing_box_selfhost_detour_group: "selector"
+
+# [proxy-guard] nftables-based per-client TCP abuse protection.
+# Runs in a dedicated table (inet sing_box_proxy_guard) at prerouting filter priority (0),
+# which fires AFTER the TPROXY redirect at prerouting mangle (-150).  This means limits
+# take effect before socket delivery and cover both transparent and explicit proxy clients
+# without interfering with proxy operation or the sing_box_tproxy table.
+#
+# Master switch — disabled by default.  Review all parameters below before enabling.
+sing_box_proxy_guard_enabled: false
+
+# [proxy-guard] LAN subnets whose traffic is subject to connlimit / auto-ban rules.
+# Only new TCP connections sourced from these prefixes enter the protection chains.
+# Adjust to exactly match your actual LAN addressing — narrower ranges are safer.
+# The defaults cover the three RFC 1918 private-use blocks, which is sufficient for
+# most home / small-office deployments.
+sing_box_proxy_guard_lan4_subnets:
+  - 10.0.0.0/8
+  - 172.16.0.0/12
+  - 192.168.0.0/16
+
+# [proxy-guard] Leave empty to disable IPv6 protection rules entirely.
+# Example: ["fd00::/8", "fe80::/10"]
+sing_box_proxy_guard_lan6_subnets: []
+
+# [proxy-guard] Throttle: rate-based soft protection (disabled by default).
+# When enabled, a source IP whose new-TCP-connection rate exceeds the configured
+# threshold is added to the throttled set for sing_box_proxy_guard_throttle_timeout.
+# During the throttle period only NEW connections from that IP are dropped —
+# already-established connections remain intact.  This makes throttle significantly
+# softer than auto-ban, which also terminates established connections.
+# By design, no restriction is applied when this feature is disabled.
+sing_box_proxy_guard_throttle_enabled: false
+
+# [proxy-guard] New TCP connections per minute that trigger a throttle once the burst
+# allowance is exhausted.
+# 600/min ≈ 10 new connections/sec sustained — accommodates typical browser bursts
+# and sync-client spikes while catching misconfigured or runaway torrent clients.
+sing_box_proxy_guard_throttle_rate: 600
+
+# [proxy-guard] Token-bucket burst size before throttle rate limiting takes effect.
+# 150 allows short-lived connection spikes (e.g. a browser opening many parallel
+# requests on page load) without immediately triggering throttle.
+sing_box_proxy_guard_throttle_burst: 150
+
+# [proxy-guard] Duration of a throttle period.  Kept short so legitimate clients
+# recover quickly after a transient connection burst.
+sing_box_proxy_guard_throttle_timeout: "2m"
+
+# [proxy-guard] Auto-ban: rate-based hard protection (disabled by default).
+# When enabled, a source IP whose new-TCP-connection rate exceeds the configured
+# threshold is added to the auto-ban set for sing_box_proxy_guard_auto_ban_timeout,
+# during which ALL TCP from that IP is dropped — including already-established
+# connections.  This is more disruptive than throttle; enable only when throttle
+# alone is insufficient to stop abusive clients.
+sing_box_proxy_guard_auto_ban_enabled: false
+
+# [proxy-guard] New TCP connections per minute that trigger a ban once the burst
+# allowance is exhausted.
+# 1200/min ≈ 20 new connections/sec sustained — well above normal browser/application
+# behaviour but clearly anomalous for runaway torrent clients or scanning tools.
+sing_box_proxy_guard_auto_ban_rate: 1200
+
+# [proxy-guard] Token-bucket burst size before rate limiting takes effect.
+# A burst of 300 accommodates legitimate spikes (e.g. a browser opening many
+# parallel connections on page load) while still catching sustained abuse.
+sing_box_proxy_guard_auto_ban_burst: 300
+
+# [proxy-guard] Duration of an auto-ban.  Shorter values reduce collateral damage
+# from false positives; 5 minutes strikes a balance between deterrence and recovery.
+sing_box_proxy_guard_auto_ban_timeout: "5m"

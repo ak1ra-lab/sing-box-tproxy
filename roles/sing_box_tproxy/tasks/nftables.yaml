@@ -70,6 +70,23 @@
   notify:
     - systemctl restart nftables.service
 
+- name: template sing_box_proxy_guard.nft on remote
+  ansible.builtin.template:
+    src: etc/nftables.d/sing_box_proxy_guard.nft.j2
+    dest: /etc/nftables.d/sing_box_proxy_guard.nft
+    mode: "0644"
+  when: sing_box_proxy_guard_enabled | ansible.builtin.bool
+  notify:
+    - systemctl restart nftables.service
+
+- name: remove sing_box_proxy_guard.nft when proxy guard is disabled
+  ansible.builtin.file:
+    path: /etc/nftables.d/sing_box_proxy_guard.nft
+    state: absent
+  when: not (sing_box_proxy_guard_enabled | ansible.builtin.bool)
+  notify:
+    - systemctl restart nftables.service
+
 - name: ensure nftables.service enabled
   ansible.builtin.systemd_service:
     name: nftables.service
