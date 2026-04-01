@@ -2,22 +2,29 @@
 
 # Proxy-guard: per-client TCP abuse protection for transparent-proxy gateways.
 #
-# This table runs at prerouting filter priority (0), which fires AFTER the TPROXY
-# redirect applied at prerouting mangle (-150) and BEFORE socket delivery.  Drops
-# issued here prevent the proxy process from ever receiving abusive packets, so
-# protection covers both transparent-proxy clients (any dport, TPROXY-redirected)
-# and explicit proxy clients (direct TCP to the mixed/socks port).
+# Two chains are used:
+#   chain prerouting (priority filter 0) — rate-limiting and auto-ban enforcement.
+#     Fires AFTER the TPROXY redirect at prerouting mangle (-150) and BEFORE socket
+#     delivery.  Scoped to LAN subnet sets so WAN return traffic is never rate-limited.
+#   chain input (priority filter 0) — ct state invalid drop.
+#     Fires AFTER the routing decision; only packets destined for this machine reach
+#     this hook.  Placed here (not in prerouting) so that forwarded LAN-to-LAN traffic
+#     is not affected: in bypass-router deployments intra-LAN reply packets arrive via
+#     the default route but their SYN bypassed the gateway entirely, leaving no
+#     conntrack entry — prerouting would classify them as invalid and drop them.
+#     TPROXY-redirected and explicit-proxy connections are delivered to local sockets
+#     and therefore pass through the input hook — they remain fully protected.
 #
-# Throttle and auto-ban rules are scoped to the configured LAN subnet sets so that
-# WAN-sourced traffic (internet return packets, inbound scans) is never mistakenly
-# rate-limited.  The ct state invalid drop applies unconditionally to all interfaces.
+# Rate-limiting rules (prerouting) are scoped to LAN subnet sets so that WAN-sourced
+# traffic (internet return packets, inbound scans) is never mistakenly rate-limited.
 #
 # Protection layers (in evaluation order):
-#   1. ct state invalid drop  — universal, always active when this table is loaded
-#   2. auto-ban enforcement   — drop ALL TCP (new + established) from banned IPs
-#   3. auto-ban detection     — rate meter; ban IPs exceeding the hard threshold
-#   4. throttle enforcement   — drop NEW TCP only from throttled IPs (softer)
-#   5. throttle detection     — rate meter; throttle IPs exceeding the soft threshold
+#   1. [prerouting] fib saddr local accept — skip rate-limiting for gateway's own traffic
+#   2. [prerouting] auto-ban enforcement  — drop ALL TCP (new + established) from banned IPs
+#   3. [prerouting] auto-ban detection    — rate meter; ban IPs exceeding the hard threshold
+#   4. [prerouting] throttle enforcement  — drop NEW TCP only from throttled IPs (softer)
+#   5. [prerouting] throttle detection    — rate meter; throttle IPs exceeding the soft threshold
+#   6. [input]      ct state invalid drop — only for locally-destined traffic
 #
 # A throttled client that keeps aggressively retrying new connections will still
 # accumulate counts in the auto-ban rate meter (step 3 fires before step 4 drops),
@@ -89,16 +96,12 @@ table inet sing_box_proxy_guard {
 {% endif %}
 {% endif %}
 	# Hook: prerouting at filter priority (0).
-	# Fires AFTER prerouting mangle (-150) where TPROXY redirect is applied, and
-	# BEFORE packet delivery to the TPROXY socket or INPUT chain.  Dropping here
-	# is sufficient to protect the proxy process from receiving abusive traffic.
+	# Fires AFTER the TPROXY redirect at prerouting mangle (-150) and BEFORE socket
+	# delivery.  Contains rate-limiting and auto-ban enforcement only; ct state
+	# invalid drop has been moved to chain input so that forwarded LAN-to-LAN
+	# traffic is not affected by asymmetric-routing false positives.
 	chain prerouting {
 		type filter hook prerouting priority filter; policy accept;
-
-		# Drop malformed and out-of-state packets on all interfaces and addresses.
-		# Covers RST injection, out-of-window segments, and conntrack overflow entries.
-		# Not restricted to LAN subnets — invalid packets from any source are harmful.
-		ct state invalid counter drop
 
 		# Skip all rate-limiting for locally-originated traffic.
 		# The gateway's own applications (and TPROXY-re-routed local flows) source
@@ -167,5 +170,20 @@ table inet sing_box_proxy_guard {
 
 {% endif %}
 {% endif %}
+	}
+
+	# Hook: input at filter priority (0).
+	# Fires AFTER the routing decision; only packets destined for this machine pass
+	# through this hook.  Forwarded traffic (LAN-to-LAN routed via the gateway) does
+	# NOT reach input, making this the correct place for ct state invalid drop in
+	# bypass-router deployments where asymmetric routing leaves conntrack without a
+	# SYN entry for the reply direction.
+	chain input {
+		type filter hook input priority filter; policy accept;
+
+		# Drop malformed and out-of-state packets destined for this machine.
+		# TPROXY-redirected flows and explicit proxy connections are delivered to
+		# local sockets and therefore pass through this hook — they remain protected.
+		ct state invalid counter drop
 	}
 }
