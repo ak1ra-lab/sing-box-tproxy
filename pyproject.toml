@@ -45,15 +45,16 @@ build-backend = "hatchling.build"
 source = "vcs"
 
 [dependency-groups]
-tests = ["pytest>=8.3.4", "pytest-cov>=6.0.0"]
-lint = ["ruff>=0.9.4"]
-dev = [
-    { include-group = "tests" },
-    { include-group = "lint" },
-    "pre-commit>=4.2.0",
-]
 docs = [
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.7.1",
     "pymdown-extensions>=10.19.1",
+]
+lint = ["ruff>=0.9.4"]
+tests = ["pytest>=8.3.4", "pytest-cov>=6.0.0"]
+dev = [
+    { include-group = "docs" },
+    { include-group = "lint" },
+    { include-group = "tests" },
+    "pre-commit>=4.2.0",
 ]

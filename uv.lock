@@ -956,7 +956,10 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "mkdocs" },
+    { name = "mkdocs-material" },
     { name = "pre-commit" },
+    { name = "pymdown-extensions" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
@@ -985,7 +988,10 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "mkdocs", specifier = ">=1.6.1" },
+    { name = "mkdocs-material", specifier = ">=9.7.1" },
     { name = "pre-commit", specifier = ">=4.2.0" },
+    { name = "pymdown-extensions", specifier = ">=10.19.1" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "pytest-cov", specifier = ">=6.0.0" },
     { name = "ruff", specifier = ">=0.9.4" },
