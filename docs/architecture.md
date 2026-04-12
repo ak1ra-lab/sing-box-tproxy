@@ -1,7 +1,7 @@
 # 架构设计
 
-本文档基于 Jinja2 template
-([sing_box_tproxy.nft.j2](../roles/sing_box_tproxy/templates/etc/nftables.d/sing_box_tproxy.nft.j2))
+本文档基于 Jinja2 template 
+(`roles/sing_box_tproxy/templates/etc/nftables.d/sing_box_tproxy.nft.j2`)
 的语义, 详细说明 sing-box-tproxy 的 nftables TPROXY 透明代理架构、数据包路径与控制流.
 
 ## 目录
