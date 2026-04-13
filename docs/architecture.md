@@ -474,70 +474,75 @@ meta nfproto ipv6 oifname != $INTERFACE6 accept
 
 ## Mermaid 架构图 {#mermaid-diagram}
 
+### 架构固定事实
+
 ```mermaid
 flowchart TD
-  subgraph COMMON["架构固定事实"]
-    C1["table inet sing_box_tproxy 仅挂载两条 base chain:<br/>prerouting_tproxy 和 output_tproxy"]
-    C1 --> C2["实际 TPROXY interception 只发生在 prerouting_tproxy"]
-    C2 --> C3["output_tproxy 只负责 local-origin packet 的<br/>分类、bypass、reject、mark 与 reroute 触发"]
-  end
-
-  subgraph LAN["场景 A: LAN 设备流量"]
-    A1["LAN 设备发出 TCP/UDP 包"] --> A2["Gateway kernel RX"]
-    A2 --> A3["Netfilter PREROUTING<br/>chain: prerouting_tproxy"]
-
-    A3 -->|"DNS dport 53"| A4["tproxy to :TPROXY_PORT<br/>mark = PROXY_MARK, accept"]
-    A3 -->|"local dst + dport TPROXY_PORT"| A5["Reject (防直连回环)"]
-    A3 -->|"custom_rejected_*"| A6["log + Reject"]
-    A3 -->|"fib daddr type local"| A7["Bypass accept"]
-    A3 -->|"reserved_* 或 custom_bypassed_*"| A8["Bypass accept"]
-    A3 -->|"TCP + socket transparent 1"| A9["mark = PROXY_MARK, accept<br/>(fast-path)"]
-    A3 -->|"其余 TCP/UDP"| A10["tproxy to :TPROXY_PORT<br/>mark = PROXY_MARK"]
-
-    A4 --> A11["策略路由<br/>fwmark PROXY_MARK -> PROXY_ROUTE_TABLE -> local default"]
-    A9 --> A11
-    A10 --> A11
-
-    A11 --> A12["Kernel 本地投递"]
-    A12 --> A13["sing-box TProxy inbound :TPROXY_PORT<br/>(user space, IP_TRANSPARENT socket)"]
-    A13 --> A14["sing-box 读取原始目标地址, 发起 outbound"]
-    A14 --> A15["Netfilter OUTPUT<br/>chain: output_tproxy"]
-    A15 -->|"skuid/skgid = PROXY_UID/PROXY_GID"| A16["mark = ROUTE_DEFAULT_MARK, accept<br/>(防回环, 走 main table 直连上游)"]
-    A15 -->|"非默认出口接口"| A17["Bypass accept"]
-  end
-
-  subgraph LOCAL["场景 B: 网关本机进程流量"]
-    B1["本机 local process 发包<br/>(user space)"] --> B2["Kernel LOCAL_OUT"]
-    B2 --> B3["Netfilter OUTPUT<br/>chain: output_tproxy"]
-
-    B3 -->|"非默认出口接口"| B4["Bypass accept"]
-    B3 -->|"skuid/skgid = PROXY_UID/PROXY_GID"| B5["mark = ROUTE_DEFAULT_MARK, accept<br/>(sing-box 自身流量防回环)"]
-    B3 -->|"mark = ROUTE_DEFAULT_MARK"| B6["Bypass accept"]
-    B3 -->|"custom_rejected_*"| B7["log + Reject"]
-    B3 -->|"DNS dport 53"| B8["mark = PROXY_MARK, accept"]
-    B3 -->|"NetBIOS / local / reserved / custom_bypassed_*"| B9["Bypass accept"]
-    B3 -->|"其余 TCP/UDP"| B10["mark = PROXY_MARK"]
-
-    B8 --> B11["type route: reroute check 触发"]
-    B10 --> B11
-    B11 --> B12["策略路由<br/>fwmark PROXY_MARK -> PROXY_ROUTE_TABLE -> local default"]
-    B12 --> B13["包折返到接收侧路径"]
-    B13 --> B14["Netfilter PREROUTING<br/>chain: prerouting_tproxy (再次)"]
-    B14 -->|"DNS"| B15["tproxy to :TPROXY_PORT"]
-    B14 -->|"其余 TCP/UDP"| B16["tproxy to :TPROXY_PORT"]
-    B15 --> B17["sing-box TProxy inbound :TPROXY_PORT<br/>(user space)"]
-    B16 --> B17
-    B17 --> B18["sing-box 发起 outbound"]
-    B18 --> B19["output_tproxy: skuid/skgid 匹配"]
-    B19 --> B20["mark = ROUTE_DEFAULT_MARK, accept<br/>走 main table 直连上游"]
-  end
-
-  N1["关键: 只有 prerouting_tproxy 执行 tproxy to :TPROXY_PORT"]
-  N2["PROXY_MARK = 送入透明代理截获路径<br/>ROUTE_DEFAULT_MARK = 代理自身流量不再被透明代理"]
-  N3["IPv6 说明: _sing_box_enable_ipv6=true 时控制流不变,<br/>变化的是 IPv6 匹配条件、conditional sets (reserved_ip6 等)<br/>与 inet6 策略路由前提.<br/>当前 deployment example 为 IPv4-only."]
-  N1 --- N2
-  N2 --- N3
+  C1["table inet sing_box_tproxy 仅挂载两条 base chain:<br/>prerouting_tproxy 和 output_tproxy"]
+  C1 --> C2["实际 TPROXY interception 只发生在 prerouting_tproxy"]
+  C2 --> C3["output_tproxy 只负责 local-origin packet 的<br/>分类、bypass、reject、mark 与 reroute 触发"]
 ```
+
+### 场景 A: LAN 设备流量
+
+```mermaid
+flowchart TD
+  A1["LAN 设备发出 TCP/UDP 包"] --> A2["Gateway kernel RX"]
+  A2 --> A3["Netfilter PREROUTING<br/>chain: prerouting_tproxy"]
+
+  A3 -->|"DNS dport 53"| A4["tproxy to :TPROXY_PORT<br/>mark = PROXY_MARK, accept"]
+  A3 -->|"local dst + dport TPROXY_PORT"| A5["Reject (防直连回环)"]
+  A3 -->|"custom_rejected_*"| A6["log + Reject"]
+  A3 -->|"fib daddr type local"| A7["Bypass accept"]
+  A3 -->|"reserved_* 或 custom_bypassed_*"| A8["Bypass accept"]
+  A3 -->|"TCP + socket transparent 1"| A9["mark = PROXY_MARK, accept<br/>(fast-path)"]
+  A3 -->|"其余 TCP/UDP"| A10["tproxy to :TPROXY_PORT<br/>mark = PROXY_MARK"]
+
+  A4 --> A11["策略路由<br/>fwmark PROXY_MARK -> PROXY_ROUTE_TABLE -> local default"]
+  A9 --> A11
+  A10 --> A11
+
+  A11 --> A12["Kernel 本地投递"]
+  A12 --> A13["sing-box TProxy inbound :TPROXY_PORT<br/>(user space, IP_TRANSPARENT socket)"]
+  A13 --> A14["sing-box 读取原始目标地址, 发起 outbound"]
+  A14 --> A15["Netfilter OUTPUT<br/>chain: output_tproxy"]
+  A15 -->|"skuid/skgid = PROXY_UID/PROXY_GID"| A16["mark = ROUTE_DEFAULT_MARK, accept<br/>(防回环, 走 main table 直连上游)"]
+  A15 -->|"非默认出口接口"| A17["Bypass accept"]
+```
+
+### 场景 B: 网关本机进程流量
+
+```mermaid
+flowchart TD
+  B1["本机 local process 发包<br/>(user space)"] --> B2["Kernel LOCAL_OUT"]
+  B2 --> B3["Netfilter OUTPUT<br/>chain: output_tproxy"]
+
+  B3 -->|"非默认出口接口"| B4["Bypass accept"]
+  B3 -->|"skuid/skgid = PROXY_UID/PROXY_GID"| B5["mark = ROUTE_DEFAULT_MARK, accept<br/>(sing-box 自身流量防回环)"]
+  B3 -->|"mark = ROUTE_DEFAULT_MARK"| B6["Bypass accept"]
+  B3 -->|"custom_rejected_*"| B7["log + Reject"]
+  B3 -->|"DNS dport 53"| B8["mark = PROXY_MARK, accept"]
+  B3 -->|"NetBIOS / local / reserved / custom_bypassed_*"| B9["Bypass accept"]
+  B3 -->|"其余 TCP/UDP"| B10["mark = PROXY_MARK"]
+
+  B8 --> B11["type route: reroute check 触发"]
+  B10 --> B11
+  B11 --> B12["策略路由<br/>fwmark PROXY_MARK -> PROXY_ROUTE_TABLE -> local default"]
+  B12 --> B13["包折返到接收侧路径"]
+  B13 --> B14["Netfilter PREROUTING<br/>chain: prerouting_tproxy (再次)"]
+  B14 -->|"DNS"| B15["tproxy to :TPROXY_PORT"]
+  B14 -->|"其余 TCP/UDP"| B16["tproxy to :TPROXY_PORT"]
+  B15 --> B17["sing-box TProxy inbound :TPROXY_PORT<br/>(user space)"]
+  B16 --> B17
+  B17 --> B18["sing-box 发起 outbound"]
+  B18 --> B19["output_tproxy: skuid/skgid 匹配"]
+  B19 --> B20["mark = ROUTE_DEFAULT_MARK, accept<br/>走 main table 直连上游"]
+```
+
+> **关键说明:**
+> - 只有 `prerouting_tproxy` 执行 `tproxy to :TPROXY_PORT`
+> - `PROXY_MARK`: 送入透明代理截获路径; `ROUTE_DEFAULT_MARK`: 代理自身流量不再被透明代理
+> - `_sing_box_enable_ipv6=true` 时控制流不变, 变化的是 IPv6 匹配条件、conditional sets (`reserved_ip6` 等) 与 `inet6` 策略路由前提; 当前 deployment example 为 IPv4-only
 
 ---
 
