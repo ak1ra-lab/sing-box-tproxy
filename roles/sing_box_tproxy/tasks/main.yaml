@@ -37,7 +37,7 @@
     dest: /etc/iproute2/rt_tables.d/sing_box_tproxy.conf
     mode: "0644"
 
-# systemd oneshot service: 添加 ip rule (policy routing) 和 ip route (local default)
+# 添加 ip rule (policy routing) 和 ip route (local default)
 - name: template sing-box-tproxy-routing.service on remote
   when: (_sing_box_enable_routing | ansible.builtin.bool)
   ansible.builtin.template:
@@ -55,6 +55,13 @@
     enabled: true
     state: started
     daemon_reload: true
+
+- name: template static /etc/resolv.conf
+  when: (sing_box_etc_resolv_conf | ansible.builtin.bool)
+  ansible.builtin.template:
+    src: etc/resolv.conf.j2
+    dest: /etc/resolv.conf
+    mode: "0644"
 
 # nftables 才是一切的关键, 为 packet 打 fwmark
 - name: ensure /etc/nftables.conf

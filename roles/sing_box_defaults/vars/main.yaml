@@ -94,6 +94,13 @@ sing_box_dns_hosts_predefined:
   "dns.alidns.com": ["223.5.5.5", "223.6.6.6"]
   "one.one.one.one": ["1.1.1.1", "1.0.0.1"]
 
+# Whether to create static /etc/resolv.conf with the above DNS servers.
+# Since all DNS requests are rerouted to sing-box via nftables.
+# We only need a valid /etc/resolv.conf to avoid client DNS errors.
+# The content in this file is not important since it will never be used.
+sing_box_etc_resolv_conf: true
+sing_box_etc_resolv_conf_servers: "{{ sing_box_dns_hosts_predefined['one.one.one.one'] }}"
+
 sing_box_dns_public_dns_servers:
   - tag: dns_direct
     type: tls
