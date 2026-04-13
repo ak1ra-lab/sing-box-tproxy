@@ -20,6 +20,7 @@ After=network-online.target sing-box.service
 
 [Service]
 Type=oneshot
+LogNamespace={{ sing_box_log_namespace }}
 RemainAfterExit=yes
 
 # IPv4: remove any stale rules/routes before re-adding (idempotent)

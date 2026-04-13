@@ -14,6 +14,10 @@ sing_box_group:
   name: proxy
   gid: 13
 
+# https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html#LogNamespace=
+# journalctl --namespace=sing-box -f
+sing_box_log_namespace: sing-box
+
 # Base directories (no intra-role dependencies)
 sing_box_etc_dir: /etc/sing-box
 sing_box_log_dir: /var/log/sing-box

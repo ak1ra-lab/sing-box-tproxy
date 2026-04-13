@@ -3,5 +3,6 @@ Description=Reload sing-box after config changes
 
 [Service]
 Type=oneshot
+LogNamespace={{ sing_box_log_namespace }}
 ExecStartPre=/usr/bin/sing-box -c {{ sing_box_etc_config_file }} check
 ExecStart=/usr/bin/systemctl reload sing-box.service

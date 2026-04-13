@@ -5,6 +5,7 @@ After=network-online.target sing-box.service
 
 [Service]
 Type=oneshot
+LogNamespace={{ sing_box_log_namespace }}
 User={{ sing_box_user.name }}
 Group={{ sing_box_group.name }}
 WorkingDirectory={{ sing_box_state_dir }}
