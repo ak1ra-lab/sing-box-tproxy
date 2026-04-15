@@ -18,22 +18,22 @@
 
     {%- elif sing_box_server_tls_mode == 'acme' -%}
         {%- set acme_config = {
-                "domain": sing_box_server_acme_domain,
-                "provider": sing_box_server_acme_provider,
-                "data_directory": sing_box_state_acme_dir,
-                "default_server_name": _sing_box_server_acme_default_server_name
+            "domain": sing_box_server_acme_domain,
+            "provider": sing_box_server_acme_provider,
+            "data_directory": sing_box_state_acme_dir,
+            "default_server_name": _sing_box_server_acme_default_server_name
         } -%}
 
         {%- if sing_box_server_acme_email -%}
             {%- set _ = acme_config.update({"email": sing_box_server_acme_email}) -%}
         {%- endif -%}
 
-        {%- if sing_box_server_acme_eab_kid and sing_box_server_acme_eab_hmac_key -%}
+        {%- if sing_box_server_acme_external_account_key_id and sing_box_server_acme_external_account_mac_key -%}
             {%- set _ = acme_config.update({
-                        "eab": {
-                        "kid": sing_box_server_acme_eab_kid,
-                        "hmac_key": sing_box_server_acme_eab_hmac_key
-                        }
+                "external_account": {
+                    "key_id": sing_box_server_acme_external_account_key_id,
+                    "mac_key": sing_box_server_acme_external_account_mac_key
+                }
             }) -%}
         {%- endif -%}
 
@@ -47,7 +47,7 @@
 
         {%- if sing_box_server_acme_use_dns01 -%}
             {%- set dns01_config = {
-                        "provider": sing_box_server_acme_dns01_provider
+                "provider": sing_box_server_acme_dns01_provider
             } -%}
 
             {%- if sing_box_server_acme_dns01_provider == 'cloudflare' -%}

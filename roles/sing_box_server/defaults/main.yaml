@@ -77,11 +77,14 @@ sing_box_server_acme_dns01_alidns_access_key_secret: ""
 sing_box_server_acme_dns01_alidns_region_id: ""
 
 # EAB (External Account Binding) for ZeroSSL/Google etc.
-sing_box_server_acme_eab_kid: ""
-sing_box_server_acme_eab_hmac_key: ""
+sing_box_server_acme_external_account_key_id: ""
+sing_box_server_acme_external_account_mac_key: ""
 
 # Manual TLS (when tls_mode = manual)
+# The path to server certificate chain, in PEM format.
+# Will be automatically reloaded if file modified.
 sing_box_server_tls_certificate_path: ""
+# The path to the server private key, in PEM format.
 sing_box_server_tls_key_path: ""
 
 # Advanced Options (rarely need to change)
