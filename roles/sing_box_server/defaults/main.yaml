@@ -10,9 +10,6 @@ sing_box_server_hostname: "{{ ansible_fqdn }}"
 # ACME email (required for automatic TLS certificates)
 sing_box_server_acme_email: ""
 
-# Server region code (for client outbound tags, e.g., US, HK, SG, JP)
-sing_box_server_region: ""
-
 # Number of users to generate (1-10, default: 1)
 sing_box_server_user_count: 1
 

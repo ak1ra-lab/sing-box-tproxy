@@ -1,6 +1,5 @@
 {%- set outbounds = [] -%}
 {%- set server_short = sing_box_server_hostname.split('.')[0] -%}
-{%- set region_prefix = sing_box_server_region ~ '-' if sing_box_server_region else '' -%}
 
 {#- Loop through all users and all enabled protocols -#}
 {%- for user in _selected_user_names -%}
@@ -10,7 +9,7 @@
         {%- if ss_user -%}
             {%- set _ = outbounds.append({
                 "type": "shadowsocks",
-                "tag": region_prefix ~ server_short ~ "-" ~ user ~ "-ss",
+                "tag": server_short ~ "-" ~ user ~ "-ss",
                 "server": sing_box_server_hostname,
                 "server_port": sing_box_server_shadowsocks_port,
                 "method": sing_box_server_shadowsocks_method,
@@ -32,7 +31,7 @@
         {%- if trojan_user -%}
             {%- set _ = outbounds.append({
                 "type": "trojan",
-                "tag": region_prefix ~ server_short ~ "-" ~ user ~ "-trojan",
+                "tag": server_short ~ "-" ~ user ~ "-trojan",
                 "server": sing_box_server_hostname,
                 "server_port": sing_box_server_trojan_port,
                 "password": trojan_user.password,
@@ -49,7 +48,7 @@
         {%- if hysteria2_user -%}
             {%- set hy2_config = {
                 "type": "hysteria2",
-                "tag": region_prefix ~ server_short ~ "-" ~ user ~ "-hy2",
+                "tag": server_short ~ "-" ~ user ~ "-hy2",
                 "server": sing_box_server_hostname,
                 "server_port": sing_box_server_hysteria2_port,
                 "password": hysteria2_user.password,
@@ -81,7 +80,7 @@
         {%- if vless_user -%}
             {%- set vless_config = {
                 "type": "vless",
-                "tag": region_prefix ~ server_short ~ "-" ~ user ~ "-vless",
+                "tag": server_short ~ "-" ~ user ~ "-vless",
                 "server": sing_box_server_hostname,
                 "server_port": sing_box_server_vless_port,
                 "uuid": vless_user.uuid,
@@ -102,7 +101,7 @@
         {%- if tuic_user -%}
             {%- set _ = outbounds.append({
                 "type": "tuic",
-                "tag": region_prefix ~ server_short ~ "-" ~ user ~ "-tuic",
+                "tag": server_short ~ "-" ~ user ~ "-tuic",
                 "server": sing_box_server_hostname,
                 "server_port": sing_box_server_tuic_port,
                 "uuid": tuic_user.uuid,

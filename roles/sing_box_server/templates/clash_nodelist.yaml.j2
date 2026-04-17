@@ -1,6 +1,5 @@
 {%- set proxies = [] -%}
 {%- set server_short = sing_box_server_hostname.split('.')[0] -%}
-{%- set region_prefix = sing_box_server_region ~ '-' if sing_box_server_region else '' -%}
 
 {#- Loop through all users and all enabled protocols -#}
 {%- for user in _selected_user_names -%}
@@ -9,7 +8,7 @@
         {%- set ss_user = sing_box_server_shadowsocks_users | selectattr('name', 'equalto', user) | first | default(none) -%}
         {%- if ss_user -%}
             {%- set _ = proxies.append({
-                "name": region_prefix ~ server_short ~ "-" ~ user ~ "-ss",
+                "name": server_short ~ "-" ~ user ~ "-ss",
                 "type": "ss",
                 "server": sing_box_server_hostname,
                 "port": sing_box_server_shadowsocks_port,
@@ -25,7 +24,7 @@
         {%- set trojan_user = sing_box_server_trojan_users | selectattr('name', 'equalto', user) | first | default(none) -%}
         {%- if trojan_user -%}
             {%- set _ = proxies.append({
-                "name": region_prefix ~ server_short ~ "-" ~ user ~ "-trojan",
+                "name": server_short ~ "-" ~ user ~ "-trojan",
                 "type": "trojan",
                 "server": sing_box_server_hostname,
                 "port": sing_box_server_trojan_port,
@@ -42,7 +41,7 @@
         {%- set hysteria2_user = sing_box_server_hysteria2_users | selectattr('name', 'equalto', user) | first | default(none) -%}
         {%- if hysteria2_user -%}
             {%- set hy2_config = {
-                "name": region_prefix ~ server_short ~ "-" ~ user ~ "-hy2",
+                "name": server_short ~ "-" ~ user ~ "-hy2",
                 "type": "hysteria2",
                 "server": sing_box_server_hostname,
                 "port": sing_box_server_hysteria2_port,
@@ -71,7 +70,7 @@
         {%- set vless_user = sing_box_server_vless_users | selectattr('name', 'equalto', user) | first | default(none) -%}
         {%- if vless_user -%}
             {%- set vless_config = {
-                "name": region_prefix ~ server_short ~ "-" ~ user ~ "-vless",
+                "name": server_short ~ "-" ~ user ~ "-vless",
                 "type": "vless",
                 "server": sing_box_server_hostname,
                 "port": sing_box_server_vless_port,
@@ -93,7 +92,7 @@
         {%- set tuic_user = sing_box_server_tuic_users | selectattr('name', 'equalto', user) | first | default(none) -%}
         {%- if tuic_user -%}
             {%- set _ = proxies.append({
-                "name": region_prefix ~ server_short ~ "-" ~ user ~ "-tuic",
+                "name": server_short ~ "-" ~ user ~ "-tuic",
                 "type": "tuic",
                 "server": sing_box_server_hostname,
                 "port": sing_box_server_tuic_port,
