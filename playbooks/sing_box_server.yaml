@@ -2,10 +2,15 @@
 # Deploy a sing-box server (Shadowsocks, Trojan, Hysteria2, etc.) on the target host(s).
 #
 # Roles executed (in order):
-#   sing_box_validation  — validate required Ansible variables
-#   sing_box_install     — install sing-box via the SagerNet APT repository
-#   sing_box_server      — generate and deploy the server config.json; also writes
-#                          client outbound files to config/client_outbounds/ locally
+#   sing_box_validation    — validate required Ansible variables
+#   acme_dns_register      — (conditional) register an acme-dns account and add the
+#                            required _acme-challenge CNAME record; only runs when
+#                            sing_box_server_tls_mode == 'acme',
+#                            sing_box_server_acme_use_dns01 is true, and
+#                            sing_box_server_acme_dns01_provider == 'acmedns'
+#   sing_box_install       — install sing-box via the SagerNet APT repository
+#   sing_box_server        — generate and deploy the server config.json; also writes
+#                            client outbound files to config/client_outbounds/ locally
 #
 # Optional overrides:
 #   playbook_hosts  (default: 'sing-box-server')  — inventory group or host pattern
@@ -17,6 +22,7 @@
 
 - name: deploy sing-box server
   hosts: "{{ playbook_hosts | default('sing-box-server') }}"
+  gather_facts: true
   become: true
   tasks:
     - name: validate configuration
@@ -24,6 +30,32 @@
         sing_box_validation_profile: server
       ansible.builtin.import_role:
         name: sing_box_validation
+
+    - name: register acme-dns account and add CNAME record
+      when:
+        - sing_box_server_tls_mode == 'acme'
+        - sing_box_server_acme_use_dns01
+        - sing_box_server_acme_dns01_provider == 'acmedns'
+      vars:
+        acme_dns_register_server_url: "{{ sing_box_server_acme_dns01_acmedns_server_url }}"
+        acme_dns_register_cloudflare_api_token: "{{ sing_box_server_acme_dns01_cloudflare_api_token }}"
+        acme_dns_register_cloudflare_zone_token: "{{ sing_box_server_acme_dns01_cloudflare_zone_token }}"
+        acme_dns_register_cloudflare_zone: "{{ sing_box_server_acme_dns01_cloudflare_zone }}"
+        acme_dns_register_hostname: "{{ sing_box_server_hostname }}"
+        acme_dns_register_acme_domains: "{{ sing_box_server_acme_domain }}"
+      ansible.builtin.import_role:
+        name: acme_dns_register
+
+    - name: propagate acme-dns credentials to sing_box_server vars
+      when:
+        - sing_box_server_tls_mode == 'acme'
+        - sing_box_server_acme_use_dns01
+        - sing_box_server_acme_dns01_provider == 'acmedns'
+        - acme_dns_register_username | default('') | length > 0
+      ansible.builtin.set_fact:
+        sing_box_server_acme_dns01_acmedns_username: "{{ acme_dns_register_username }}"
+        sing_box_server_acme_dns01_acmedns_password: "{{ acme_dns_register_password }}"
+        sing_box_server_acme_dns01_acmedns_subdomain: "{{ acme_dns_register_subdomain }}"
 
     - name: install sing-box package
       ansible.builtin.import_role:

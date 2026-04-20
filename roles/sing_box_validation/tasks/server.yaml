@@ -152,9 +152,9 @@
         - name: validate acme_dns01_provider value
           ansible.builtin.assert:
             that:
-              - sing_box_server_acme_dns01_provider in ['cloudflare', 'alidns']
+              - sing_box_server_acme_dns01_provider in ['cloudflare', 'alidns', 'acmedns']
             fail_msg: >-
-              sing_box_server_acme_dns01_provider must be one of: cloudflare, alidns.
+              sing_box_server_acme_dns01_provider must be one of: cloudflare, alidns, acmedns.
               Got: '{{ sing_box_server_acme_dns01_provider }}'.
             quiet: true
 

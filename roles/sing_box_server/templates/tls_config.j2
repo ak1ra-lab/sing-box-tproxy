@@ -67,6 +67,19 @@
                 {%- if sing_box_server_acme_dns01_alidns_region_id -%}
                     {%- set _ = dns01_config.update({"region_id": sing_box_server_acme_dns01_alidns_region_id}) -%}
                 {%- endif -%}
+            {%- elif sing_box_server_acme_dns01_provider == 'acmedns' -%}
+                {%- if sing_box_server_acme_dns01_acmedns_username -%}
+                    {%- set _ = dns01_config.update({"username": sing_box_server_acme_dns01_acmedns_username}) -%}
+                {%- endif -%}
+                {%- if sing_box_server_acme_dns01_acmedns_password -%}
+                    {%- set _ = dns01_config.update({"password": sing_box_server_acme_dns01_acmedns_password}) -%}
+                {%- endif -%}
+                {%- if sing_box_server_acme_dns01_acmedns_subdomain -%}
+                    {%- set _ = dns01_config.update({"subdomain": sing_box_server_acme_dns01_acmedns_subdomain}) -%}
+                {%- endif -%}
+                {%- if sing_box_server_acme_dns01_acmedns_server_url -%}
+                    {%- set _ = dns01_config.update({"server_url": sing_box_server_acme_dns01_acmedns_server_url}) -%}
+                {%- endif -%}
             {%- endif -%}
 
             {%- set _ = acme_config.update({"dns01_challenge": dns01_config}) -%}

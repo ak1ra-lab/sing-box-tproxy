@@ -65,13 +65,25 @@ sing_box_server_acme_email: ""
 # Use DNS-01 challenge? (recommended for NAT/firewall)
 sing_box_server_acme_use_dns01: true
 
-# DNS-01 provider: [cloudflare, alidns]
+# DNS-01 provider: [cloudflare, alidns, acmedns]
 sing_box_server_acme_dns01_provider: cloudflare
 sing_box_server_acme_dns01_cloudflare_api_token: ""
 sing_box_server_acme_dns01_cloudflare_zone_token: ""
+# Cloudflare DNS zone for CNAME management (e.g., "example.com")
+# Leave empty to auto-derive from the last two parts of sing_box_server_hostname.
+# Must be set explicitly for non-standard TLDs (e.g., "example.co.uk").
+sing_box_server_acme_dns01_cloudflare_zone: ""
 sing_box_server_acme_dns01_alidns_access_key_id: ""
 sing_box_server_acme_dns01_alidns_access_key_secret: ""
 sing_box_server_acme_dns01_alidns_region_id: ""
+
+# acmedns since sing-box 1.13.0
+# https://github.com/acme-dns/acme-dns
+sing_box_server_acme_dns01_acmedns_username: ""
+sing_box_server_acme_dns01_acmedns_password: ""
+sing_box_server_acme_dns01_acmedns_subdomain: ""
+# https://github.com/libdns/acmedns/blob/55d190ba033a5857828c7f92cb0772d7a561b7b3/provider.go#L49
+sing_box_server_acme_dns01_acmedns_server_url: "https://auth.acme-dns.io"
 
 # EAB (External Account Binding) for ZeroSSL/Google etc.
 sing_box_server_acme_external_account_key_id: ""
