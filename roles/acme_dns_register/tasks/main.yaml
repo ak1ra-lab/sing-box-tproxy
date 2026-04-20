@@ -1,0 +1,53 @@
+---
+# acme_dns_register role
+#
+# Registers with an acme-dns server (POST /register) and persists the resulting
+# credentials to playbooks/host_vars/<inventory_hostname>/acme_dns_credentials.yaml.
+#
+# If the credentials are already present in host_vars the registration step is
+# skipped (idempotent).
+#
+# After a fresh registration the role adds the required _acme-challenge CNAME
+# record(s) automatically when a Cloudflare API token is available.  For all
+# other DNS providers the role pauses and prompts the operator to add the
+# record(s) manually before continuing.
+#
+# All tasks run on the Ansible controller (delegate_to: localhost).
+#
+# Public interface (pass via `vars:` on import_role):
+#   acme_dns_register_server_url             — acme-dns server URL (required)
+#   acme_dns_register_username               — existing username (omit to register)
+#   acme_dns_register_password               — existing password
+#   acme_dns_register_subdomain              — existing subdomain
+#   acme_dns_register_cloudflare_api_token   — CF account token (optional)
+#   acme_dns_register_cloudflare_zone_token  — CF zone token (optional, preferred)
+#   acme_dns_register_cloudflare_zone        — explicit CF zone (optional)
+#   acme_dns_register_hostname               — host FQDN (default: inventory_hostname)
+#   acme_dns_register_acme_domains           — list of ACME domains for CNAME records
+#
+# Output facts (available to subsequent tasks in the play):
+#   acme_dns_register_newly_registered  — true when registration occurred this run
+#   acme_dns_register_username          — registered (or pre-existing) username
+#   acme_dns_register_password          — registered (or pre-existing) password
+#   acme_dns_register_subdomain         — registered (or pre-existing) subdomain
+
+- name: validate acme_dns_register inputs
+  ansible.builtin.import_tasks: validate.yaml
+
+- name: register with acme-dns server
+  ansible.builtin.import_tasks: register.yaml
+
+- name: add _acme-challenge CNAME records via Cloudflare
+  when:
+    - acme_dns_register_newly_registered | bool
+    - >-
+      acme_dns_register_cloudflare_api_token | length > 0
+      or acme_dns_register_cloudflare_zone_token | length > 0
+  ansible.builtin.import_tasks: cname_cloudflare.yaml
+
+- name: prompt operator to add _acme-challenge CNAME records manually
+  when:
+    - acme_dns_register_newly_registered | bool
+    - acme_dns_register_cloudflare_api_token | length == 0
+    - acme_dns_register_cloudflare_zone_token | length == 0
+  ansible.builtin.import_tasks: cname_manual.yaml

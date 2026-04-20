@@ -1,0 +1,49 @@
+---
+# Add _acme-challenge CNAME records via the Cloudflare DNS API.
+# Runs only after a fresh acme-dns registration (acme_dns_register_newly_registered).
+# All tasks run on the Ansible controller.
+
+- name: derive Cloudflare DNS zone
+  become: false
+  delegate_to: localhost
+  ansible.builtin.set_fact:
+    _cloudflare_zone: >-
+      {{ acme_dns_register_cloudflare_zone
+         if acme_dns_register_cloudflare_zone | length > 0
+         else (acme_dns_register_hostname.split('.')[-2:] | join('.')) }}
+    # Prefer the zone-scoped token (least-privilege); fall back to the account token.
+    _cloudflare_api_token: >-
+      {{ acme_dns_register_cloudflare_zone_token
+         if acme_dns_register_cloudflare_zone_token | length > 0
+         else acme_dns_register_cloudflare_api_token }}
+
+- name: add _acme-challenge CNAME records
+  become: false
+  delegate_to: localhost
+  community.general.cloudflare_dns:
+    api_token: "{{ _cloudflare_api_token }}"
+    zone: "{{ _cloudflare_zone }}"
+    # Strip the zone suffix to produce a name relative to the zone, e.g.:
+    #   _acme-challenge.server.example.com  (zone: example.com)
+    #   → record: _acme-challenge.server
+    record: >-
+      {{ ('_acme-challenge.' + acme_domain)
+         | ansible.builtin.regex_replace('\.' + _cloudflare_zone + '$', '') }}
+    type: CNAME
+    value: "{{ _acme_dns_fulldomain }}"
+    proxied: false
+    state: present
+  loop: "{{ acme_dns_register_acme_domains }}"
+  loop_control:
+    loop_var: acme_domain
+    label: "_acme-challenge.{{ acme_domain }} → {{ _acme_dns_fulldomain | default('') }}"
+
+- name: display CNAME summary
+  become: false
+  delegate_to: localhost
+  ansible.builtin.debug:
+    msg: |-
+      Cloudflare CNAME records added for {{ inventory_hostname }}:
+      {% for domain in acme_dns_register_acme_domains %}
+        _acme-challenge.{{ domain }}.  CNAME  {{ _acme_dns_fulldomain | default('') }}.
+      {% endfor %}

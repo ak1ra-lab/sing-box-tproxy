@@ -1,0 +1,45 @@
+---
+# Validate acme_dns_register inputs before performing any network operations.
+
+- name: validate acmedns server URL
+  ansible.builtin.assert:
+    that:
+      - acme_dns_register_server_url | length > 0
+      - acme_dns_register_server_url is ansible.builtin.match("^https?://")
+    fail_msg: >-
+      acme_dns_register_server_url must be a valid HTTP/HTTPS URL.
+      Got: '{{ acme_dns_register_server_url }}'.
+    quiet: true
+
+- name: validate pre-configured credentials are complete
+  when: >-
+    acme_dns_register_username | length > 0
+    or acme_dns_register_password | length > 0
+    or acme_dns_register_subdomain | length > 0
+  ansible.builtin.assert:
+    that:
+      - acme_dns_register_username | length > 0
+      - acme_dns_register_password | length > 0
+      - acme_dns_register_subdomain | length > 0
+    fail_msg: >-
+      When any acme-dns credential is set, all three must be provided:
+      acme_dns_register_username, acme_dns_register_password,
+      acme_dns_register_subdomain.
+    quiet: true
+
+- name: validate Cloudflare zone is derivable for CNAME integration
+  when:
+    - acme_dns_register_username | length == 0
+    - >-
+      acme_dns_register_cloudflare_api_token | length > 0
+      or acme_dns_register_cloudflare_zone_token | length > 0
+    - acme_dns_register_cloudflare_zone | length == 0
+  ansible.builtin.assert:
+    that:
+      - acme_dns_register_hostname.split('.') | length >= 2
+    fail_msg: >-
+      Cannot auto-derive the Cloudflare zone from
+      acme_dns_register_hostname='{{ acme_dns_register_hostname }}'.
+      Please set acme_dns_register_cloudflare_zone explicitly
+      (e.g. "example.com").
+    quiet: true

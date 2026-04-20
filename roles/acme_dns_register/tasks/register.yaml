@@ -1,0 +1,54 @@
+---
+# Register with the acme-dns server and persist credentials to host_vars.
+# Skipped entirely when credentials are already set (idempotent re-runs).
+# All tasks run on the Ansible controller.
+
+- name: check whether acme-dns registration is needed
+  become: false
+  delegate_to: localhost
+  ansible.builtin.set_fact:
+    _acme_dns_register_needed: >-
+      {{ acme_dns_register_username | length == 0
+         or acme_dns_register_password | length == 0
+         or acme_dns_register_subdomain | length == 0 }}
+
+- name: register with acme-dns server
+  when: _acme_dns_register_needed | ansible.builtin.bool
+  become: false
+  delegate_to: localhost
+  block:
+    - name: POST /register to acme-dns server
+      ansible.builtin.uri:
+        url: "{{ acme_dns_register_server_url }}/register"
+        method: POST
+        return_content: true
+        status_code: 201
+      register: _acme_dns_register_response
+
+    - name: set acme-dns credential facts from registration response
+      ansible.builtin.set_fact:
+        acme_dns_register_username: "{{ _acme_dns_register_response.json.username }}"
+        acme_dns_register_password: "{{ _acme_dns_register_response.json.password }}"
+        acme_dns_register_subdomain: "{{ _acme_dns_register_response.json.subdomain }}"
+        _acme_dns_fulldomain: "{{ _acme_dns_register_response.json.fulldomain }}"
+        acme_dns_register_newly_registered: true
+
+    - name: ensure host_vars directory exists
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/host_vars/{{ inventory_hostname }}"
+        state: directory
+        mode: "0755"
+
+    - name: write acme-dns credentials to host_vars
+      ansible.builtin.template:
+        src: acme_dns_credentials.yaml.j2
+        dest: "{{ playbook_dir }}/host_vars/{{ inventory_hostname }}/acme_dns_credentials.yaml"
+        mode: "0600"
+
+- name: mark registration as skipped (credentials already present)
+  when: not (_acme_dns_register_needed | ansible.builtin.bool)
+  become: false
+  delegate_to: localhost
+  ansible.builtin.set_fact:
+    _acme_dns_fulldomain: ""
+    acme_dns_register_newly_registered: false

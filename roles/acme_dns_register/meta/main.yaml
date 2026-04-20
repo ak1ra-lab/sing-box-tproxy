@@ -1,0 +1,31 @@
+---
+# Role metadata for acme_dns_register
+
+galaxy_info:
+  author: ak1ra
+  description: >-
+    Register an acme-dns account and optionally add the required _acme-challenge
+    CNAME record so that sing-box can obtain TLS certificates without storing
+    DNS provider credentials on the remote host.
+  license: MIT
+  min_ansible_version: "2.18"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+        - jammy
+    - name: Debian
+      versions:
+        - trixie
+        - bookworm
+
+  galaxy_tags:
+    - acme
+    - dns
+    - tls
+    - sing-box
+
+dependencies: []
+
+allow_duplicates: false

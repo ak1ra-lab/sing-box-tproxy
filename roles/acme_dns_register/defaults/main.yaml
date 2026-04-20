@@ -1,0 +1,39 @@
+---
+# Default variables for the acme_dns_register role.
+#
+# These are the role's public interface — callers should pass values via
+# `vars:` when invoking `import_role`.
+
+# ── acme-dns server ──────────────────────────────────────────────────────────
+
+# URL of the acme-dns server to register with (required).
+acme_dns_register_server_url: ""
+
+# Existing acme-dns credentials.  When all three are non-empty, registration
+# is skipped (idempotent).  Leave empty to trigger a fresh registration.
+acme_dns_register_username: ""
+acme_dns_register_password: ""
+acme_dns_register_subdomain: ""
+
+# ── Cloudflare CNAME automation ──────────────────────────────────────────────
+
+# Cloudflare account-level API token (optional; least-privilege alternative:
+# use acme_dns_register_cloudflare_zone_token instead).
+acme_dns_register_cloudflare_api_token: ""
+
+# Cloudflare zone-scoped API token (preferred over the account token).
+acme_dns_register_cloudflare_zone_token: ""
+
+# Explicit Cloudflare DNS zone (e.g. "example.com").
+# When empty the zone is derived from the last two labels of
+# acme_dns_register_hostname.
+acme_dns_register_cloudflare_zone: ""
+
+# ── Host and domain context ──────────────────────────────────────────────────
+
+# FQDN of the host being registered; used to derive the Cloudflare zone when
+# acme_dns_register_cloudflare_zone is not set.
+acme_dns_register_hostname: "{{ inventory_hostname }}"
+
+# List of domain names for which _acme-challenge CNAME records are required.
+acme_dns_register_acme_domains: []

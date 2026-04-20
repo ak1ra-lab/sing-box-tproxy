@@ -1,0 +1,32 @@
+---
+# Prompt the operator to add _acme-challenge CNAME records manually.
+# Used when no Cloudflare API token is available (any other DNS provider).
+# Runs only after a fresh acme-dns registration (acme_dns_register_newly_registered).
+# All tasks run on the Ansible controller.
+
+- name: display required CNAME records
+  become: false
+  delegate_to: localhost
+  ansible.builtin.debug:
+    msg: |-
+      ============================================================
+      ACTION REQUIRED: add the following DNS CNAME record(s) for
+      {{ inventory_hostname }} before continuing.
+
+      {% for domain in acme_dns_register_acme_domains %}
+        _acme-challenge.{{ domain }}.  CNAME  {{ _acme_dns_fulldomain | default('') }}.
+      {% endfor %}
+
+      These records delegate the ACME DNS-01 challenge to the
+      acme-dns server at {{ acme_dns_register_server_url }}.
+      The CNAME only needs to be added once; it never changes.
+      ============================================================
+
+- name: wait for operator to add CNAME records
+  become: false
+  delegate_to: localhost
+  ansible.builtin.pause:
+    prompt: >-
+      Add the CNAME record(s) shown above using your DNS provider's control
+      panel or API, then press Enter to continue.
+      (Press Ctrl+C then A to abort.)
