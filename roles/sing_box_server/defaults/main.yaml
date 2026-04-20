@@ -7,9 +7,6 @@
 # Server hostname (for TLS certificates)
 sing_box_server_hostname: "{{ ansible_fqdn }}"
 
-# ACME email (required for automatic TLS certificates)
-sing_box_server_acme_email: ""
-
 # Number of users to generate (1-10, default: 1)
 sing_box_server_user_count: 1
 
@@ -61,6 +58,9 @@ sing_box_server_tls_mode: acme
 sing_box_server_acme_provider: letsencrypt
 sing_box_server_acme_domain:
   - "{{ sing_box_server_hostname }}"
+
+# ACME email (required for automatic TLS certificates)
+sing_box_server_acme_email: ""
 
 # Use DNS-01 challenge? (recommended for NAT/firewall)
 sing_box_server_acme_use_dns01: true

@@ -1,9 +1,6 @@
 ---
 # Main tasks for sing_box_server role
 
-- name: validate configuration parameters
-  ansible.builtin.import_tasks: validation.yaml
-
 - name: generate credentials if not provided
   ansible.builtin.import_tasks: generate_credentials.yaml
 
