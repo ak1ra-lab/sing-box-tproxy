@@ -10,14 +10,19 @@ from sing_box_config.export import (
     populate_outbound_groups,
     remove_invalid_outbounds,
 )
+from sing_box_config.models import (
+    InlineSubscription,
+    LocalSubscription,
+    RemoteSubscription,
+    SelfhostDetourEntry,
+)
 
 
 def test_inline_singbox():
-    sub = {
-        "type": "inline",
-        "format": "sing-box",
-        "outbounds": [{"tag": "proxy1", "type": "shadowsocks"}],
-    }
+    sub = InlineSubscription(
+        sub_format="sing-box",
+        outbounds=[{"tag": "proxy1", "type": "shadowsocks"}],
+    )
     proxies = get_proxies_from_subscriptions("test", sub)
     assert len(proxies) == 1
     assert proxies[0]["tag"] == "test - proxy1"
@@ -26,7 +31,7 @@ def test_inline_singbox():
 def test_inline_sip002():
     uri = "ss://YWVzLTEyOC1nY206cGFzc3dvcmQ@1.2.3.4:8388#Example"
     content = base64.b64encode(uri.encode()).decode()
-    sub = {"type": "inline", "format": "sip002", "content": content}
+    sub = InlineSubscription(sub_format="sip002", content=content)
     proxies = get_proxies_from_subscriptions("test", sub)
     assert len(proxies) == 1
     # SIP002 format adds prefix
@@ -39,7 +44,7 @@ def test_local_singbox(mock_read, mock_exists):
     mock_exists.return_value = True
     mock_read.return_value = json.dumps([{"tag": "proxy1", "type": "shadowsocks"}])
 
-    sub = {"type": "local", "format": "sing-box", "path": "/tmp/proxies.json"}
+    sub = LocalSubscription(sub_format="sing-box", path="/tmp/proxies.json")
     proxies = get_proxies_from_subscriptions("test", sub)
     assert len(proxies) == 1
     assert proxies[0]["tag"] == "test - proxy1"
@@ -54,11 +59,10 @@ def test_local_singbox_paths(mock_read, mock_exists):
         json.dumps([{"tag": "proxy2", "type": "shadowsocks"}]),
     ]
 
-    sub = {
-        "type": "local",
-        "format": "sing-box",
-        "paths": ["/tmp/proxies1.json", "/tmp/proxies2.json"],
-    }
+    sub = LocalSubscription(
+        sub_format="sing-box",
+        paths=["/tmp/proxies1.json", "/tmp/proxies2.json"],
+    )
     proxies = get_proxies_from_subscriptions("test", sub)
     assert len(proxies) == 2
     assert proxies[0]["tag"] == "test - proxy1"
@@ -71,7 +75,7 @@ def test_remote_singbox(mock_fetch):
     mock_resp.text = json.dumps([{"tag": "proxy1", "type": "shadowsocks"}])
     mock_fetch.return_value = mock_resp
 
-    sub = {"type": "remote", "format": "sing-box", "url": "http://example.com/sub"}
+    sub = RemoteSubscription(sub_format="sing-box", url="http://example.com/sub")
     proxies = get_proxies_from_subscriptions("test", sub)
     assert len(proxies) == 1
     assert proxies[0]["tag"] == "test - proxy1"
@@ -84,11 +88,10 @@ def test_remote_singbox_urls(mock_fetch):
     resp2.text = json.dumps([{"tag": "proxy2", "type": "shadowsocks"}])
     mock_fetch.side_effect = [resp1, resp2]
 
-    sub = {
-        "type": "remote",
-        "format": "sing-box",
-        "urls": ["http://example.com/sub1", "http://example.com/sub2"],
-    }
+    sub = RemoteSubscription(
+        sub_format="sing-box",
+        urls=["http://example.com/sub1", "http://example.com/sub2"],
+    )
     proxies = get_proxies_from_subscriptions("test", sub)
     assert len(proxies) == 2
     assert proxies[0]["tag"] == "test - proxy1"
@@ -105,13 +108,12 @@ def test_local_singbox_path_and_paths_merged_deduplicated(mock_read, mock_exists
         json.dumps([{"tag": "proxy2", "type": "shadowsocks"}]),
     ]
 
-    sub = {
-        "type": "local",
-        "format": "sing-box",
+    sub = LocalSubscription(
+        sub_format="sing-box",
         # paths lists proxy1 and proxy2; path duplicates proxy1 — should be ignored
-        "paths": ["/tmp/proxies1.json", "/tmp/proxies2.json"],
-        "path": "/tmp/proxies1.json",
-    }
+        paths=["/tmp/proxies1.json", "/tmp/proxies2.json"],
+        path="/tmp/proxies1.json",
+    )
     proxies = get_proxies_from_subscriptions("test", sub)
     assert len(proxies) == 2
     assert proxies[0]["tag"] == "test - proxy1"
@@ -126,13 +128,12 @@ def test_remote_singbox_url_and_urls_merged_deduplicated(mock_fetch):
     resp2.text = json.dumps([{"tag": "proxy2", "type": "shadowsocks"}])
     mock_fetch.side_effect = [resp1, resp2]
 
-    sub = {
-        "type": "remote",
-        "format": "sing-box",
+    sub = RemoteSubscription(
+        sub_format="sing-box",
         # urls lists sub1 and sub2; url duplicates sub1 — should be ignored
-        "urls": ["http://example.com/sub1", "http://example.com/sub2"],
-        "url": "http://example.com/sub1",
-    }
+        urls=["http://example.com/sub1", "http://example.com/sub2"],
+        url="http://example.com/sub1",
+    )
     proxies = get_proxies_from_subscriptions("test", sub)
     assert len(proxies) == 2
     assert proxies[0]["tag"] == "test - proxy1"
@@ -140,15 +141,14 @@ def test_remote_singbox_url_and_urls_merged_deduplicated(mock_fetch):
 
 
 def test_exclude_filter():
-    sub = {
-        "type": "inline",
-        "format": "sing-box",
-        "outbounds": [
+    sub = InlineSubscription(
+        sub_format="sing-box",
+        outbounds=[
             {"tag": "KeepMe", "type": "shadowsocks"},
             {"tag": "ExcludeMe", "type": "shadowsocks"},
         ],
-        "exclude": "Exclude",
-    }
+        exclude="Exclude",
+    )
     proxies = get_proxies_from_subscriptions("test", sub)
     assert len(proxies) == 1
     assert proxies[0]["tag"] == "test - KeepMe"
@@ -191,8 +191,8 @@ def test_patch_intra_subscription_detours_ignores_external_detour():
 # duplicate_selfhost_detour
 
 SELFHOST_DETOUR_MAP = [
-    {"filter": "SG|Singapore|狮城", "detour": "🇸🇬 狮城节点"},
-    {"filter": "US|United States|美国", "detour": "🇺🇸 美国节点"},
+    SelfhostDetourEntry(tag_filter="SG|Singapore|狮城", detour="🇸🇬 狮城节点"),
+    SelfhostDetourEntry(tag_filter="US|United States|美国", detour="🇺🇸 美国节点"),
 ]
 
 
@@ -302,4 +302,4 @@ def test_populate_outbound_groups_pops_keys():
     populate_outbound_groups([outbound], PROXIES)
     assert "filter" not in outbound
     assert "exclude" not in outbound
-    assert build_selfhost_detours([{"tag": "selfhost-sg-01"}], {}) == []
+    assert build_selfhost_detours([{"tag": "selfhost-sg-01"}], []) == []

@@ -6,8 +6,10 @@ from pathlib import Path
 import argcomplete
 from chaos_utils.logging import setup_logger
 from chaos_utils.text_utils import read_json
+from pydantic import ValidationError
 
 from sing_box_config.export import save_config_from_subscriptions
+from sing_box_config.models import BaseConfig, subscription_adapter
 
 logger = setup_logger(__name__)
 
@@ -68,8 +70,27 @@ def main() -> None:
             },
         )
 
-        base_config = read_json(args.base)
-        subscriptions_config = read_json(args.subscriptions)
+        raw_base = read_json(args.base)
+        try:
+            base_config = BaseConfig.model_validate(raw_base)
+        except ValidationError as e:
+            logger.error("Invalid base config %s: %s", args.base, e)
+            raise SystemExit(1) from e
+
+        raw_subscriptions = read_json(args.subscriptions)
+        if not isinstance(raw_subscriptions, dict):
+            logger.error(
+                "Invalid subscriptions config %s: expected a JSON object",
+                args.subscriptions,
+            )
+            raise SystemExit(1)
+        subscriptions_config = {}
+        for name, entry in raw_subscriptions.items():
+            try:
+                subscriptions_config[name] = subscription_adapter.validate_python(entry)
+            except ValidationError as e:
+                logger.warning("Invalid subscription %r, skipping: %s", name, e)
+
         output_path = args.output
         proxies_path = args.proxies_path
 

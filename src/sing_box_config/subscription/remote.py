@@ -4,6 +4,7 @@ from typing import Any
 import httpx
 import tenacity
 
+from sing_box_config.models import RemoteSubscription
 from sing_box_config.subscription.base import SubscriptionSource
 
 logger = logging.getLogger(__name__)
@@ -21,15 +22,14 @@ def fetch_url_with_retries(url: str, **kwargs: Any) -> httpx.Response:
     return resp
 
 
-class RemoteSubscriptionSource(SubscriptionSource):
-    def fetch(self, config: dict[str, Any]) -> list[str]:
-        raw: list[str] = list(config.get("urls", []))
-        if "url" in config:
-            raw.append(config["url"])
+class RemoteSubscriptionSource(SubscriptionSource[RemoteSubscription]):
+    def fetch(self, config: RemoteSubscription) -> list[str]:
+        raw = list(config.urls)
+        if config.url is not None:
+            raw.append(config.url)
         # deduplicate while preserving order
         urls = list(dict.fromkeys(raw))
-        if not urls:
-            raise ValueError("Remote subscription missing 'url' or 'urls'")
+        # urls is guaranteed non-empty by RemoteSubscription validator
 
         results = []
         for url in urls:

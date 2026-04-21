@@ -7,6 +7,7 @@ dependencies = [
     "argcomplete>=3.6.2",
     "chaos-utils>=0.4.1",
     "httpx>=0.28.1",
+    "pydantic>=2.0",
     "pyyaml>=6.0",
     "tenacity>=9.1.2",
 ]
@@ -51,10 +52,14 @@ docs = [
     "pymdown-extensions>=10.19.1",
 ]
 lint = ["ruff>=0.9.4"]
+typecheck = [
+    "ty>=0.0.32",
+]
 tests = ["pytest>=8.3.4", "pytest-cov>=6.0.0"]
 dev = [
     { include-group = "docs" },
     { include-group = "lint" },
+    { include-group = "typecheck" },
     { include-group = "tests" },
     "pre-commit>=4.2.0",
 ]

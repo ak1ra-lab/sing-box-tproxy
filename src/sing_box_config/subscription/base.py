@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Generic, TypeVar
+
+_S = TypeVar("_S")
 
 
-class SubscriptionSource(ABC):
+class SubscriptionSource(ABC, Generic[_S]):
     """Base class for subscription content fetchers."""
 
     @abstractmethod
-    def fetch(self, config: dict[str, Any]) -> list[str]:
+    def fetch(self, config: _S) -> list[str]:
         """
         Fetch subscription content and return it as a list of raw strings.
 
@@ -14,7 +16,7 @@ class SubscriptionSource(ABC):
         Callers should iterate over the list and parse each item independently.
 
         Args:
-            config: Subscription configuration dict.
+            config: Typed subscription configuration model.
 
         Returns:
             List of raw subscription content strings.

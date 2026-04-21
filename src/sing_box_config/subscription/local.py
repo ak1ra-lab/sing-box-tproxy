@@ -1,18 +1,15 @@
-from pathlib import Path
-from typing import Any
-
+from sing_box_config.models import LocalSubscription
 from sing_box_config.subscription.base import SubscriptionSource
 
 
-class LocalSubscriptionSource(SubscriptionSource):
-    def fetch(self, config: dict[str, Any]) -> list[str]:
-        raw: list[str] = list(config.get("paths", []))
-        if "path" in config:
-            raw.append(config["path"])
+class LocalSubscriptionSource(SubscriptionSource[LocalSubscription]):
+    def fetch(self, config: LocalSubscription) -> list[str]:
+        raw = list(config.paths)
+        if config.path is not None:
+            raw.append(config.path)
         # deduplicate while preserving order; Path is hashable
-        paths = list(dict.fromkeys(Path(p) for p in raw))
-        if not paths:
-            raise ValueError("Local subscription missing 'path' or 'paths'")
+        paths = list(dict.fromkeys(raw))
+        # paths is guaranteed non-empty by LocalSubscription validator
 
         results = []
         for path in paths:

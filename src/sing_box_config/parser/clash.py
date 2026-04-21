@@ -106,7 +106,7 @@ class ClashSubscriptionParser(SubscriptionParser):
 
         if network == "h2":
             opts = raw.get("h2-opts", {}) or {}
-            t = {"type": "http"}
+            t: dict[str, Any] = {"type": "http"}
             if opts.get("host"):
                 t["host"] = list(opts["host"])
             if opts.get("path"):

@@ -7,6 +7,7 @@ from typing import Any
 
 from chaos_utils.text_utils import read_json, save_json
 
+from sing_box_config.models import BaseConfig, SelfhostDetourEntry, SubscriptionConfig
 from sing_box_config.parser import SUPPORTED_FORMATS, get_parser
 from sing_box_config.subscription import get_source
 
@@ -51,27 +52,24 @@ def apply_name_prefix(proxies: list[dict[str, Any]], name: str) -> None:
 
 
 def get_proxies_from_subscriptions(
-    name: str, subscription: dict[str, Any]
+    name: str, subscription: SubscriptionConfig
 ) -> list[dict[str, Any]]:
     """
     Parse subscription and extract proxy configurations.
 
     Args:
         name: Subscription name for proxy tag prefix
-        subscription: Subscription configuration dict
+        subscription: Typed subscription configuration model
 
     Returns:
         List of proxy configuration dicts
     """
-    if not subscription.get("enabled", True):
+    if not subscription.enabled:
         return []
 
-    sub_type = subscription.get("type", "").lower()
-    sub_format = subscription.get("format", "sing-box").lower()
-
-    source = get_source(sub_type)
+    source = get_source(subscription.type)
     if source is None:
-        logger.warning("Unsupported subscription type: %s", sub_type)
+        logger.warning("Unsupported subscription type: %s", subscription.type)
         return []
 
     try:
@@ -80,11 +78,11 @@ def get_proxies_from_subscriptions(
         logger.error("Failed to fetch subscription %s: %s", name, e)
         return []
 
-    parser = get_parser(sub_format)
+    parser = get_parser(subscription.sub_format)
     if parser is None:
         logger.warning(
             "Unsupported subscription format: %s (supported: %s)",
-            sub_format,
+            subscription.sub_format,
             ", ".join(SUPPORTED_FORMATS.keys()),
         )
         return []
@@ -92,34 +90,35 @@ def get_proxies_from_subscriptions(
     proxies = []
     for content in contents:
         proxies.extend(parser.parse(content))
-    if sub_format == "sing-box":
+    if subscription.sub_format == "sing-box":
         patch_intra_subscription_detours(proxies, name)
     apply_name_prefix(proxies, name)
 
-    exclude_pattern = subscription.get("exclude", "")
-    if not exclude_pattern:
+    if not subscription.exclude:
         return proxies
 
     return [
-        p for p in proxies if not re.search(exclude_pattern, p["tag"], re.IGNORECASE)
+        p
+        for p in proxies
+        if not re.search(subscription.exclude, p["tag"], re.IGNORECASE)
     ]
 
 
 def build_selfhost_detours(
     selfhost_proxies: list[dict[str, Any]],
-    selfhost_detour: list[dict[str, str]],
+    selfhost_detour: list[SelfhostDetourEntry],
 ) -> list[dict[str, Any]]:
     """
     Duplicate self-hosted proxies with detour chaining.
 
     For each selfhost proxy, creates a copy whose tag gets a ``-detour`` suffix
     and whose ``detour`` field is set to the upstream selector for that region.
-    The region is determined by matching the proxy tag against each ``filter``
+    The region is determined by matching the proxy tag against each ``tag_filter``
     regex in *selfhost_detour*.
 
     Args:
         selfhost_proxies: Self-hosted proxy configs to duplicate.
-        selfhost_detour: List of ``{filter: <regex>, detour: <tag>}`` mappings.
+        selfhost_detour: List of :class:`SelfhostDetourEntry` region-to-detour mappings.
             Comes from ``_selfhost_detour`` embedded in base.json by Ansible.
 
     Returns:
@@ -128,11 +127,11 @@ def build_selfhost_detours(
     detour_proxies = []
     for proxy in selfhost_proxies:
         for item in selfhost_detour:
-            if not re.search(item["filter"], proxy["tag"], re.IGNORECASE):
+            if not re.search(item.tag_filter, proxy["tag"], re.IGNORECASE):
                 continue
             detour_proxy = proxy.copy()
             detour_proxy["tag"] = f"{proxy['tag']}-detour"
-            detour_proxy["detour"] = item["detour"]
+            detour_proxy["detour"] = item.detour
             detour_proxies.append(detour_proxy)
             break
     return detour_proxies
@@ -200,7 +199,7 @@ def remove_invalid_outbounds(outbounds: list[dict[str, Any]]) -> None:
 
 
 def load_proxies(
-    subscriptions_config: dict[str, Any],
+    subscriptions_config: dict[str, SubscriptionConfig],
     proxies_path: Path,
     use_cache: bool,
 ) -> list[dict[str, Any]]:
@@ -226,15 +225,15 @@ def load_proxies(
 
     if proxies_path:
         proxies_path.parent.mkdir(parents=True, exist_ok=True)
-        save_json(proxies_path, proxies)
+        save_json(proxies_path, proxies)  # type: ignore
         logger.info("Saved %d proxies to cache: %s", len(proxies), proxies_path)
 
     return proxies
 
 
 def save_config_from_subscriptions(
-    base_config: dict[str, Any],
-    subscriptions_config: dict[str, Any],
+    base_config: BaseConfig,
+    subscriptions_config: dict[str, SubscriptionConfig],
     output_path: Path,
     proxies_path: Path,
     use_cache: bool = False,
@@ -244,8 +243,8 @@ def save_config_from_subscriptions(
     Generate final sing-box configuration by merging base config with subscription proxies.
 
     Args:
-        base_config: Base configuration dict
-        subscriptions_config: Subscriptions configuration dict
+        base_config: Validated base configuration model
+        subscriptions_config: Validated subscriptions configuration
         output_path: Path to save the generated config
         proxies_path: Path to load/save proxies cache
         use_cache: Whether to use cached proxies if available
@@ -255,12 +254,11 @@ def save_config_from_subscriptions(
     if not proxies:
         logger.warning("No proxies found from subscriptions")
 
-    # Pop internal metadata keys before outbounds — they must never reach sing-box.
-    selfhost_tag_pattern: str = base_config.pop(
-        "_selfhost_tag_pattern", r"selfhost|自建"
-    )
-    selfhost_detour: list[dict[str, str]] = base_config.pop("_selfhost_detour", [])
-    outbounds = base_config.pop("outbounds")
+    # Read internal metadata fields from the typed model.
+    selfhost_tag_pattern = base_config.selfhost_tag_pattern
+    selfhost_detour = base_config.selfhost_detour
+    # Take a mutable copy of outbounds to avoid mutating the model.
+    outbounds: list[dict[str, Any]] = list(base_config.outbounds)
 
     if selfhost_detour:
         selfhost_re = re.compile(selfhost_tag_pattern, re.IGNORECASE)
@@ -280,7 +278,13 @@ def save_config_from_subscriptions(
     populate_outbound_groups(outbounds, proxies)
     remove_invalid_outbounds(outbounds)
     outbounds += proxies
-    base_config["outbounds"] = outbounds
+
+    # Build output dict: exclude internal metadata fields, inject final outbounds.
+    config_dict = base_config.model_dump(
+        by_alias=False,
+        exclude={"selfhost_tag_pattern", "selfhost_detour", "outbounds"},
+    )
+    config_dict["outbounds"] = outbounds
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     if backup_output and output_path.exists():
@@ -291,5 +295,5 @@ def save_config_from_subscriptions(
             "Saved %s to %s", output_path, output_path.with_suffix(backup_suffix)
         )
 
-    save_json(output_path, base_config, sort_keys=False)
+    save_json(output_path, config_dict, sort_keys=False)
     logger.info("Configuration saved to %s", output_path)

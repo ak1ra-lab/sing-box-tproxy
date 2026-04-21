@@ -1,13 +1,14 @@
 import json
-from typing import Any
 
+from sing_box_config.models import InlineSubscription
 from sing_box_config.subscription.base import SubscriptionSource
 
 
-class InlineSubscriptionSource(SubscriptionSource):
-    def fetch(self, config: dict[str, Any]) -> list[str]:
-        if "outbounds" in config:
-            return [json.dumps(config["outbounds"])]
-        if "content" in config:
-            return [config["content"]]
+class InlineSubscriptionSource(SubscriptionSource[InlineSubscription]):
+    def fetch(self, config: InlineSubscription) -> list[str]:
+        if config.outbounds:
+            return [json.dumps(config.outbounds)]
+        if config.content is not None:
+            return [config.content]
+        # InlineSubscription validator guarantees at least one is present
         raise ValueError("Inline subscription missing 'outbounds' or 'content'")
