@@ -15,9 +15,10 @@ The environment manager is **[uv](https://github.com/astral-sh/uv)**.
 
 - ALWAYS run Python commands with `uv run <command>`.
 - NEVER use `.venv/bin/python`, `pip install`, `conda`, `pipenv`, or `poetry`.
-- Install/sync dev dependencies: `uv sync --group dev`
-- Run tests: `uv run pytest -v` — do NOT use `python -m pytest`.
-- Lint + format: `./ruff.sh` (wraps `uv run ruff check` and `uv run ruff format`).
+- Install/sync dev dependencies: `just sync`
+- Lint + format: `just lint` (wraps `uv run ruff check` and `uv run ruff format`).
+- Typecheck: `just typecheck` (runs `uv run ty check`).
+- Run tests: `just test` (runs `uv run pytest -v`) — do NOT use `python -m pytest`.
 
 ## Conventions
 
@@ -32,18 +33,7 @@ The environment manager is **[uv](https://github.com/astral-sh/uv)**.
 ## Testing Guidelines
 
 - Tests live in `tests/` and mirror `src/sing_box_config/` module names.
-- Run the full suite after every change: `uv run pytest -v`
+- Run the full suite after every change: `just test`
 - When modifying a function signature, update all call sites in `src/` **and** `tests/`
   in the same commit.
 - Mock all external I/O (HTTP, subprocess) — do NOT make real network calls in tests.
-
-## Common Operations
-
-```shell
-uv run pytest -v                                      # run tests
-./ruff.sh                                             # lint + format
-uv sync --group dev                                   # sync dev dependencies
-ansible-playbook playbooks/sing_box_tproxy.yaml -v    # deploy tproxy client
-ansible-playbook playbooks/sing_box_server.yaml -v    # deploy server
-uv run mkdocs serve                                   # docs preview
-```
