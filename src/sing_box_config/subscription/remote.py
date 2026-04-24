@@ -31,9 +31,10 @@ class RemoteSubscriptionSource(SubscriptionSource[RemoteSubscription]):
         urls = list(dict.fromkeys(raw))
         # urls is guaranteed non-empty by RemoteSubscription validator
 
+        headers = {"User-Agent": config.user_agent}
         results = []
         for url in urls:
-            resp = fetch_url_with_retries(url, follow_redirects=True)
+            resp = fetch_url_with_retries(url, follow_redirects=True, headers=headers)
             logger.debug("resp.text = %s", resp.text[:100])
             results.append(resp.text)
         return results

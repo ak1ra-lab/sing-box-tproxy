@@ -11,6 +11,8 @@ Two entry points are validated at CLI startup:
 from __future__ import annotations
 
 import re
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _pkg_version
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
@@ -22,6 +24,16 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+
+try:
+    _VERSION = _pkg_version("sing-box-config")
+except PackageNotFoundError:
+    _VERSION = "dev"
+
+#: Default User-Agent sent when fetching remote subscriptions.
+#: popular clients accept the request out of the box.
+#: Individual subscriptions can override this via the ``user_agent`` field.
+DEFAULT_USER_AGENT = f"sing-box-config/{_VERSION}"
 
 
 class SelfhostDetourEntry(BaseModel):
@@ -70,6 +82,7 @@ class RemoteSubscription(_BaseSubscription):
     type: Literal["remote"] = "remote"
     urls: list[str] = Field(default_factory=list)
     url: str | None = None
+    user_agent: str = Field(default=DEFAULT_USER_AGENT)
 
     @model_validator(mode="after")
     def _require_at_least_one_url(self) -> RemoteSubscription:
