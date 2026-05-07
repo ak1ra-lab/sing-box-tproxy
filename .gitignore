@@ -58,7 +58,7 @@ nohup.out
 __MACOSX/
 .AppleDouble
 .LSOverride
-Icon[
+Icon\[
 ]
 
 # Thumbnails
@@ -326,6 +326,7 @@ __marimo__/
 .streamlit/secrets.toml
 
 # Ansible
+.ansible/*
 inventory/*.yaml
 playbooks/host_vars/**/*.yaml
 playbooks/group_vars/**/*.yaml
@@ -338,9 +339,9 @@ playbooks/group_vars/**/*.patch
 # General configuration file and examples folder
 examples/*
 config/*
-docs/sessions/*
+credentials/
+credentials.yaml
 
-# sing-box
-**/credentials/*
-**/inbounds/*
-**/outbounds/*
+## LLM
+docs/sessions/*
+.agents/state/sessions/*
