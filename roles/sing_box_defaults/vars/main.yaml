@@ -148,6 +148,7 @@ sing_box_remote_rule_sets:
   - path: geoip/private.srs
   - path: geoip/telegram.srs
   - path: geosite/category-ai-!cn.srs
+  - path: geosite/steam.srs
   - path: geosite/category-entertainment.srs
   - path: geosite/cn.srs
   - path: geosite/gfw.srs
@@ -162,6 +163,7 @@ sing_box_remote_rule_sets:
 sing_box_direct_dns_rule_sets:
   - geosite-cn
   - geosite-private
+  - geosite-steam
 
 # General DNS routing rules
 sing_box_basic_dns_rules:
@@ -210,11 +212,14 @@ sing_box_filtering_route_rules:
     rule_set: [geosite-category-ai-!cn]
     outbound: AI
   - action: route
-    rule_set: [geosite-category-entertainment]
-    outbound: Entertainment
+    rule_set: [geosite-steam]
+    outbound: Steam
   - action: route
     rule_set: [geoip-telegram, geosite-telegram]
     outbound: TELEGRAM
+  - action: route
+    rule_set: [geosite-category-entertainment]
+    outbound: Entertainment
   - action: route
     rule_set: [geosite-gfw, geosite-github, geosite-google]
     outbound: PROXY
@@ -232,10 +237,13 @@ sing_box_proxy_groups:
   - tag: AI
     type: selector
     outbounds: [PROXY, DIRECT]
-  - tag: Entertainment
+  - tag: Steam
     type: selector
     outbounds: [PROXY, DIRECT]
   - tag: TELEGRAM
+    type: selector
+    outbounds: [PROXY, DIRECT]
+  - tag: Entertainment
     type: selector
     outbounds: [PROXY, DIRECT]
   - tag: SSH
