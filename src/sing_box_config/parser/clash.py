@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # Clash proxy types we know how to convert
 _SUPPORTED_TYPES: frozenset[str] = frozenset(
-    {"ss", "vmess", "trojan", "vless", "socks5", "http"}
+    {"ss", "vmess", "trojan", "vless", "socks5", "http", "anytls"}
 )
 
 
@@ -57,6 +57,7 @@ class ClashSubscriptionParser(SubscriptionParser):
             "vless": self._convert_vless,
             "socks5": self._convert_socks5,
             "http": self._convert_http,
+            "anytls": self._convert_anytls,
         }
         try:
             return converters[clash_type](raw)
@@ -75,8 +76,16 @@ class ClashSubscriptionParser(SubscriptionParser):
             "server_port": int(raw.get("port", 0)),
         }
 
-    def _tls(self, raw: dict[str, Any], sni_key: str = "sni") -> dict[str, Any] | None:
-        if not raw.get("tls"):
+    def _tls(
+        self,
+        raw: dict[str, Any],
+        sni_key: str = "sni",
+        *,
+        force_enabled: bool = False,
+        include_alpn: bool = False,
+        include_utls: bool = False,
+    ) -> dict[str, Any] | None:
+        if not force_enabled and not raw.get("tls"):
             return None
         tls: dict[str, Any] = {"enabled": True}
         if raw.get("skip-cert-verify"):
@@ -84,7 +93,36 @@ class ClashSubscriptionParser(SubscriptionParser):
         sni = raw.get(sni_key) or raw.get("servername") or raw.get("sni") or ""
         if sni:
             tls["server_name"] = sni
+        if include_alpn and (alpn := raw.get("alpn")):
+            if isinstance(alpn, list):
+                tls["alpn"] = [str(value) for value in alpn if str(value)]
+            else:
+                tls["alpn"] = [str(alpn)]
+        if include_utls and (
+            fingerprint := raw.get("client-fingerprint")
+            or raw.get("client_fingerprint")
+        ):
+            tls["utls"] = {"enabled": True, "fingerprint": str(fingerprint)}
         return tls
+
+    def _duration(self, raw_value: Any) -> str | None:
+        if raw_value is None or raw_value == "":
+            return None
+        if isinstance(raw_value, bool):
+            return None
+        if isinstance(raw_value, int):
+            return f"{raw_value}s"
+        if isinstance(raw_value, float):
+            if raw_value.is_integer():
+                return f"{int(raw_value)}s"
+            return f"{raw_value}s"
+
+        value = str(raw_value).strip()
+        if not value:
+            return None
+        if value.isdecimal():
+            return f"{value}s"
+        return value
 
     def _transport(self, raw: dict[str, Any]) -> dict[str, Any] | None:
         network = str(raw.get("network", "")).lower()
@@ -182,8 +220,8 @@ class ClashSubscriptionParser(SubscriptionParser):
             "type": "vless",
             "uuid": raw.get("uuid", ""),
         }
-        if raw.get("flow"):
-            proxy["flow"] = raw["flow"]
+        if flow := raw.get("flow"):
+            proxy["flow"] = flow
         tls = self._tls(raw, sni_key="servername")
         if tls:
             proxy["tls"] = tls
@@ -194,10 +232,10 @@ class ClashSubscriptionParser(SubscriptionParser):
 
     def _convert_socks5(self, raw: dict[str, Any]) -> dict[str, Any]:
         proxy: dict[str, Any] = {**self._base(raw), "type": "socks", "version": "5"}
-        if raw.get("username"):
-            proxy["username"] = raw["username"]
-        if raw.get("password"):
-            proxy["password"] = str(raw["password"])
+        if username := raw.get("username"):
+            proxy["username"] = username
+        if password := raw.get("password"):
+            proxy["password"] = str(password)
         tls = self._tls(raw)
         if tls:
             proxy["tls"] = tls
@@ -205,11 +243,37 @@ class ClashSubscriptionParser(SubscriptionParser):
 
     def _convert_http(self, raw: dict[str, Any]) -> dict[str, Any]:
         proxy: dict[str, Any] = {**self._base(raw), "type": "http"}
-        if raw.get("username"):
-            proxy["username"] = raw["username"]
-        if raw.get("password"):
-            proxy["password"] = str(raw["password"])
+        if username := raw.get("username"):
+            proxy["username"] = username
+        if password := raw.get("password"):
+            proxy["password"] = str(password)
         tls = self._tls(raw)
         if tls:
             proxy["tls"] = tls
+        return proxy
+
+    def _convert_anytls(self, raw: dict[str, Any]) -> dict[str, Any]:
+        proxy: dict[str, Any] = {
+            **self._base(raw),
+            "type": "anytls",
+            "password": str(raw.get("password", "")),
+            "tls": self._tls(
+                raw,
+                force_enabled=True,
+                include_alpn=True,
+                include_utls=True,
+            ),
+        }
+
+        if (
+            value := self._duration(raw.get("idle-session-check-interval"))
+        ) is not None:
+            proxy["idle_session_check_interval"] = value
+        if (value := self._duration(raw.get("idle-session-timeout"))) is not None:
+            proxy["idle_session_timeout"] = value
+
+        min_idle_session = raw.get("min-idle-session")
+        if min_idle_session is not None:
+            proxy["min_idle_session"] = int(min_idle_session)
+
         return proxy

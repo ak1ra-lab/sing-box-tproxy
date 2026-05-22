@@ -149,6 +149,38 @@ def test_clash_parser_trojan():
     assert p["tls"].get("insecure", False) is False
 
 
+def test_clash_parser_anytls():
+    raw = {
+        "name": "HK-anytls",
+        "type": "anytls",
+        "server": "hk-01.example.com",
+        "port": 20300,
+        "client-fingerprint": "chrome",
+        "idle-session-check-interval": 30,
+        "idle-session-timeout": 30,
+        "min-idle-session": 0,
+        "alpn": ["h2"],
+        "password": "secret",
+        "sni": "cloudfront-cn.jdcloud.com",
+        "skip-cert-verify": True,
+    }
+    proxies = ClashSubscriptionParser().parse(_clash_yaml(raw))
+    p = proxies[0]
+    assert p["type"] == "anytls"
+    assert p["tag"] == "HK-anytls"
+    assert p["server"] == "hk-01.example.com"
+    assert p["server_port"] == 20300
+    assert p["password"] == "secret"
+    assert p["idle_session_check_interval"] == "30s"
+    assert p["idle_session_timeout"] == "30s"
+    assert p["min_idle_session"] == 0
+    assert p["tls"]["enabled"] is True
+    assert p["tls"]["server_name"] == "cloudfront-cn.jdcloud.com"
+    assert p["tls"]["insecure"] is True
+    assert p["tls"]["alpn"] == ["h2"]
+    assert p["tls"]["utls"] == {"enabled": True, "fingerprint": "chrome"}
+
+
 def test_clash_parser_skips_unsupported_type():
     raw_ssr = {"name": "SSR-01", "type": "ssr", "server": "1.2.3.4", "port": 1080}
     raw_ss = {
