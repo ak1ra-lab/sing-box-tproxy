@@ -10,7 +10,7 @@
 
 - name: enable tcp_bbr
   when:
-    - ansible_kernel is version('4.9.0', '>=')
+    - ansible_facts['kernel'] is version('4.9.0', '>=')
     - (sing_box_tcp_bbr_enabled | ansible.builtin.bool)
   ansible.builtin.import_tasks: tcp_bbr.yaml
 

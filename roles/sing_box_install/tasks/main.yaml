@@ -63,7 +63,7 @@
 
 - name: add apt repo in DEB822 format
   vars:
-    # ansible_architecture return x86_64,
+    # ansible_facts['architecture'] return x86_64,
     # but $(dpkg --print-architecture) return = amd64
     deb_architectures:
       x86_64: amd64
@@ -75,7 +75,7 @@
     uris: "{{ sing_box_apt_repo_uris }}"
     suites: "{{ sing_box_apt_repo_suites }}"
     components: "{{ sing_box_apt_repo_components }}"
-    architectures: "{{ deb_architectures[ansible_architecture] }}"
+    architectures: "{{ deb_architectures[ansible_facts['architecture']] }}"
     signed_by: "{{ sing_box_apt_keyrings_dest }}"
 
 - name: add apt package pinning

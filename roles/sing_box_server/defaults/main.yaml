@@ -5,7 +5,7 @@
 # Required Settings
 
 # Server hostname (for TLS certificates)
-sing_box_server_hostname: "{{ ansible_fqdn }}"
+sing_box_server_hostname: "{{ ansible_facts['fqdn'] }}"
 
 # Number of users to generate (1-10, default: 1)
 sing_box_server_user_count: 1

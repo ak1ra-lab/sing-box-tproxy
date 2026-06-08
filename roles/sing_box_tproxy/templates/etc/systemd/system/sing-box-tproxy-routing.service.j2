@@ -6,10 +6,10 @@
 #
 # Equivalent manual commands:
 #   ip -4 rule add fwmark {{ sing_box_proxy_mark }} lookup {{ sing_box_proxy_route_table }}
-#   ip -4 route add local default dev {{ ansible_default_ipv4.interface }} table {{ sing_box_proxy_route_table }}
+#   ip -4 route add local default dev {{ ansible_facts['default_ipv4'].interface }} table {{ sing_box_proxy_route_table }}
 {% if _sing_box_enable_ipv6 %}
 #   ip -6 rule add fwmark {{ sing_box_proxy_mark }} lookup {{ sing_box_proxy_route_table }}
-#   ip -6 route add local default dev {{ ansible_default_ipv6.interface }} table {{ sing_box_proxy_route_table }}
+#   ip -6 route add local default dev {{ ansible_facts['default_ipv6'].interface }} table {{ sing_box_proxy_route_table }}
 {% endif %}
 
 [Unit]
@@ -34,11 +34,11 @@ ExecStartPre=-/usr/bin/ip -6 rule del fwmark {{ sing_box_proxy_mark }} lookup {{
 
 # IPv4: add routing policy rule and local default route
 ExecStart=/usr/bin/ip -4 rule add fwmark {{ sing_box_proxy_mark }} lookup {{ sing_box_proxy_route_table }}
-ExecStart=/usr/bin/ip -4 route add local default dev {{ ansible_default_ipv4.interface }} table {{ sing_box_proxy_route_table }}
+ExecStart=/usr/bin/ip -4 route add local default dev {{ ansible_facts['default_ipv4'].interface }} table {{ sing_box_proxy_route_table }}
 {% if _sing_box_enable_ipv6 %}
 # IPv6: add routing policy rule and local default route
 ExecStart=/usr/bin/ip -6 rule add fwmark {{ sing_box_proxy_mark }} lookup {{ sing_box_proxy_route_table }}
-ExecStart=/usr/bin/ip -6 route add local default dev {{ ansible_default_ipv6.interface }} table {{ sing_box_proxy_route_table }}
+ExecStart=/usr/bin/ip -6 route add local default dev {{ ansible_facts['default_ipv6'].interface }} table {{ sing_box_proxy_route_table }}
 {% endif %}
 
 # Remove routing rules/routes on stop (ignore errors if already absent)
