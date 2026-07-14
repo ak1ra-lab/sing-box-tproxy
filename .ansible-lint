@@ -1,0 +1,51 @@
+---
+# ansible-lint configuration
+# https://ansible.readthedocs.io/projects/lint/configuring/
+#
+# Run with:  ansible-lint
+#            ansible-lint
+
+# Use the 'basic' profile - enforces the most important rules without
+# being overly strict for a project that is still evolving.
+# Profiles in ascending order of strictness:
+#   min → basic → moderate → safety → shared → production
+profile: production
+
+# Paths to exclude from linting.
+exclude_paths:
+  - .venv/
+  - .git/
+  - site/
+  - dist/
+  - molecule/
+  - examples/
+  - playbooks/host_vars/
+  - playbooks/group_vars/
+  - mkdocs.yaml
+
+# Rules to warn about instead of failing on.
+# These are either stylistic preferences or rules that generate too many
+# false-positives for the patterns used in this project.
+warn_list:
+  # 'no-changed-when' fires on shell tasks that use '|| true' for idempotent reads.
+  # The preflight tasks set changed_when: false explicitly where it matters.
+  - command-instead-of-shell
+  # Jinja2 control flow ({% for %}, {% if %}) inside shell: cmd blocks is
+  # intentional in preflight.yaml and is not a mistake.
+  - no-jinja-when
+
+# Rules to skip entirely.
+skip_list:
+  - name[casing]
+  - var-naming[no-role-prefix]
+
+# Lint only the paths relevant to Ansible content; ignore the Python
+# source tree and documentation.
+kinds:
+  - playbook: "playbooks/*.yaml"
+  - tasks: "roles/*/tasks/*.yaml"
+  - handlers: "roles/*/handlers/*.yaml"
+  - vars: "roles/*/vars/*.yaml"
+  - defaults: "roles/*/defaults/*.yaml"
+  - meta: "roles/*/meta/*.yaml"
+  - yaml: "roles/*/molecule/**/*.yaml"

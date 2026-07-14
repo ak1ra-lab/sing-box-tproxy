@@ -2,9 +2,12 @@
 default:
     @just --list --unsorted
 
+# Run all available recipes
+all: lint typecheck test coverage build docs-build
+
 # Sync development dependencies (may update uv.lock if pyproject.toml changed)
 sync *ARGS:
-    uv sync --group dev {{ARGS}}
+    uv sync {{ARGS}} --group dev
 
 # Lint and format source code
 lint:
@@ -21,11 +24,11 @@ test *ARGS:
 
 # Run tests with coverage report
 coverage:
-    uv run pytest --cov=sing-box-config --cov-report=term-missing tests/
+    uv run pytest --cov=sing_box_config --cov=plugins --cov-report=term-missing tests/
 
 # Build distribution packages
 build:
-    uv build -v
+    uv build
 
 # Serve documentation locally
 docs-serve:
@@ -33,10 +36,21 @@ docs-serve:
 
 # Build documentation
 docs-build:
-    uv run mkdocs build --strict
+    NO_MKDOCS_2_WARNING=1 uv run mkdocs build --strict
+
+# Install project-local Ansible collection
+ansible-collection-install:
+    mkdir -p .ansible/collections
+    ansible-galaxy collection install --force --collections-path .ansible/collections .
+    ansible-galaxy collection install --force --collections-path .ansible/collections ../ansible-collection-general
+
+# Build project-local Ansible collection
+ansible-collection-build:
+    mkdir -p .ansible/dist/
+    ansible-galaxy collection build --force --output-path .ansible/dist/ .
 
 # Remove build artifacts
 clean:
-    rm -rf dist/ site/ .pytest_cache/ htmlcov/ .coverage
+    rm -rf dist/ site/ .ansible/ .cache/ .ruff_cache/ .pytest_cache/ htmlcov/ .coverage ansible-navigator.log
     find src/ tests/ -type f -name "*.pyc" -delete
     find src/ tests/ -type d -name "__pycache__" -delete

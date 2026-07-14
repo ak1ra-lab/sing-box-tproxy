@@ -1,0 +1,35 @@
+---
+namespace: ak1ra_lab
+name: sing_box_tproxy
+version: 0.9.0
+readme: README.md
+authors:
+  - ak1ra <git@ak1ra.xyz>
+description: configure sing-box as a transparent proxy with Ansible
+license_file: LICENSE
+tags:
+  - linux
+  - networking
+  - tproxy
+  - nftables
+dependencies: {}
+repository: https://github.com/ak1ra-lab/sing-box-tproxy
+documentation: https://github.com/ak1ra-lab/sing-box-tproxy
+homepage: https://github.com/ak1ra-lab/sing-box-tproxy
+issues: https://github.com/ak1ra-lab/sing-box-tproxy/issues
+# https://setuptools.pypa.io/en/latest/userguide/miscellaneous.html
+manifest:
+  omit_default_directives: true
+  directives:
+    - graft docs
+    - graft playbooks
+    - graft roles
+    - graft src
+    - graft tests
+    - recursive-exclude playbooks/host_vars *
+    - recursive-exclude playbooks/group_vars *
+    - recursive-exclude playbooks/scripts *
+    - recursive-exclude playbooks/templates *
+    - recursive-exclude roles/*/molecule *
+    - global-exclude *~ *.py[cod] __pycache__ *.bak *.swp *.tmp *.retry
+    - include requirements.yaml LICENSE README.md pyproject.toml uv.lock mkdocs.yml

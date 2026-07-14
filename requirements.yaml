@@ -1,0 +1,6 @@
+---
+collections:
+  - name: ansible.posix
+  - name: community.general
+  - name: git+https://github.com/ak1ra-lab/ansible-collection-general.git
+    version: master
