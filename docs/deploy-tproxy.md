@@ -96,11 +96,11 @@ sing_box_subscriptions:
 
 通过 `sing_box_mode` 变量选择运行模式:
 
-| 模式      | 适用场景         | 说明                                                 |
-| --------- | ---------------- | ---------------------------------------------------- |
-| `gateway` | 家庭/办公室网关  | 默认模式. 开启 IP Forwarding, 代理 LAN 所有设备      |
-| `local`   | 个人工作站       | 仅代理本机流量, 关闭 IP Forwarding                   |
-| `mixed`   | 开发/测试环境    | 仅启用混合代理端口, 无 nftables/路由规则             |
+| 模式      | 适用场景        | 说明                                            |
+| --------- | --------------- | ----------------------------------------------- |
+| `gateway` | 家庭/办公室网关 | 默认模式. 开启 IP Forwarding, 代理 LAN 所有设备 |
+| `local`   | 个人工作站      | 仅代理本机流量, 关闭 IP Forwarding              |
+| `mixed`   | 开发/测试环境   | 仅启用混合代理端口, 无 nftables/路由规则        |
 
 ```yaml
 # playbooks/group_vars/sing-box-tproxy/main.yaml

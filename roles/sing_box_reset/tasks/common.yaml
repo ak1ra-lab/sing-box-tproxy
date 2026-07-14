@@ -1,5 +1,5 @@
 ---
-# tasks/common.yaml — cleanup shared by both tproxy and server profiles
+# tasks/common.yaml - cleanup shared by both tproxy and server profiles
 # Reverses what roles/sing_box_install/tasks/ deploys.
 
 # ── systemd services (sing-box core) ─────────────────────────────────────────

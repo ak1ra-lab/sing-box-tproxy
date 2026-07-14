@@ -1,5 +1,5 @@
 ---
-# tasks/tproxy.yaml — undo what roles/sing_box_config + roles/sing_box_tproxy deployed
+# tasks/tproxy.yaml - undo what roles/sing_box_config + roles/sing_box_tproxy deployed
 
 # ── sing-box-config timer & liveness probe ────────────────────────────────────
 
@@ -39,7 +39,7 @@
 # ── nftables ──────────────────────────────────────────────────────────────────
 # Only remove the sing-box-tproxy specific ruleset file and let nftables reload.
 # /etc/nftables.conf is a system-wide config and must not be touched.
-# nftables.service itself stays enabled — it may serve other purposes on the host.
+# nftables.service itself stays enabled - it may serve other purposes on the host.
 
 - name: reset | remove sing_box_tproxy nftables ruleset file
   ansible.builtin.file:

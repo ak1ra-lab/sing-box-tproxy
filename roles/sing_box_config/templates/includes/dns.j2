@@ -50,7 +50,7 @@
     }) -%}
 {%- endif -%}
 
-{# Direct DNS rules — custom-bypassed and geo direct rule_sets merged into one dns_direct rule #}
+{# Direct DNS rules - custom-bypassed and geo direct rule_sets merged into one dns_direct rule #}
 {%- set _direct_dns_rule_sets = [] -%}
 {%- if (sing_box_custom_bypassed_rule_set_rules | default([], true)) | length > 0 -%}
     {%- set _ = _direct_dns_rule_sets.append(sing_box_custom_bypassed_rule_set) -%}

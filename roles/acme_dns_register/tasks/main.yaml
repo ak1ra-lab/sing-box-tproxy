@@ -15,21 +15,21 @@
 # All tasks run on the Ansible controller (delegate_to: localhost).
 #
 # Public interface (pass via `vars:` on import_role):
-#   acme_dns_register_server_url             — acme-dns server URL (required)
-#   acme_dns_register_username               — existing username (omit to register)
-#   acme_dns_register_password               — existing password
-#   acme_dns_register_subdomain              — existing subdomain
-#   acme_dns_register_cloudflare_api_token   — CF account token (optional)
-#   acme_dns_register_cloudflare_zone_token  — CF zone token (optional, preferred)
-#   acme_dns_register_cloudflare_zone        — explicit CF zone (optional)
-#   acme_dns_register_hostname               — host FQDN (default: inventory_hostname)
-#   acme_dns_register_acme_domains           — list of ACME domains for CNAME records
+#   acme_dns_register_server_url             - acme-dns server URL (required)
+#   acme_dns_register_username               - existing username (omit to register)
+#   acme_dns_register_password               - existing password
+#   acme_dns_register_subdomain              - existing subdomain
+#   acme_dns_register_cloudflare_api_token   - CF account token (optional)
+#   acme_dns_register_cloudflare_zone_token  - CF zone token (optional, preferred)
+#   acme_dns_register_cloudflare_zone        - explicit CF zone (optional)
+#   acme_dns_register_hostname               - host FQDN (default: inventory_hostname)
+#   acme_dns_register_acme_domains           - list of ACME domains for CNAME records
 #
 # Output facts (available to subsequent tasks in the play):
-#   acme_dns_register_newly_registered  — true when registration occurred this run
-#   acme_dns_register_username          — registered (or pre-existing) username
-#   acme_dns_register_password          — registered (or pre-existing) password
-#   acme_dns_register_subdomain         — registered (or pre-existing) subdomain
+#   acme_dns_register_newly_registered  - true when registration occurred this run
+#   acme_dns_register_username          - registered (or pre-existing) username
+#   acme_dns_register_password          - registered (or pre-existing) password
+#   acme_dns_register_subdomain         - registered (or pre-existing) subdomain
 
 - name: validate acme_dns_register inputs
   ansible.builtin.import_tasks: validate.yaml

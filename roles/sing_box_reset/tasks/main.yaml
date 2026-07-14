@@ -1,5 +1,5 @@
 ---
-# tasks/main.yaml — dispatch to profile-specific tasks then run common cleanup
+# tasks/main.yaml - dispatch to profile-specific tasks then run common cleanup
 
 - name: reset | assert sing_box_reset_profile is set
   ansible.builtin.assert:

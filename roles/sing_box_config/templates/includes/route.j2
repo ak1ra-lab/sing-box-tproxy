@@ -106,7 +106,7 @@
 {# Basic Rules #}
 {%- set _ = route_rules.extend(sing_box_basic_route_rules | default([], true)) -%}
 
-{# Direct Rules — custom-internal, custom-bypassed, and geo direct rule_sets merged into one rule #}
+{# Direct Rules - custom-internal, custom-bypassed, and geo direct rule_sets merged into one rule #}
 {%- set _direct_rule_sets = [] -%}
 {%- if (_internal_rs_json | default('', true)) | length > 0 -%}
     {%- set _ = _direct_rule_sets.append(sing_box_custom_internal_rule_set) -%}

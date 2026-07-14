@@ -3,28 +3,28 @@
 # Proxy-guard: per-client TCP abuse protection for transparent-proxy gateways.
 #
 # Two chains are used:
-#   chain prerouting (priority filter 0) — rate-limiting and auto-ban enforcement.
+#   chain prerouting (priority filter 0) - rate-limiting and auto-ban enforcement.
 #     Fires AFTER the TPROXY redirect at prerouting mangle (-150) and BEFORE socket
 #     delivery.  Scoped to LAN subnet sets so WAN return traffic is never rate-limited.
-#   chain input (priority filter 0) — ct state invalid drop.
+#   chain input (priority filter 0) - ct state invalid drop.
 #     Fires AFTER the routing decision; only packets destined for this machine reach
 #     this hook.  Placed here (not in prerouting) so that forwarded LAN-to-LAN traffic
 #     is not affected: in bypass-router deployments intra-LAN reply packets arrive via
 #     the default route but their SYN bypassed the gateway entirely, leaving no
-#     conntrack entry — prerouting would classify them as invalid and drop them.
+#     conntrack entry - prerouting would classify them as invalid and drop them.
 #     TPROXY-redirected and explicit-proxy connections are delivered to local sockets
-#     and therefore pass through the input hook — they remain fully protected.
+#     and therefore pass through the input hook - they remain fully protected.
 #
 # Rate-limiting rules (prerouting) are scoped to LAN subnet sets so that WAN-sourced
 # traffic (internet return packets, inbound scans) is never mistakenly rate-limited.
 #
 # Protection layers (in evaluation order):
-#   1. [prerouting] fib saddr local accept — skip rate-limiting for gateway's own traffic
-#   2. [prerouting] auto-ban enforcement  — drop ALL TCP (new + established) from banned IPs
-#   3. [prerouting] auto-ban detection    — rate meter; ban IPs exceeding the hard threshold
-#   4. [prerouting] throttle enforcement  — drop NEW TCP only from throttled IPs (softer)
-#   5. [prerouting] throttle detection    — rate meter; throttle IPs exceeding the soft threshold
-#   6. [input]      ct state invalid drop — only for locally-destined traffic
+#   1. [prerouting] fib saddr local accept - skip rate-limiting for gateway's own traffic
+#   2. [prerouting] auto-ban enforcement  - drop ALL TCP (new + established) from banned IPs
+#   3. [prerouting] auto-ban detection    - rate meter; ban IPs exceeding the hard threshold
+#   4. [prerouting] throttle enforcement  - drop NEW TCP only from throttled IPs (softer)
+#   5. [prerouting] throttle detection    - rate meter; throttle IPs exceeding the soft threshold
+#   6. [input]      ct state invalid drop - only for locally-destined traffic
 #
 # A throttled client that keeps aggressively retrying new connections will still
 # accumulate counts in the auto-ban rate meter (step 3 fires before step 4 drops),
@@ -34,7 +34,7 @@
 
 table inet sing_box_proxy_guard {
 {% if sing_box_proxy_guard_lan4_subnets | default([]) | length > 0 %}
-	# IPv4 LAN subnets — interval flag required for CIDR prefix matching.
+	# IPv4 LAN subnets - interval flag required for CIDR prefix matching.
 	set lan4_subnets {
 		type ipv4_addr
 		flags interval
@@ -43,7 +43,7 @@ table inet sing_box_proxy_guard {
 
 {% if sing_box_proxy_guard_auto_ban_enabled | bool %}
 	# Auto-ban set (IPv4): WITH timeout; add semantics write the ban timer exactly
-	# once on first match and never reset it — a chatty client cannot extend its
+	# once on first match and never reset it - a chatty client cannot extend its
 	# own ban by sending further packets.
 	set auto_banned_ip4 {
 		type ipv4_addr
@@ -67,7 +67,7 @@ table inet sing_box_proxy_guard {
 {% endif %}
 {% endif %}
 {% if sing_box_proxy_guard_lan6_subnets | default([]) | length > 0 %}
-	# IPv6 LAN subnets — interval flag required for CIDR prefix matching.
+	# IPv6 LAN subnets - interval flag required for CIDR prefix matching.
 	set lan6_subnets {
 		type ipv6_addr
 		flags interval
@@ -113,7 +113,7 @@ table inet sing_box_proxy_guard {
 
 {% if sing_box_proxy_guard_auto_ban_enabled | bool %}
 {% if sing_box_proxy_guard_lan4_subnets | default([]) | length > 0 %}
-		# [auto-ban] Drop ALL TCP from banned IPv4 addresses — evaluated before the
+		# [auto-ban] Drop ALL TCP from banned IPv4 addresses - evaluated before the
 		# rate-detection rules so both new and established connections from abusive
 		# clients are terminated immediately without re-traversing the rate meters.
 		ip saddr @auto_banned_ip4 ip protocol tcp counter drop
@@ -143,7 +143,7 @@ table inet sing_box_proxy_guard {
 {% if sing_box_proxy_guard_throttle_enabled | bool %}
 {% if sing_box_proxy_guard_lan4_subnets | default([]) | length > 0 %}
 		# [throttle] Drop NEW TCP from throttled IPv4 addresses.
-		# Only new connections are dropped — established connections remain intact,
+		# Only new connections are dropped - established connections remain intact,
 		# making this significantly less disruptive than auto-ban.
 		ip saddr @throttled_ip4 ip protocol tcp ct state new counter drop
 
@@ -183,7 +183,7 @@ table inet sing_box_proxy_guard {
 
 		# Drop malformed and out-of-state packets destined for this machine.
 		# TPROXY-redirected flows and explicit proxy connections are delivered to
-		# local sockets and therefore pass through this hook — they remain protected.
+		# local sockets and therefore pass through this hook - they remain protected.
 		ct state invalid counter drop
 	}
 }

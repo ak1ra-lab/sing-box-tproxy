@@ -2,11 +2,11 @@
 # Reset (undo) a sing-box deployment.
 #
 # Required variable:
-#   sing_box_reset_profile  — either 'tproxy' or 'server'
+#   sing_box_reset_profile  - either 'tproxy' or 'server'
 #
 # Optional overrides (role defaults shown):
-#   sing_box_reset_remove_packages    (default: true)  — uninstall sing-box APT package & repo
-#   sing_box_reset_remove_directories (default: true)  — remove /etc/sing-box, /var/lib/sing-box, etc.
+#   sing_box_reset_remove_packages    (default: true)  - uninstall sing-box APT package & repo
+#   sing_box_reset_remove_directories (default: true)  - remove /etc/sing-box, /var/lib/sing-box, etc.
 #
 # Examples:
 #

@@ -2,18 +2,18 @@
 # Deploy a sing-box server (Shadowsocks, Trojan, Hysteria2, etc.) on the target host(s).
 #
 # Roles executed (in order):
-#   sing_box_validation    — validate required Ansible variables
-#   acme_dns_register      — (conditional) register an acme-dns account and add the
+#   sing_box_validation    - validate required Ansible variables
+#   acme_dns_register      - (conditional) register an acme-dns account and add the
 #                            required _acme-challenge CNAME record; only runs when
 #                            sing_box_server_tls_mode == 'acme',
 #                            sing_box_server_acme_use_dns01 is true, and
 #                            sing_box_server_acme_dns01_provider == 'acmedns'
-#   sing_box_install       — install sing-box via the SagerNet APT repository
-#   sing_box_server        — generate and deploy the server config.json; also writes
+#   sing_box_install       - install sing-box via the SagerNet APT repository
+#   sing_box_server        - generate and deploy the server config.json; also writes
 #                            client outbound files to config/client_outbounds/ locally
 #
 # Optional overrides:
-#   playbook_hosts  (default: 'sing-box-server')  — inventory group or host pattern
+#   playbook_hosts  (default: 'sing-box-server')  - inventory group or host pattern
 #
 # Examples:
 #

@@ -1,7 +1,7 @@
 ---
 # Default variables for the acme_dns_register role.
 #
-# These are the role's public interface — callers should pass values via
+# These are the role's public interface - callers should pass values via
 # `vars:` when invoking `import_role`.
 
 # ── acme-dns server ──────────────────────────────────────────────────────────

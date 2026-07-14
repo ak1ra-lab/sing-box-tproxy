@@ -110,7 +110,7 @@ def test_local_singbox_path_and_paths_merged_deduplicated(mock_read, mock_exists
 
     sub = LocalSubscription(
         sub_format="sing-box",
-        # paths lists proxy1 and proxy2; path duplicates proxy1 — should be ignored
+        # paths lists proxy1 and proxy2; path duplicates proxy1 - should be ignored
         paths=["/tmp/proxies1.json", "/tmp/proxies2.json"],
         path="/tmp/proxies1.json",
     )
@@ -130,7 +130,7 @@ def test_remote_singbox_url_and_urls_merged_deduplicated(mock_fetch):
 
     sub = RemoteSubscription(
         sub_format="sing-box",
-        # urls lists sub1 and sub2; url duplicates sub1 — should be ignored
+        # urls lists sub1 and sub2; url duplicates sub1 - should be ignored
         urls=["http://example.com/sub1", "http://example.com/sub2"],
         url="http://example.com/sub1",
     )

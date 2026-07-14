@@ -61,7 +61,7 @@ sing_box_subscriptions: {}
 sing_box_validate_subscription_urls: false
 
 # [apt]
-# Apt package: one of [present, latest] — 'latest' ensures the newest version is installed
+# Apt package: one of [present, latest] - 'latest' ensures the newest version is installed
 sing_box_apt_packages_state: present
 # one of [sing-box, sing-box-beta]
 sing_box_apt_packages: [sing-box]
@@ -146,10 +146,10 @@ sing_box_clash_api_external_ui_reinstall: false
 sing_box_dns_internal_servers: []
 
 # [dns]
-# Default DNS server for unmatched queries — should point at the proxy-routed resolver.
+# Default DNS server for unmatched queries - should point at the proxy-routed resolver.
 sing_box_dns_final: dns_proxy
 
-# Route rules — custom rule sets
+# Route rules - custom rule sets
 
 # [sing-box route.rule_set] custom-rejected-rule-set (LANs, Ads, Malicious etc.)
 # NOTE: defined rules will be merged with ip_cidr from sing_box_custom_rejected_ip4/6
@@ -191,12 +191,12 @@ sing_box_selfhost_detour_group: "selector"
 # take effect before socket delivery and cover both transparent and explicit proxy clients
 # without interfering with proxy operation or the sing_box_tproxy table.
 #
-# Master switch — disabled by default.  Review all parameters below before enabling.
+# Master switch - disabled by default.  Review all parameters below before enabling.
 sing_box_proxy_guard_enabled: false
 
 # [proxy-guard] LAN subnets whose traffic is subject to connlimit / auto-ban rules.
 # Only new TCP connections sourced from these prefixes enter the protection chains.
-# Adjust to exactly match your actual LAN addressing — narrower ranges are safer.
+# Adjust to exactly match your actual LAN addressing - narrower ranges are safer.
 # The defaults cover the three RFC 1918 private-use blocks, which is sufficient for
 # most home / small-office deployments.
 sing_box_proxy_guard_lan4_subnets:
@@ -219,7 +219,7 @@ sing_box_proxy_guard_throttle_enabled: false
 
 # [proxy-guard] New TCP connections per minute that trigger a throttle once the burst
 # allowance is exhausted.
-# 600/min ≈ 10 new connections/sec sustained — accommodates typical browser bursts
+# 600/min ≈ 10 new connections/sec sustained - accommodates typical browser bursts
 # and sync-client spikes while catching misconfigured or runaway torrent clients.
 sing_box_proxy_guard_throttle_rate: 600
 
@@ -235,14 +235,14 @@ sing_box_proxy_guard_throttle_timeout: "2m"
 # [proxy-guard] Auto-ban: rate-based hard protection (disabled by default).
 # When enabled, a source IP whose new-TCP-connection rate exceeds the configured
 # threshold is added to the auto-ban set for sing_box_proxy_guard_auto_ban_timeout,
-# during which ALL TCP from that IP is dropped — including already-established
+# during which ALL TCP from that IP is dropped - including already-established
 # connections.  This is more disruptive than throttle; enable only when throttle
 # alone is insufficient to stop abusive clients.
 sing_box_proxy_guard_auto_ban_enabled: false
 
 # [proxy-guard] New TCP connections per minute that trigger a ban once the burst
 # allowance is exhausted.
-# 1200/min ≈ 20 new connections/sec sustained — well above normal browser/application
+# 1200/min ≈ 20 new connections/sec sustained - well above normal browser/application
 # behaviour but clearly anomalous for runaway torrent clients or scanning tools.
 sing_box_proxy_guard_auto_ban_rate: 1200
 

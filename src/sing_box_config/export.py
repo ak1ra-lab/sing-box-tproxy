@@ -26,7 +26,7 @@ def patch_intra_subscription_detours(proxies: list[dict[str, Any]], name: str) -
 
     Args:
         proxies: Proxy list as returned by the parser (modified in-place).
-        name: Subscription name — the same prefix that will be applied to tags.
+        name: Subscription name - the same prefix that will be applied to tags.
     """
     original_tags = {p["tag"] for p in proxies}
     for proxy in proxies:

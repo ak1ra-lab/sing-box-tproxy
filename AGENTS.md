@@ -1,4 +1,4 @@
-# AGENTS.md — Project Guide for AI Coding Agents
+# AGENTS.md - Project Guide for AI Coding Agents
 
 Read this file before making any changes. See `README.md` for full project details.
 
@@ -9,7 +9,7 @@ Read this file before making any changes. See `README.md` for full project detai
 (TPROXY) on Debian/Ubuntu Linux. It ships a `sing-box-config` Python CLI package
 (entry points: `sing-box-config`, `sing-box-liveness-probe`) alongside Ansible roles.
 
-## Python Environment — CRITICAL
+## Python Environment - CRITICAL
 
 The environment manager is **[uv](https://github.com/astral-sh/uv)**.
 
@@ -18,7 +18,7 @@ The environment manager is **[uv](https://github.com/astral-sh/uv)**.
 - Install/sync dev dependencies: `just sync`
 - Lint + format: `just lint` (wraps `uv run ruff check` and `uv run ruff format`).
 - Typecheck: `just typecheck` (runs `uv run ty check`).
-- Run tests: `just test` (runs `uv run pytest -v`) — do NOT use `python -m pytest`.
+- Run tests: `just test` (runs `uv run pytest -v`) - do NOT use `python -m pytest`.
 
 ## Conventions
 
@@ -36,4 +36,4 @@ The environment manager is **[uv](https://github.com/astral-sh/uv)**.
 - Run the full suite after every change: `just test`
 - When modifying a function signature, update all call sites in `src/` **and** `tests/`
   in the same commit.
-- Mock all external I/O (HTTP, subprocess) — do NOT make real network calls in tests.
+- Mock all external I/O (HTTP, subprocess) - do NOT make real network calls in tests.

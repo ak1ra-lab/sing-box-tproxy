@@ -1,6 +1,6 @@
 # 架构设计
 
-本文档基于 Jinja2 template 
+本文档基于 Jinja2 template
 (`roles/sing_box_tproxy/templates/etc/nftables.d/sing_box_tproxy.nft.j2`)
 的语义, 详细说明 sing-box-tproxy 的 nftables TPROXY 透明代理架构、数据包路径与控制流.
 
@@ -82,7 +82,7 @@ sing-box-tproxy 利用 Linux 内核的 **TPROXY** (Transparent Proxy) 机制, �
 实际部署时可通过 Ansible 变量覆盖.
 
 **注意**: 当前 deployment example 没有 `custom_bypassed_ip4/ip6`, 只有 `custom_rejected_ip4`.
-这并不代表架构不支持这些 conditional sets — 它们都由 template 按配置条件渲染.
+这并不代表架构不支持这些 conditional sets - 它们都由 template 按配置条件渲染.
 
 ### 策略路由前提
 
@@ -182,7 +182,7 @@ type route hook output priority mangle; policy accept;
 ```
 
 - 挂载在 Netfilter **OUTPUT** hook, priority mangle.
-- 使用 `type route` — 当此链中的规则修改了影响路由决策的字段 (如 fwmark),
+- 使用 `type route` - 当此链中的规则修改了影响路由决策的字段 (如 fwmark),
   内核会自动触发 **reroute check**, 使数据包按新 mark 重新做路由决策.
 - **这条链不执行任何 `tproxy to` 动作.**
   它只负责本机发出数据包的分类、打标、bypass、reject 与 reroute 触发.
@@ -213,9 +213,9 @@ type route hook output priority mangle; policy accept;
 ### 1. 数据包到达 gateway kernel (kernel space)
 
 LAN 设备发出的数据包到达 gateway 网卡, 进入 kernel space 的网络协议栈.
-**此流量不经过 `output_tproxy`** — OUTPUT hook 只处理本机 local process 发出的包.
+**此流量不经过 `output_tproxy`** - OUTPUT hook 只处理本机 local process 发出的包.
 
-### 2. PREROUTING hook — `prerouting_tproxy` (kernel space)
+### 2. PREROUTING hook - `prerouting_tproxy` (kernel space)
 
 数据包命中 `prerouting_tproxy` 链. 按规则顺序:
 
@@ -276,7 +276,7 @@ TCP/UDP 流量经过以下路径:
 
 本机进程在 user space 发包, 内核生成数据包进入 LOCAL_OUT 路径.
 
-### 2. OUTPUT hook — `output_tproxy` (kernel space)
+### 2. OUTPUT hook - `output_tproxy` (kernel space)
 
 数据包命中 `output_tproxy` 链. 按规则顺序:
 
@@ -306,7 +306,7 @@ fwmark PROXY_MARK -> lookup PROXY_ROUTE_TABLE -> local default dev INTERFACE
 内核将该出站包的目标判定为本机, 切换到**接收侧路径**,
 使数据包**重新进入 PREROUTING hook**.
 
-### 4. PREROUTING hook — `prerouting_tproxy` (再次, kernel space)
+### 4. PREROUTING hook - `prerouting_tproxy` (再次, kernel space)
 
 折返后的数据包再次进入 `prerouting_tproxy`. 由于原始目标地址被保留,
 规则正常匹配:
@@ -347,7 +347,7 @@ meta skuid $PROXY_UID meta skgid $PROXY_GID     meta mark set $ROUTE_DEFAULT_MAR
 
 1. 匹配 `proxy` 用户发出的所有包 (即 sing-box 的 outbound 流量).
 2. 设置 `ROUTE_DEFAULT_MARK` (当前值: 225).
-3. 直接 **accept** — 跳出 `output_tproxy` 链, 不再执行后续规则.
+3. 直接 **accept** - 跳出 `output_tproxy` 链, 不再执行后续规则.
 
 由于策略路由中没有针对 `ROUTE_DEFAULT_MARK` 的规则,
 sing-box 的 outbound 包走默认路由表 (main table), 按正常路由直连上游.
@@ -540,6 +540,7 @@ flowchart TD
 ```
 
 > **关键说明:**
+>
 > - 只有 `prerouting_tproxy` 执行 `tproxy to :TPROXY_PORT`
 > - `PROXY_MARK`: 送入透明代理截获路径; `ROUTE_DEFAULT_MARK`: 代理自身流量不再被透明代理
 > - `_sing_box_enable_ipv6=true` 时控制流不变, 变化的是 IPv6 匹配条件、conditional sets (`reserved_ip6` 等) 与 `inet6` 策略路由前提; 当前 deployment example 为 IPv4-only

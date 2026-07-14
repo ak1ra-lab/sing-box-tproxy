@@ -110,42 +110,42 @@ DNS 解析策略的核心在于区分**可信 DNS**(Remote DoT/DoH, 用于代理
 
 以下变量定义在 `roles/sing_box_defaults/vars/main.yaml` 中, 提供了有完整注释的预设值. 由于 role `vars/` 的优先级高于 `host_vars`、`group_vars`、play vars, **不能**通过常规变量层覆盖; 若确实需要调整, 请在执行 ansible-playbook 时使用 `--extra-vars` (`-e`) 或 `--extra-vars=@path/to/overrides.yaml`.
 
-| 变量名                                                 | 类型    | 默认值                         | 描述                                                        |
-| :----------------------------------------------------- | :------ | :----------------------------- | :---------------------------------------------------------- |
-| `sing_box_mixed_port`                                  | integer | `7890`                         | HTTP/SOCKS 混合代理端口                                     |
-| `sing_box_tproxy_port`                                 | integer | `7895`                         | 透明代理 (TPROXY) 端口                                      |
-| `sing_box_proxy_route_table`                           | integer | `224`                          | iproute2 路由表 ID                                          |
-| `sing_box_proxy_mark`                                  | integer | `224`                          | 需代理流量的 fwmark 值                                      |
-| `sing_box_route_default_mark`                          | integer | `225`                          | sing-box 自身出站流量的 fwmark 值 (防回环)                  |
-| `sing_box_nftables_flow_offload`                       | boolean | `true`                         | 是否启用 nftables flow offloading                           |
-| `sing_box_tcp_bbr_enabled`                             | boolean | `true`                         | 是否启用 TCP BBR 拥塞控制                                   |
-| `sing_box_sysctl_nf_conntrack`                         | boolean | `true`                         | 是否调整 nf_conntrack 内核参数                              |
-| `sing_box_sysctl_nf_conntrack_buckets`                 | integer | `65536`                        | conntrack 哈希表桶数                                        |
-| `sing_box_sysctl_nf_conntrack_max`                     | integer | `262144`                       | conntrack 最大连接数                                        |
-| `sing_box_sysctl_nf_conntrack_tcp_timeout_established` | integer | `3600`                         | TCP 已建立连接超时 (秒)                                     |
-| `sing_box_cache_file_enabled`                          | boolean | `true`                         | 是否启用 sing-box 缓存文件                                  |
-| `sing_box_cache_file_store_fakeip`                     | boolean | `true`                         | 是否缓存 FakeIP 映射                                        |
-| `sing_box_cache_file_store_rdrc`                       | boolean | `true`                         | 是否缓存拒收响应                                            |
-| `sing_box_dns_strategy`                                | string  | `prefer_ipv4`                  | DNS 解析策略 (`prefer_ipv4`, `prefer_ipv6`, `ipv4_only` 等) |
-| `sing_box_dns_disable_cache`                           | boolean | `false`                        | 禁用 DNS 缓存                                               |
-| `sing_box_dns_disable_expire`                          | boolean | `false`                        | 禁用 DNS 缓存过期                                           |
-| `sing_box_dns_independent_cache`                       | boolean | `false`                        | 各服务器独立缓存                                            |
-| `sing_box_dns_cache_capacity`                          | integer | `65535`                        | DNS 缓存条目上限                                            |
-| `sing_box_route_final`                                 | string  | `FINAL`                        | 路由兜底 Outbound tag                                       |
-| `sing_box_route_default_domain_resolver`               | string  | `dns_direct`                   | Outbound 域名解析器 (不能为代理出站, 否则死循环)            |
-| `sing_box_route_auto_detect_interface`                 | boolean | `true`                         | 自动检测出口接口                                            |
-| `sing_box_custom_rejected_rule_set`                    | string  | `custom-rejected-rule-set`     | 自定义拒绝规则集的 tag 名                                   |
-| `sing_box_custom_internal_rule_set`                    | string  | `custom-internal-rule-set`     | 自定义内网规则集的 tag 名                                   |
-| `sing_box_custom_internal_rule_set_dns`                | string  | `dns_internal`                 | 内网规则集使用的 DNS tag                                    |
-| `sing_box_custom_bypassed_rule_set`                    | string  | `custom-bypassed-rule-set`     | 自定义放行规则集的 tag 名                                   |
-| `sing_box_remote_rule_set_url_prefix`                  | string  | `...github.com/.../sing/geo/`  | 远程规则集 URL 前缀 (受 `sing_box_github_proxy` 影响)       |
-| `sing_box_remote_rule_set_update_interval`             | string  | `30d`                          | 远程规则集更新间隔                                          |
-| `sing_box_remote_rule_sets`                            | list    | `[geoip-cn, geosite-gfw, ...]` | 启用的远程规则集列表                                        |
-| `sing_box_direct_dns_rule_sets`                        | list    | `[geosite-cn, geosite-private]` | 合并进单条 `server: dns_direct` DNS 规则的规则集 tag 列表; 模板还会将 `custom-bypassed-rule-set` 前置加入 |
-| `sing_box_basic_dns_rules`                             | list    | `[...]`                        | 基础 DNS 分流规则 (gfw/google 等走 fakeip)                  |
+| 变量名                                                 | 类型    | 默认值                                                   | 描述                                                                                                           |
+| :----------------------------------------------------- | :------ | :------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- |
+| `sing_box_mixed_port`                                  | integer | `7890`                                                   | HTTP/SOCKS 混合代理端口                                                                                        |
+| `sing_box_tproxy_port`                                 | integer | `7895`                                                   | 透明代理 (TPROXY) 端口                                                                                         |
+| `sing_box_proxy_route_table`                           | integer | `224`                                                    | iproute2 路由表 ID                                                                                             |
+| `sing_box_proxy_mark`                                  | integer | `224`                                                    | 需代理流量的 fwmark 值                                                                                         |
+| `sing_box_route_default_mark`                          | integer | `225`                                                    | sing-box 自身出站流量的 fwmark 值 (防回环)                                                                     |
+| `sing_box_nftables_flow_offload`                       | boolean | `true`                                                   | 是否启用 nftables flow offloading                                                                              |
+| `sing_box_tcp_bbr_enabled`                             | boolean | `true`                                                   | 是否启用 TCP BBR 拥塞控制                                                                                      |
+| `sing_box_sysctl_nf_conntrack`                         | boolean | `true`                                                   | 是否调整 nf_conntrack 内核参数                                                                                 |
+| `sing_box_sysctl_nf_conntrack_buckets`                 | integer | `65536`                                                  | conntrack 哈希表桶数                                                                                           |
+| `sing_box_sysctl_nf_conntrack_max`                     | integer | `262144`                                                 | conntrack 最大连接数                                                                                           |
+| `sing_box_sysctl_nf_conntrack_tcp_timeout_established` | integer | `3600`                                                   | TCP 已建立连接超时 (秒)                                                                                        |
+| `sing_box_cache_file_enabled`                          | boolean | `true`                                                   | 是否启用 sing-box 缓存文件                                                                                     |
+| `sing_box_cache_file_store_fakeip`                     | boolean | `true`                                                   | 是否缓存 FakeIP 映射                                                                                           |
+| `sing_box_cache_file_store_rdrc`                       | boolean | `true`                                                   | 是否缓存拒收响应                                                                                               |
+| `sing_box_dns_strategy`                                | string  | `prefer_ipv4`                                            | DNS 解析策略 (`prefer_ipv4`, `prefer_ipv6`, `ipv4_only` 等)                                                    |
+| `sing_box_dns_disable_cache`                           | boolean | `false`                                                  | 禁用 DNS 缓存                                                                                                  |
+| `sing_box_dns_disable_expire`                          | boolean | `false`                                                  | 禁用 DNS 缓存过期                                                                                              |
+| `sing_box_dns_independent_cache`                       | boolean | `false`                                                  | 各服务器独立缓存                                                                                               |
+| `sing_box_dns_cache_capacity`                          | integer | `65535`                                                  | DNS 缓存条目上限                                                                                               |
+| `sing_box_route_final`                                 | string  | `FINAL`                                                  | 路由兜底 Outbound tag                                                                                          |
+| `sing_box_route_default_domain_resolver`               | string  | `dns_direct`                                             | Outbound 域名解析器 (不能为代理出站, 否则死循环)                                                               |
+| `sing_box_route_auto_detect_interface`                 | boolean | `true`                                                   | 自动检测出口接口                                                                                               |
+| `sing_box_custom_rejected_rule_set`                    | string  | `custom-rejected-rule-set`                               | 自定义拒绝规则集的 tag 名                                                                                      |
+| `sing_box_custom_internal_rule_set`                    | string  | `custom-internal-rule-set`                               | 自定义内网规则集的 tag 名                                                                                      |
+| `sing_box_custom_internal_rule_set_dns`                | string  | `dns_internal`                                           | 内网规则集使用的 DNS tag                                                                                       |
+| `sing_box_custom_bypassed_rule_set`                    | string  | `custom-bypassed-rule-set`                               | 自定义放行规则集的 tag 名                                                                                      |
+| `sing_box_remote_rule_set_url_prefix`                  | string  | `...github.com/.../sing/geo/`                            | 远程规则集 URL 前缀 (受 `sing_box_github_proxy` 影响)                                                          |
+| `sing_box_remote_rule_set_update_interval`             | string  | `30d`                                                    | 远程规则集更新间隔                                                                                             |
+| `sing_box_remote_rule_sets`                            | list    | `[geoip-cn, geosite-gfw, ...]`                           | 启用的远程规则集列表                                                                                           |
+| `sing_box_direct_dns_rule_sets`                        | list    | `[geosite-cn, geosite-private]`                          | 合并进单条 `server: dns_direct` DNS 规则的规则集 tag 列表; 模板还会将 `custom-bypassed-rule-set` 前置加入      |
+| `sing_box_basic_dns_rules`                             | list    | `[...]`                                                  | 基础 DNS 分流规则 (gfw/google 等走 fakeip)                                                                     |
 | `sing_box_direct_route_rule_sets`                      | list    | `[geoip-private, geosite-private, geoip-cn, geosite-cn]` | 合并进单条 `outbound: DIRECT` 路由规则的规则集 tag 列表; 模板还会将 custom-internal / custom-bypassed 前置加入 |
-| `sing_box_basic_route_rules`                           | list    | `[...]`                        | 基础路由规则 (DNS 劫持, SSH 直连等)                         |
-| `sing_box_filtering_route_rules`                       | list    | `[...]`                        | 应用层过滤/分流规则 (geoip/geosite → DIRECT/PROXY/AI 等)    |
-| `sing_box_proxy_groups`                                | list    | `[PROXY, FINAL, AI, ...]`      | 顶层 Proxy Group (Selector) 列表                            |
-| `sing_box_selfhost_tag_pattern`                        | string  | `selfhost\|自建`               | 识别自建节点 tag 的正则模式                                 |
-| `sing_box_region_groups`                               | list    | `[{tag, regex}, ...]`          | 各地区组配置 (tag/regex); 模板直接由此生成 auto/selector/selfhost 三套分组 (SG/HK/JP/TW/US/EU/KR 等) |
+| `sing_box_basic_route_rules`                           | list    | `[...]`                                                  | 基础路由规则 (DNS 劫持, SSH 直连等)                                                                            |
+| `sing_box_filtering_route_rules`                       | list    | `[...]`                                                  | 应用层过滤/分流规则 (geoip/geosite → DIRECT/PROXY/AI 等)                                                       |
+| `sing_box_proxy_groups`                                | list    | `[PROXY, FINAL, AI, ...]`                                | 顶层 Proxy Group (Selector) 列表                                                                               |
+| `sing_box_selfhost_tag_pattern`                        | string  | `selfhost\|自建`                                         | 识别自建节点 tag 的正则模式                                                                                    |
+| `sing_box_region_groups`                               | list    | `[{tag, regex}, ...]`                                    | 各地区组配置 (tag/regex); 模板直接由此生成 auto/selector/selfhost 三套分组 (SG/HK/JP/TW/US/EU/KR 等)           |
