@@ -23,7 +23,7 @@
   when: sing_box_pip_install_source in ['pypi', 'testpypi']
   ansible.builtin.pip:
     name: sing-box-config
-    state: latest
+    state: latest  # noqa: package-latest
     virtualenv: "{{ sing_box_state_venv_dir }}"
     virtualenv_command: python3 -m venv
     extra_args: "{{ sing_box_pip_extra_args[sing_box_pip_install_source] }}"

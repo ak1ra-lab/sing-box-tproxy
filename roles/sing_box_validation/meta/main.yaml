@@ -20,7 +20,7 @@ galaxy_info:
   galaxy_tags:
     - proxy
     - tproxy
-    - sing-box
+    - singbox
 
 dependencies:
   - sing_box_defaults

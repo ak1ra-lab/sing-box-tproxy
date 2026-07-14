@@ -12,6 +12,7 @@
   ansible.builtin.command:
     argv: [uv, build, --wheel]
     chdir: "{{ sing_box_local_repo_root }}"
+  changed_when: true
   delegate_to: localhost
   run_once: true
 
@@ -34,6 +35,7 @@
       ansible.builtin.copy:
         src: "{{ dist_wheel }}"
         dest: "{{ dist_wheel_dest }}"
+        mode: "0644"
 
     # The forcereinstall option is only available in Ansible 2.1 and above.
     - name: install dist_wheel on remote venv

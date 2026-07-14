@@ -24,7 +24,7 @@ galaxy_info:
     - acme
     - dns
     - tls
-    - sing-box
+    - singbox
 
 dependencies: []
 
