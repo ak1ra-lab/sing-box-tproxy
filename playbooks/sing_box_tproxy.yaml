@@ -27,17 +27,17 @@
       vars:
         sing_box_validation_profile: tproxy
       ansible.builtin.import_role:
-        name: sing_box_validation
+        name: ak1ra_lab.sing_box_tproxy.sing_box_validation
 
     - name: install sing-box package
       ansible.builtin.import_role:
-        name: sing_box_install
+        name: ak1ra_lab.sing_box_tproxy.sing_box_install
 
     - name: setup sing-box-config timer
       ansible.builtin.import_role:
-        name: sing_box_config
+        name: ak1ra_lab.sing_box_tproxy.sing_box_config
 
     - name: setup sing-box-tproxy
       when: sing_box_mode in ['local', 'gateway']
       ansible.builtin.import_role:
-        name: sing_box_tproxy
+        name: ak1ra_lab.sing_box_tproxy.sing_box_tproxy

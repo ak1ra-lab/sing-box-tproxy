@@ -39,7 +39,7 @@
 
 - name: add _acme-challenge CNAME records via Cloudflare
   when:
-    - acme_dns_register_newly_registered | bool
+    - acme_dns_register_newly_registered | ansible.builtin.bool
     - >-
       acme_dns_register_cloudflare_api_token | length > 0
       or acme_dns_register_cloudflare_zone_token | length > 0
@@ -47,7 +47,7 @@
 
 - name: prompt operator to add _acme-challenge CNAME records manually
   when:
-    - acme_dns_register_newly_registered | bool
+    - acme_dns_register_newly_registered | ansible.builtin.bool
     - acme_dns_register_cloudflare_api_token | length == 0
     - acme_dns_register_cloudflare_zone_token | length == 0
   ansible.builtin.import_tasks: cname_manual.yaml

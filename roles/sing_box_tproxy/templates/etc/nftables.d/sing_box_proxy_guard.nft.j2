@@ -41,7 +41,7 @@ table inet sing_box_proxy_guard {
 		elements = { {{ sing_box_proxy_guard_lan4_subnets | join(', ') }} }
 	}
 
-{% if sing_box_proxy_guard_auto_ban_enabled | bool %}
+{% if sing_box_proxy_guard_auto_ban_enabled | ansible.builtin.bool %}
 	# Auto-ban set (IPv4): WITH timeout; add semantics write the ban timer exactly
 	# once on first match and never reset it - a chatty client cannot extend its
 	# own ban by sending further packets.
@@ -53,7 +53,7 @@ table inet sing_box_proxy_guard {
 	}
 
 {% endif %}
-{% if sing_box_proxy_guard_throttle_enabled | bool %}
+{% if sing_box_proxy_guard_throttle_enabled | ansible.builtin.bool %}
 	# Throttle set (IPv4): WITH timeout; same add-once semantics as auto-ban.
 	# Entries expire automatically after the configured throttle period so that
 	# legitimate clients recover without any manual intervention.
@@ -74,7 +74,7 @@ table inet sing_box_proxy_guard {
 		elements = { {{ sing_box_proxy_guard_lan6_subnets | join(', ') }} }
 	}
 
-{% if sing_box_proxy_guard_auto_ban_enabled | bool %}
+{% if sing_box_proxy_guard_auto_ban_enabled | ansible.builtin.bool %}
 	# Auto-ban set (IPv6): same semantics as IPv4 counterpart.
 	set auto_banned_ip6 {
 		type ipv6_addr
@@ -84,7 +84,7 @@ table inet sing_box_proxy_guard {
 	}
 
 {% endif %}
-{% if sing_box_proxy_guard_throttle_enabled | bool %}
+{% if sing_box_proxy_guard_throttle_enabled | ansible.builtin.bool %}
 	# Throttle set (IPv6): same semantics as IPv4 counterpart.
 	set throttled_ip6 {
 		type ipv6_addr
@@ -111,7 +111,7 @@ table inet sing_box_proxy_guard {
 		# assigned to this machine (covers both IPv4 and IPv6 in an inet table).
 		fib saddr type local accept
 
-{% if sing_box_proxy_guard_auto_ban_enabled | bool %}
+{% if sing_box_proxy_guard_auto_ban_enabled | ansible.builtin.bool %}
 {% if sing_box_proxy_guard_lan4_subnets | default([]) | length > 0 %}
 		# [auto-ban] Drop ALL TCP from banned IPv4 addresses - evaluated before the
 		# rate-detection rules so both new and established connections from abusive
@@ -140,7 +140,7 @@ table inet sing_box_proxy_guard {
 
 {% endif %}
 {% endif %}
-{% if sing_box_proxy_guard_throttle_enabled | bool %}
+{% if sing_box_proxy_guard_throttle_enabled | ansible.builtin.bool %}
 {% if sing_box_proxy_guard_lan4_subnets | default([]) | length > 0 %}
 		# [throttle] Drop NEW TCP from throttled IPv4 addresses.
 		# Only new connections are dropped - established connections remain intact,

@@ -23,6 +23,6 @@ galaxy_info:
     - singbox
 
 dependencies:
-  - sing_box_defaults
+  - ak1ra_lab.sing_box_tproxy.sing_box_defaults
 
 allow_duplicates: false

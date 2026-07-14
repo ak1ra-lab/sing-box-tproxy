@@ -58,7 +58,12 @@
         - name: report subscription urls
           ansible.builtin.debug:
             msg: >-
-              subscription '{{ url_check.subscription.key }}': {{ 'accessible' if url_check.status == 200 else 'FAILED (' + (url_check.status | string) + ')' }}
+              subscription '{{ url_check.subscription.key }}':
+              {{
+                'accessible'
+                if url_check.status == 200
+                else 'FAILED (' + (url_check.status | string) + ')'
+              }}
           loop: "{{ subscription_url_checks.results }}"
           loop_control:
             loop_var: url_check
@@ -102,4 +107,4 @@
       - sing_box_sysctl_nf_conntrack_buckets | int >= 1024
     fail_msg: "sing_box_sysctl_nf_conntrack_buckets is too small (min 1024)."
     quiet: true
-  when: sing_box_sysctl_nf_conntrack | bool
+  when: sing_box_sysctl_nf_conntrack | ansible.builtin.bool
