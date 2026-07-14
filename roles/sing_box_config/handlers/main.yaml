@@ -8,16 +8,3 @@
   ansible.builtin.systemd_service:
     name: sing-box.service
     state: restarted
-
-- name: ensure sing-box working directory ownership
-  ansible.builtin.file:
-    path: "{{ directory }}"
-    owner: "{{ sing_box_user.name }}"
-    group: "{{ sing_box_group.name }}"
-    recurse: true
-  loop:
-    - "{{ sing_box_etc_dir }}"
-    - "{{ sing_box_log_dir }}"
-    - "{{ sing_box_state_dir }}"
-  loop_control:
-    loop_var: directory

@@ -42,11 +42,6 @@ sing_box_apt_repo_uris: https://deb.sagernet.org/
 sing_box_apt_repo_suites: "*"
 sing_box_apt_repo_components: "*"
 
-# pip install extra args per source
-sing_box_pip_extra_args:
-  pypi: ""
-  testpypi: "--index-url=https://test.pypi.org/simple/"
-
 # Internal: service states that trigger a sing-box-config run
 sing_box_config_service_active_state: ["started", "restarted"]
 
