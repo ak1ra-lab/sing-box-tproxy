@@ -1,39 +1,59 @@
-# AGENTS.md - Project Guide for AI Coding Agents
+# AGENTS.md
 
-Read this file before making any changes. See `README.md` for full project details.
+`sing-box-tproxy` = a Python CLI (`src/sing_box_config/`, tests mirror it under
+`tests/`) plus Ansible roles (`roles/sing_box_*`) that deploy sing-box as a TPROXY
+transparent proxy. The package is `sing-box-config` (CLIs: `sing-box-config`,
+`sing-box-liveness-probe`). See `README.md` for the deployment workflow.
 
-## What This Project Does
+## Tooling - use these, not the defaults
 
-**sing-box-tproxy** is a hybrid Ansible + Python project that automates deployment of
-[SagerNet/sing-box](https://github.com/SagerNet/sing-box) as a transparent proxy
-(TPROXY) on Debian/Ubuntu Linux. It ships a `sing-box-config` Python CLI package
-(entry points: `sing-box-config`, `sing-box-liveness-probe`) alongside Ansible roles.
+`just <recipe>` is a convenience wrapper for humans; each recipe is a thin
+`uv run ...` (see `justfile`). Agents can call `uv run ...` directly when that is
+more flexible - the two are equivalent, not mutually exclusive.
 
-## Python Environment - CRITICAL
+- Env/deps: **uv** (`just sync` = `uv sync --group dev`). Never `pip`/`poetry`/`pipenv`.
+- Lint+format: **ruff** (`just lint` = `uv run ruff check --fix` then
+  `uv run ruff format`, over `src/ tests/`). Never `black`/`isort`/`flake8`.
+- Typecheck: **ty** (astral-sh/ty), `src/` only
+  (`just typecheck` = `uv run ty check src/`). Never `mypy`.
+- Tests: **pytest**. `just test *ARGS` = `uv run pytest -v {{ARGS}} tests/` - ARGS
+  go *before* `tests/`, so `just test -k <pattern>`. Or run
+  `uv run pytest -v tests/test_file.py` directly. Mock all I/O; no real network calls.
+- Docs: `just docs-build` = `NO_MKDOCS_2_WARNING=1 uv run mkdocs build --strict`.
+- Build: `just build` = `uv build`. Version comes from git tags (`hatch-vcs`);
+  pushing a `v*` tag publishes to PyPI.
 
-The environment manager is **[uv](https://github.com/astral-sh/uv)**.
+New Ansible vars follow `sing_box_<subsystem>_<parameter>` and default in
+`roles/sing_box_defaults/defaults/main.yaml` (single source of truth); override
+only via `playbooks/{group_vars,host_vars}/`.
 
-- ALWAYS run Python commands with `uv run <command>`.
-- NEVER use `.venv/bin/python`, `pip install`, `conda`, `pipenv`, or `poetry`.
-- Install/sync dev dependencies: `just sync`
-- Lint + format: `just lint` (wraps `uv run ruff check` and `uv run ruff format`).
-- Typecheck: `just typecheck` (runs `uv run ty check`).
-- Run tests: `just test` (runs `uv run pytest -v`) - do NOT use `python -m pytest`.
+Python changes MUST pass lint, typecheck, and test before commit.
 
-## Conventions
+## Ansible (self-contained layout)
 
-- **Ansible variables** follow the pattern `sing_box_<subsystem>_<parameter>`.
-- **`roles/sing_box_defaults/defaults/main.yaml`** is the single source of truth for
-  all default Ansible variable values. Define new parameters here first, then reference
-  them in role tasks or Jinja2 templates. `playbooks/group_vars/` and
-  `playbooks/host_vars/` are the only override layers.
-- **Python source** lives in `src/sing_box_config/`; the CLI entry points are
-  `main.py` (`sing-box-config`) and `probe.py` (`sing-box-liveness-probe`).
+`ansible.cfg` pins `roles_path=./roles` and `collections_path=./.ansible/collections`
+and never reaches user-level/parent paths. Playbooks reference roles by FQCN
+(`ak1ra_lab.sing_box_tproxy.*`). Before running `ansible-lint` or any playbook,
+install the dependencies into the project-local tree:
 
-## Testing Guidelines
+```shell
+ansible-galaxy collection install -r requirements.yaml -p ./.ansible/collections
+```
 
-- Tests live in `tests/` and mirror `src/sing_box_config/` module names.
-- Run the full suite after every change: `just test`
-- When modifying a function signature, update all call sites in `src/` **and** `tests/`
-  in the same commit.
-- Mock all external I/O (HTTP, subprocess) - do NOT make real network calls in tests.
+- `requirements.yaml` deps: `ansible.posix`, `community.general` (usually resolve
+  from user-level ansible) and `ak1ra_lab.general` (not on Galaxy, pulled from git).
+- `ansible-lint` (strict `production` profile, run from repo root) auto-installs
+  `requirements.yaml` into its own cache dir `./.ansible/collections` - computed
+  by ansible-compat from the project dir, ignoring `ansible.cfg`'s `collections_path`.
+- `group_vars.sh gen|sync [tproxy|server|all]` manages `playbooks/group_vars/`
+  overrides as diff patches against role defaults; edit the patch, not the
+  generated `main.yaml`.
+
+Ansible changes MUST pass `ansible-lint` before commit.
+
+## Docs (bilingual)
+
+`docs/` is served by mkdocs with the i18n plugin (`docs_structure: suffix`):
+every page has an English `*.md` and a Simplified-Chinese `*.zh.md` sibling
+(e.g. `cli.md` + `cli.zh.md`). When adding or changing user-facing behavior,
+update BOTH language files.
