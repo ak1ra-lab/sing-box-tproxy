@@ -44,7 +44,7 @@
         acme_dns_register_hostname: "{{ sing_box_server_hostname }}"
         acme_dns_register_acme_domains: "{{ sing_box_server_acme_domain }}"
       ansible.builtin.import_role:
-        name: ak1ra_lab.sing_box_tproxy.acme_dns_register
+        name: ak1ra_lab.general.acme_dns_register
 
     - name: propagate acme-dns credentials to sing_box_server vars
       when:
