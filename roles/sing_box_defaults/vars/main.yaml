@@ -98,14 +98,14 @@ sing_box_etc_resolv_conf_servers: "{{ sing_box_dns_hosts_predefined['one.one.one
 
 sing_box_dns_public_dns_servers:
   - tag: dns_direct
-    type: tls
+    type: https
     server: dns.alidns.com
-    server_port: 853
+    server_port: 443
     domain_resolver: dns_hosts
   - tag: dns_proxy
-    type: tls
+    type: https
     server: one.one.one.one
-    server_port: 853
+    server_port: 443
     domain_resolver: dns_hosts
     detour: PROXY
   - tag: dns_fakeip
