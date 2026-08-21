@@ -30,6 +30,13 @@
                 "password": trojan_user.password,
                 "tls": {
                     "enabled": true
+                },
+                "multiplex": {
+                    "enabled": true,
+                    "protocol": "h2mux",
+                    "max_connections": 32,
+                    "min_streams": 16,
+                    "padding": true
                 }
             }) -%}
         {%- endif -%}
