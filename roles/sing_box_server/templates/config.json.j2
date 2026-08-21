@@ -10,11 +10,7 @@
         "listen": sing_box_server_listen,
         "listen_port": sing_box_server_shadowsocks_port,
         "method": sing_box_server_shadowsocks_method,
-        "password": sing_box_server_shadowsocks_password,
-        "multiplex": {
-            "enabled": true,
-            "padding": true
-        }
+        "password": sing_box_server_shadowsocks_password
     } -%}
     {%- if sing_box_server_shadowsocks_users | length > 0 -%}
         {%- set ss_users = [] -%}

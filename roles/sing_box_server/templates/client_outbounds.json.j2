@@ -13,14 +13,7 @@
                 "server": sing_box_server_hostname,
                 "server_port": sing_box_server_shadowsocks_port,
                 "method": sing_box_server_shadowsocks_method,
-                "password": sing_box_server_shadowsocks_password ~ ":" ~ ss_user.password,
-                "multiplex": {
-                    "enabled": true,
-                    "protocol": "h2mux",
-                    "max_connections": 16,
-                    "min_streams": 4,
-                    "padding": true
-                }
+                "password": sing_box_server_shadowsocks_password ~ ":" ~ ss_user.password
             }) -%}
         {%- endif -%}
     {%- endif -%}
