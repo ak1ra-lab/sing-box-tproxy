@@ -176,20 +176,12 @@ sing_box_basic_dns_rules:
 sing_box_basic_route_rules:
   - action: sniff
   - action: hijack-dns
-    type: logical
-    mode: or
-    rules:
-      - port: 53
-      - protocol: dns
+    protocol: dns
   - action: route
     protocol: bittorrent
     outbound: DIRECT
   - action: route
-    type: logical
-    mode: or
-    rules:
-      - port: 22
-      - protocol: ssh
+    protocol: ssh
     outbound: SSH
 
 # Rule-set tags routed to the DIRECT outbound.
