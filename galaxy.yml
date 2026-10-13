@@ -1,7 +1,7 @@
 ---
 namespace: ak1ra_lab
 name: sing_box_tproxy
-version: 0.9.0
+version: 0.11.0
 readme: README.md
 authors:
   - ak1ra <git@ak1ra.xyz>
